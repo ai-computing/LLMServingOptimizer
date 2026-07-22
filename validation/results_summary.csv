@@ -1,0 +1,3 @@
+tp,n_matched,ttft_mape,tpot_mape,ttft_pearson_r,tpot_pearson_r,ttft_p50_vllm,ttft_p99_vllm,ttft_p50_sim,ttft_p99_sim,tpot_p50_vllm,tpot_p99_vllm,tpot_p50_sim,tpot_p99_sim,throughput_vllm,throughput_sim,power_vllm_mean_w,power_sim_mean_w
+1,83,65.119,15.915,-0.017,-0.019,133.695,403.115,45.456,62.470,34.111,103.163,30.935,32.217,562.002,846.200,,340.824
+2,82,59.345,42.112,-0.186,-0.033,102.629,428.131,37.003,46.835,22.294,65.392,30.236,30.911,714.100,850.020,,489.759

@@ -1,0 +1,227 @@
+{% extends "base.html" %}
+{% block content %}
+<header class="page-header">
+    <h1>1. Configure Cluster</h1>
+    <p class="sub">Select hardware, model, and network settings to build a cluster config JSON file.</p>
+</header>
+
+<!-- ================================================================ -->
+<!-- Cluster Config Builder                                            -->
+<!-- ================================================================ -->
+<section class="card" id="cluster-builder">
+    <h2>Cluster Config Builder</h2>
+
+    <div class="cc-row">
+        <label>Load existing config
+            <select id="cc-load-select">
+                <option value="">(new config)</option>
+            </select>
+        </label>
+        <button type="button" id="cc-load-btn" class="btn-secondary">Load</button>
+        <button type="button" id="cc-delete-btn" class="btn-secondary" title="Delete the selected config file (only configs under cluster_config/web/ can be deleted)">Delete</button>
+    </div>
+
+    <div class="cc-row">
+        <label>Filename
+            <input id="cc-name" type="text" placeholder="my_cluster" style="max-width:280px">
+        </label>
+        <span class="hint" style="align-self:flex-end">→ <code>cluster_config/web/&lt;name&gt;.json</code></span>
+    </div>
+
+    <div class="cc-row">
+        <label style="max-width:160px">Link BW (GB/s)
+            <input id="cc-link-bw" type="number" value="112" min="0">
+        </label>
+        <label style="max-width:160px">Link latency (ns)
+            <input id="cc-link-latency" type="number" value="0" min="0">
+        </label>
+    </div>
+
+    <h3>Nodes</h3>
+    <div id="cc-nodes"></div>
+    <button type="button" id="cc-add-node" class="btn-secondary">+ Add node</button>
+
+    <div class="cc-row" style="margin-top:var(--space-lg)">
+        <button type="button" id="cc-save-btn" class="btn-primary">Save config</button>
+        <span id="cc-status" class="cc-status"></span>
+    </div>
+</section>
+
+<header class="page-header">
+    <h1>2. Select Scenario</h1>
+    <p class="sub">Define instance groups and sweep axes (TP / PP / DP / P&D split), then choose a dataset and request count.</p>
+</header>
+
+
+<section class="scenario-tabs-section">
+    <div id="scenario-tabs" class="tab-bar">
+        <!-- tab buttons added dynamically -->
+    </div>
+    <button id="btn-add-scenario" class="btn-secondary" type="button">+ Add Scenario</button>
+</section>
+
+<section id="scenario-forms"></section>
+
+<!-- Workload (shared across scenarios) -->
+<section class="card">
+    <h2>Workload</h2>
+    <div class="form-grid">
+        <label>
+            Simulator backend
+            <select id="backend-select">
+                <option value="legacy" selected>legacy (fork, main.py)</option>
+                <option value="upstream">upstream (casys-kaist v1.1+)</option>
+            </select>
+        </label>
+        <label>
+            Dataset
+            <select id="dataset-select"></select>
+        </label>
+        <label>
+            Number of requests
+            <input id="num-req" type="range" min="10" max="300" step="10" value="100">
+            <span id="num-req-value">100</span>
+        </label>
+        <label>
+            Phase
+            <span class="radio-row">
+                <label><input type="radio" name="phase" value="smoke"> smoke (10 req)</label>
+                <label><input type="radio" name="phase" value="full" checked> full (100 req)</label>
+                <label><input type="radio" name="phase" value="both"> both</label>
+            </span>
+        </label>
+    </div>
+</section>
+
+<header class="page-header">
+    <h1>3. Run Simulation</h1>
+    <p class="sub">Preview all configurations expanded from the sweep axes, select the ones to run, then launch the simulation pool.</p>
+</header>
+
+<section class="card">
+    <div class="actions">
+        <button id="btn-enumerate" class="btn-primary" type="button">Enumerate Configs</button>
+        <button id="btn-run" class="btn-primary" type="button" disabled>Run Sweep</button>
+        <label class="inline-label" style="margin-left: auto">
+            Timeout (s)
+            <input id="timeout-s" type="number" min="10" step="10" value="120"
+                   style="max-width: 90px"
+                   title="Per-config timeout. Simulations exceeding this are killed and marked failed.">
+        </label>
+    </div>
+    <div id="enum-summary" class="hint"></div>
+</section>
+
+<section id="enum-results"></section>
+
+<!-- Node row template -->
+<template id="cc-node-template">
+    <div class="cc-node">
+        <header>
+            <strong>Node <span class="cc-node-idx"></span></strong>
+            <button type="button" class="cc-rm-node" title="Remove node">×</button>
+        </header>
+        <div class="cc-row" style="margin-bottom:var(--space-sm)">
+            <label style="max-width:160px">CPU mem size (GB)
+                <input class="cc-cpu-size" type="number" value="128" min="0">
+            </label>
+            <label style="max-width:160px">CPU mem BW (GB/s)
+                <input class="cc-cpu-bw" type="number" value="256" min="0">
+            </label>
+            <label style="max-width:160px">CPU mem latency (ns)
+                <input class="cc-cpu-lat" type="number" value="0" min="0">
+            </label>
+        </div>
+        <div class="cc-instances"></div>
+        <button type="button" class="cc-add-inst btn-secondary" style="margin-top:var(--space-sm)">+ Add instance</button>
+    </div>
+</template>
+
+<!-- Instance row template -->
+<template id="cc-inst-template">
+    <div class="cc-inst">
+        <label>HW<select class="cc-hw"></select></label>
+        <label>Model<select class="cc-model"></select></label>
+        <label>npu_num<input class="cc-npu-num" type="number" value="1" min="1" style="width:70px"></label>
+        <label>npu_group<input class="cc-npu-group" type="number" value="1" min="1" style="width:70px"></label>
+        <label>pd_type
+            <select class="cc-pd" style="width:90px">
+                <option value="">none</option>
+                <option value="prefill">prefill</option>
+                <option value="decode">decode</option>
+            </select>
+        </label>
+        <details class="cc-mem-details">
+            <summary>npu_mem override</summary>
+            <div class="cc-row" style="margin-top:4px">
+                <label style="max-width:120px">size (GB)<input class="cc-npu-size" type="number" placeholder="default"></label>
+                <label style="max-width:120px">BW (GB/s)<input class="cc-npu-bw" type="number" placeholder="default"></label>
+                <label style="max-width:120px">latency (ns)<input class="cc-npu-lat" type="number" placeholder="default"></label>
+            </div>
+        </details>
+        <button type="button" class="cc-rm-inst" title="Remove instance">×</button>
+    </div>
+</template>
+
+
+<!-- Hidden template for one scenario form. Cloned by app.js. -->
+<template id="scenario-form-template">
+    <div class="card scenario-form" data-scenario-idx="0" hidden>
+        <h2 class="scenario-title">Scenario 1</h2>
+        <label class="inline-label">
+            Name
+            <input type="text" class="scenario-name" value="Scenario 1">
+        </label>
+        <h3>Instance Groups</h3>
+        <table class="instance-groups">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Hardware</th>
+                    <th>Model</th>
+                    <th>NPU count</th>
+                    <th>P/D role</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody class="ig-body"></tbody>
+        </table>
+        <button class="btn-secondary btn-add-ig" type="button">+ Add Instance Group</button>
+
+        <h3>Sweep Axes</h3>
+        <div class="checkbox-row">
+            <label><input type="checkbox" class="ax-tp" checked> Vary TP</label>
+            <label><input type="checkbox" class="ax-pp" checked> Vary PP</label>
+            <label><input type="checkbox" class="ax-dp" checked> Vary DP</label>
+            <label><input type="checkbox" class="ax-pd" checked> Include P/D split</label>
+        </div>
+    </div>
+</template>
+
+<!-- Hidden template for one instance group row. -->
+<template id="instance-group-row-template">
+    <tr class="ig-row">
+        <td class="ig-idx"></td>
+        <td><select class="ig-hardware"></select></td>
+        <td><select class="ig-model"></select></td>
+        <td><input class="ig-npu-count" type="number" min="1" max="32" value="4"></td>
+        <td>
+            <select class="ig-pd-role">
+                <option value="auto" selected>auto</option>
+                <option value="combined">combined</option>
+                <option value="prefill">prefill</option>
+                <option value="decode">decode</option>
+            </select>
+        </td>
+        <td><button class="btn-danger btn-remove-ig" type="button">Remove</button></td>
+    </tr>
+</template>
+
+{% endblock %}
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        if (window.LLMSS && LLMSS.initIndexPage) LLMSS.initIndexPage();
+    });
+</script>
+{% endblock %}

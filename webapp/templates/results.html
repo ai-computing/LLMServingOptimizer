@@ -1,0 +1,164 @@
+{% extends "base.html" %}
+{% block content %}
+<header class="page-header">
+    <h1>Sweep Results</h1>
+    <p class="sub">Sweep ID: <code>{{ sweep_id }}</code></p>
+</header>
+
+<section class="card">
+    <h2>Configuration Matrix</h2>
+    <table class="matrix-table">
+        <thead>
+            <tr>
+                <th>Config</th><th>TP</th><th>PP</th><th>DP</th><th>P/D</th>
+                <th>Throughput (tok/s)</th><th>TTFT (ms)</th><th>TPOT (ms)</th><th>P99 ITL (ms)</th>
+                {% if has_energy %}<th>Energy (Wh)</th>{% endif %}
+            </tr>
+        </thead>
+        <tbody>
+            {% for r in config_rows %}
+            <tr>
+                <td title="{{ r.label }}">{{ r.label }}</td>
+                <td>{{ r.tp }}</td>
+                <td>{{ r.pp }}</td>
+                <td>{{ r.dp }}</td>
+                <td>{{ r.pd_layout }}</td>
+                <td>{{ "%.2f"|format(r.throughput) if r.throughput is not none else "—" }}</td>
+                <td>{{ "%.2f"|format(r.ttft) if r.ttft is not none else "—" }}</td>
+                <td>{{ "%.2f"|format(r.tpot) if r.tpot is not none else "—" }}</td>
+                <td>{{ "%.2f"|format(r.itl) if r.itl is not none else "—" }}</td>
+                {% if has_energy %}
+                <td>{{ "%.3f"|format(r.energy_wh) if r.energy_wh is not none else "—" }}</td>
+                {% endif %}
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</section>
+
+{% if config_colors %}
+<section class="card">
+    <h2>Config Legend</h2>
+    <p class="hint">Each color in the charts below maps to one config. Hover any chart marker/bar for its label.</p>
+    <div class="config-legend">
+        {% for label, color in config_colors.items() %}
+        <div class="config-legend-item" title="{{ label }}">
+            <span class="config-legend-swatch" style="background: {{ color }}"></span>
+            <span class="config-legend-label">{{ label }}</span>
+        </div>
+        {% endfor %}
+    </div>
+</section>
+{% endif %}
+
+{% if has_energy %}
+<section class="card">
+    <h2>Energy Breakdown (Wh per device, per config)</h2>
+    <table class="matrix-table">
+        <thead>
+            <tr>
+                <th>Config</th>
+                <th>Base Node</th><th>NPU</th><th>CPU</th><th>Memory</th>
+                <th>Link</th><th>NIC</th><th>Storage</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for r in config_rows %}
+            <tr>
+                <td title="{{ r.label }}">{{ r.label }}</td>
+                {% for dev in ['Base Node', 'NPU', 'CPU', 'Memory', 'Link', 'NIC', 'Storage'] %}
+                <td>{{ "%.4f"|format(r.energy_breakdown[dev]) if r.energy_breakdown.get(dev) is not none else "—" }}</td>
+                {% endfor %}
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</section>
+{% endif %}
+
+<section class="card">
+    <h2>Throughput &amp; Latency</h2>
+    <div class="chart-grid">
+        <div id="plot-total_token_tp" class="plot"></div>
+        <div id="plot-mean_ttft_ms" class="plot"></div>
+        <div id="plot-mean_tpot_ms" class="plot"></div>
+        <div id="plot-mean_itl_ms" class="plot"></div>
+        {% if has_energy %}<div id="plot-total_energy_kj" class="plot"></div>{% endif %}
+    </div>
+</section>
+
+<section class="card">
+    <h2>Pareto Analysis</h2>
+    <label class="inline-label">
+        X-axis metric
+        <select id="pareto-x-metric">
+            <option value="mean_ttft_ms" selected>Mean TTFT</option>
+            <option value="mean_tpot_ms">Mean TPOT</option>
+            <option value="mean_itl_ms">Mean ITL</option>
+        </select>
+    </label>
+    <div id="plot-pareto" class="plot plot-wide"></div>
+</section>
+
+<section class="card">
+    <h2>Axis Scaling</h2>
+    <div class="chart-grid">
+        <div id="plot-line_tp" class="plot"></div>
+        <div id="plot-line_pp" class="plot"></div>
+        <div id="plot-line_dp" class="plot"></div>
+    </div>
+</section>
+
+<section class="card">
+    <h2>Latency Distribution (CDF)</h2>
+    <div class="chart-grid">
+        <div id="plot-cdf_ttft" class="plot"></div>
+        <div id="plot-cdf_itl" class="plot"></div>
+    </div>
+</section>
+
+<section class="card">
+    <h2>Downloads</h2>
+    <div class="actions">
+        <a class="btn-secondary" href="/api/sweeps/{{ sweep_id }}/download/metrics">metrics.json</a>
+        <a class="btn-secondary" href="/api/sweeps/{{ sweep_id }}/download/zip">All CSVs + logs (.zip)</a>
+    </div>
+</section>
+{% endblock %}
+{% block scripts %}
+<script id="plots-data" type="application/json">{{ plots_json|tojson|safe }}</script>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        if (window.LLMSS && LLMSS.initResultsPage) {
+            const plots = JSON.parse(document.getElementById('plots-data').textContent);
+            LLMSS.initResultsPage({{ sweep_id|tojson }}, plots);
+        }
+
+        // Highlight best values in Configuration Matrix:
+        // col 5 = Throughput (max is best), col 6-8 = TTFT/TPOT/P99 ITL (min),
+        // col 9 = Energy (only present when has_energy; min is best)
+        const table = document.querySelector('.matrix-table');
+        if (table) {
+            const rows = Array.from(table.querySelectorAll('tbody tr'));
+            const headerCount = table.querySelectorAll('thead th').length;
+            const metricCols = [
+                {col: 5, best: 'max'},
+                {col: 6, best: 'min'},
+                {col: 7, best: 'min'},
+                {col: 8, best: 'min'},
+            ];
+            if (headerCount > 9) metricCols.push({col: 9, best: 'min'});
+            for (const {col, best} of metricCols) {
+                const cells = rows.map(r => r.cells[col]).filter(Boolean);
+                const values = cells.map(c => parseFloat(c.textContent));
+                const valid = values.filter(v => !isNaN(v));
+                if (!valid.length) continue;
+                const target = best === 'max' ? Math.max(...valid) : Math.min(...valid);
+                cells.forEach((c, i) => {
+                    if (values[i] === target) c.classList.add('best-cell');
+                });
+            }
+        }
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+{% block content %}
+<header class="page-header">
+    <h1>Resource Planner <span class="hint">(MILP · Max-Flow)</span></h1>
+    <p class="sub">Describe a heterogeneous cluster + SLO/objectives. Stage 1 solves the
+    placement (CP-SAT epsilon-sweep over throughput/power); Stage 2 verifies each
+    candidate with a real simulation and ranks by Pareto front.</p>
+</header>
+
+<section class="card">
+    <h2>1. Model &amp; Workload</h2>
+    <div class="cc-row">
+        <label>Model
+            <select id="model-select"></select>
+        </label>
+        <label style="max-width: 120px">FP precision
+            <select id="fp-select">
+                <option value="16" selected>16-bit</option>
+                <option value="8">8-bit</option>
+            </select>
+        </label>
+    </div>
+    <div class="cc-row">
+        <label>Dataset
+            <select id="dataset-select"></select>
+        </label>
+        <label style="max-width: 160px">Num requests
+            <input id="num-req" type="number" min="1" value="30">
+        </label>
+    </div>
+</section>
+
+<section class="card">
+    <h2>2. Cluster topology</h2>
+    <p class="hint">Add a row per hardware group. Give rows different <em>Node</em> ids to
+    place them on separate nodes — cross-node P/D KV transfer is then bounded by the
+    inter-node link bandwidth (Max-Flow constraint).</p>
+    <table id="device-table" class="matrix-table">
+        <thead><tr><th>Hardware</th><th>Node</th><th>Count</th><th>Mem (GB)</th><th></th></tr></thead>
+        <tbody id="device-body"></tbody>
+    </table>
+    <button id="btn-add-device" class="btn-secondary" type="button">+ Add hardware</button>
+    <div class="cc-row" style="margin-top: var(--space-md)">
+        <label style="max-width: 220px">Inter-node link bandwidth
+            <input id="link-bw" type="text" value="200Gbps">
+        </label>
+        <label style="max-width: 220px">Intra-node bandwidth
+            <input id="intra-bw" type="text" value="600GBps">
+        </label>
+    </div>
+</section>
+
+<section class="card">
+    <h2>3. SLO constraints <span class="hint">(hard; leave unchecked to ignore)</span></h2>
+    <div class="cc-row">
+        <label class="inline-label"><input type="checkbox" id="c-ttft" checked> TTFT ≤</label>
+        <input id="v-ttft" type="number" value="500" style="max-width:120px"> ms
+    </div>
+    <div class="cc-row">
+        <label class="inline-label"><input type="checkbox" id="c-tpot" checked> TPOT ≤</label>
+        <input id="v-tpot" type="number" value="50" style="max-width:120px"> ms
+    </div>
+    <div class="cc-row">
+        <label class="inline-label"><input type="checkbox" id="c-itl"> ITL-p99 ≤</label>
+        <input id="v-itl" type="number" value="80" style="max-width:120px"> ms
+    </div>
+</section>
+
+<section class="card">
+    <h2>4. Objectives</h2>
+    <div class="cc-row">
+        <label class="inline-label"><input type="checkbox" id="o-thr" checked> Throughput (max), weight</label>
+        <input id="w-thr" type="number" step="0.1" value="0.6" style="max-width:100px">
+    </div>
+    <div class="cc-row">
+        <label class="inline-label"><input type="checkbox" id="o-tpw" checked> Toks/Wh (max), weight</label>
+        <input id="w-tpw" type="number" step="0.1" value="0.4" style="max-width:100px">
+    </div>
+    <p class="hint">Enabling Toks/Wh attaches a power model to the generated config
+    (energy is parsed from the simulator).</p>
+</section>
+
+<section class="card">
+    <h2>5. Search space</h2>
+    <label class="inline-label"><input type="checkbox" id="pd-toggle"> P/D disaggregation (separate prefill/decode instances)</label>
+    <div class="cc-row" style="margin-top: var(--space-sm)">
+        <span>TP degrees:</span>
+        <label class="inline-label"><input type="checkbox" class="tp-choice" value="1" checked> 1</label>
+        <label class="inline-label"><input type="checkbox" class="tp-choice" value="2" checked> 2</label>
+        <label class="inline-label"><input type="checkbox" class="tp-choice" value="4"> 4</label>
+        <label class="inline-label"><input type="checkbox" class="tp-choice" value="8"> 8</label>
+    </div>
+    <div class="cc-row">
+        <span>Batch tokens:</span>
+        <label class="inline-label"><input type="checkbox" class="bt-choice" value="2048" checked> 2048</label>
+        <label class="inline-label"><input type="checkbox" class="bt-choice" value="4096"> 4096</label>
+    </div>
+    <div id="xpyd-row" class="cc-row" style="display:none">
+        <label style="max-width:160px">Prefill count [min,max]
+            <input id="xpyd-p" type="text" value="1,4"></label>
+        <label style="max-width:160px">Decode count [min,max]
+            <input id="xpyd-d" type="text" value="1,6"></label>
+    </div>
+</section>
+
+<section class="card">
+    <h2>6. Solver &amp; run</h2>
+    <div class="cc-row">
+        <label style="max-width:140px">Top-K candidates <input id="top-k" type="number" min="1" value="5"></label>
+        <label style="max-width:160px">ε-sweep steps <input id="eps-steps" type="number" min="1" value="5"></label>
+        <label style="max-width:160px">MILP time limit (s) <input id="time-limit" type="number" min="1" value="30"></label>
+        <label style="max-width:160px">Parallel sims <input id="jobs" type="number" min="1" value="4"></label>
+    </div>
+    <div class="cc-row">
+        <label class="inline-label"><input type="checkbox" id="dry-run"> Dry run (Stage 1 + render only, no simulation)</label>
+    </div>
+    <div id="problems" class="warning-banner" style="display:none"></div>
+    <div class="actions" style="margin-top: var(--space-md)">
+        <button id="btn-validate" class="btn-secondary" type="button">Validate</button>
+        <button id="btn-run" class="btn-primary" type="button">Run planner</button>
+    </div>
+</section>
+{% endblock %}
+{% block scripts %}
+<script src="{{ static('planner_explore.js') }}"></script>
+{% endblock %}

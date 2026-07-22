@@ -1,0 +1,212 @@
+{% extends "base.html" %}
+{% block content %}
+<header class="page-header">
+    <h1>Design Space Exploration</h1>
+    <p class="sub">Define a resource pool + constraints, and we'll enumerate and simulate every viable cluster combination, then rank by your objectives.</p>
+</header>
+
+<section class="card">
+    <h2>Load from History</h2>
+    <p class="hint">과거에 실행했던 DSE 설정을 불러와 폼을 자동으로 채웁니다.</p>
+    <div class="cc-row" style="align-items: flex-end; gap: var(--space-md)">
+        <label style="flex: 1">Past configurations
+            <select id="history-select">
+                <option value="">-- 불러올 설정 선택 --</option>
+            </select>
+        </label>
+        <button id="btn-apply-history" class="btn-secondary" type="button" disabled style="white-space: nowrap">Apply</button>
+    </div>
+</section>
+
+<section class="card">
+    <h2>1. Resource Pool</h2>
+    <p class="hint">Hardware types and their allowed quantity ranges. Add rows for each hardware in your pool.</p>
+    <table id="resource-pool" class="matrix-table">
+        <thead><tr><th>Hardware</th><th>min</th><th>max</th><th></th></tr></thead>
+        <tbody id="resource-pool-body"></tbody>
+    </table>
+    <button id="btn-add-hw" class="btn-secondary" type="button">+ Add hardware</button>
+    <div class="cc-row" style="margin-top: var(--space-md)">
+        <label style="max-width: 200px">Total max NPUs (optional)
+            <input id="total-max" type="number" min="1" placeholder="(no cap)">
+        </label>
+    </div>
+    <div class="cc-row">
+        <label title="Physical interconnect of the target box. The TP group is decomposed onto its tiers (hierarchical tp_group_shape). 'Catalog default' uses each hardware's interconnect_bw_gbs as a flat link.">Interconnect fabric
+            <select id="fabric-select"></select>
+        </label>
+        <span id="fabric-desc" class="hint" style="align-self:flex-end"></span>
+    </div>
+</section>
+
+<section class="card">
+    <h2>2. Model & Workload</h2>
+    <div class="cc-row">
+        <label>Model
+            <select id="model-select"></select>
+        </label>
+        <label style="max-width: 120px">FP precision
+            <select id="fp-select">
+                <option value="16" selected>16-bit</option>
+                <option value="8">8-bit</option>
+                <option value="32">32-bit</option>
+            </select>
+        </label>
+    </div>
+    <div class="cc-row">
+        <label>Dataset
+            <select id="dataset-select"></select>
+        </label>
+        <label style="max-width: 160px">Num requests
+            <input id="num-req" type="number" min="1" value="100">
+        </label>
+        <label style="max-width: 160px">Timeout (s)
+            <input id="timeout-s" type="number" min="10" step="10" value="600">
+        </label>
+    </div>
+</section>
+
+<section class="card">
+    <h2>3. Performance Objectives</h2>
+    <p class="hint">최적화할 메트릭을 선택하고 우선순위를 지정하세요. 체크한 항목만 후보 선별·랭킹에 반영됩니다.</p>
+    <div style="display:flex;flex-direction:column;gap:6px;margin-top:10px">
+
+        <div class="obj-row" style="display:flex;align-items:center;gap:12px;padding:7px 10px;border-radius:4px">
+            <input type="checkbox" id="obj-ttft">
+            <label for="obj-ttft" style="flex:1;cursor:pointer;user-select:none">
+                <strong>TTFT p99</strong>
+                <span class="hint" style="margin-left:6px">첫 토큰 응답 시간 (↓ 낮을수록 좋음)</span>
+            </label>
+            <span class="obj-pri" style="display:flex;gap:14px">
+                <label style="cursor:pointer"><input type="radio" name="pri-ttft" value="1"> Low</label>
+                <label style="cursor:pointer"><input type="radio" name="pri-ttft" value="3" checked> Medium</label>
+                <label style="cursor:pointer"><input type="radio" name="pri-ttft" value="9"> High</label>
+            </span>
+        </div>
+
+        <div class="obj-row" style="display:flex;align-items:center;gap:12px;padding:7px 10px;border-radius:4px">
+            <input type="checkbox" id="obj-tpot">
+            <label for="obj-tpot" style="flex:1;cursor:pointer;user-select:none">
+                <strong>TPOT p99</strong>
+                <span class="hint" style="margin-left:6px">토큰 생성 지연 (↓ 낮을수록 좋음)</span>
+            </label>
+            <span class="obj-pri" style="display:flex;gap:14px">
+                <label style="cursor:pointer"><input type="radio" name="pri-tpot" value="1"> Low</label>
+                <label style="cursor:pointer"><input type="radio" name="pri-tpot" value="3" checked> Medium</label>
+                <label style="cursor:pointer"><input type="radio" name="pri-tpot" value="9"> High</label>
+            </span>
+        </div>
+
+        <div class="obj-row" style="display:flex;align-items:center;gap:12px;padding:7px 10px;border-radius:4px">
+            <input type="checkbox" id="obj-tp" checked>
+            <label for="obj-tp" style="flex:1;cursor:pointer;user-select:none">
+                <strong>Throughput</strong>
+                <span class="hint" style="margin-left:6px">처리량 tok/s (↑ 높을수록 좋음)</span>
+            </label>
+            <span class="obj-pri" style="display:flex;gap:14px">
+                <label style="cursor:pointer"><input type="radio" name="pri-tp" value="1"> Low</label>
+                <label style="cursor:pointer"><input type="radio" name="pri-tp" value="3" checked> Medium</label>
+                <label style="cursor:pointer"><input type="radio" name="pri-tp" value="9"> High</label>
+            </span>
+        </div>
+
+        <div class="obj-row" style="display:flex;align-items:center;gap:12px;padding:7px 10px;border-radius:4px">
+            <input type="checkbox" id="obj-tokwh" checked>
+            <label for="obj-tokwh" style="flex:1;cursor:pointer;user-select:none">
+                <strong>Tok/Wh</strong>
+                <span class="hint" style="margin-left:6px">에너지 효율 (↑ 높을수록 좋음)</span>
+            </label>
+            <span class="obj-pri" style="display:flex;gap:14px">
+                <label style="cursor:pointer"><input type="radio" name="pri-tokwh" value="1"> Low</label>
+                <label style="cursor:pointer"><input type="radio" name="pri-tokwh" value="3" checked> Medium</label>
+                <label style="cursor:pointer"><input type="radio" name="pri-tokwh" value="9"> High</label>
+            </span>
+        </div>
+
+        <div class="obj-row" style="display:flex;align-items:center;gap:12px;padding:7px 10px;border-radius:4px">
+            <input type="checkbox" id="obj-power">
+            <label for="obj-power" style="flex:1;cursor:pointer;user-select:none">
+                <strong>Energy (Wh)</strong>
+                <span class="hint" style="margin-left:6px">총 에너지 소비 (↓ 낮을수록 좋음)</span>
+            </label>
+            <span class="obj-pri" style="display:flex;gap:14px">
+                <label style="cursor:pointer"><input type="radio" name="pri-power" value="1"> Low</label>
+                <label style="cursor:pointer"><input type="radio" name="pri-power" value="3" checked> Medium</label>
+                <label style="cursor:pointer"><input type="radio" name="pri-power" value="9"> High</label>
+            </span>
+        </div>
+
+    </div>
+</section>
+
+<section class="card">
+    <h2>4. Search & Objective Weights</h2>
+    <div class="cc-row">
+        <label style="max-width: 180px">Max combinations
+            <input id="search-max" type="number" min="1" value="20">
+        </label>
+        <label style="max-width: 180px">Sampling
+            <select id="search-sampling">
+                <option value="random" selected>random</option>
+                <option value="grid">grid</option>
+            </select>
+        </label>
+        <label style="max-width: 140px">Seed
+            <input id="search-seed" type="number" value="42">
+        </label>
+        <label style="max-width: 100px">Top-N
+            <input id="top-n" type="number" min="1" value="5">
+        </label>
+    </div>
+    <div class="cc-row" style="gap: var(--space-md); flex-wrap: wrap">
+        <label><input type="checkbox" id="feat-pd" checked> P/D disaggregation</label>
+        <label><input type="checkbox" id="feat-prefix"> Prefix caching</label>
+        <label><input type="checkbox" id="feat-attn-off"> Attention offload (PIM)</label>
+    </div>
+</section>
+
+<section class="card">
+    <h2>5. Pre-simulation Filters</h2>
+    <div class="cc-row" style="gap: var(--space-md); flex-wrap: wrap">
+        <label title="Stage 1: discard physically impossible candidates (memory, divisibility, roofline, communication, power) using closed-form checks.">
+            <input type="checkbox" id="use-stage1" checked> Stage 1 — analytical filter
+        </label>
+        <label title="Stage 2: rank surviving candidates by predicted TTFT/TPOT from llm_profile tables before sampling, so simulation budget is spent on the most promising configs.">
+            <input type="checkbox" id="use-stage2" checked> Stage 2 — profile pre-rank
+        </label>
+    </div>
+</section>
+
+<section class="card">
+    <div class="actions" style="flex-wrap: wrap; gap: var(--space-md)">
+        <button id="btn-dry-run" class="btn-secondary" type="button">Estimate count</button>
+        <button id="btn-start" class="btn-primary" type="button">Start Exploration</button>
+        <label style="display:flex; align-items:center; gap:6px; font-size:0.9em; white-space:nowrap">
+            Max concurrent
+            <input id="max-concurrent" type="number" min="1" style="width:70px"
+                   title="동시에 실행할 최대 시뮬레이션 수. 자동값은 CPU 코어 수와 여유 메모리로 결정됩니다.">
+        </label>
+        <span id="dse-status" class="hint"></span>
+    </div>
+</section>
+
+<section class="card" id="dry-run-results" style="display:none">
+    <h2>Candidate List <span id="dry-run-count-label" class="hint"></span></h2>
+    <div style="max-height:400px; overflow-y:auto; border:1px solid var(--border); border-radius:4px">
+        <table class="matrix-table" id="dry-run-table">
+            <thead><tr>
+                <th>Candidate</th>
+                <th>Hardware</th>
+                <th>TP</th><th>PP</th><th>DP</th>
+                <th>P/D Layout</th>
+                <th>Simulate?</th>
+            </tr></thead>
+            <tbody id="dry-run-list-body"></tbody>
+        </table>
+    </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ static('dse_explore.js') }}"></script>
+{% endblock %}

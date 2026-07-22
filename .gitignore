@@ -1,0 +1,10 @@
+# run artifacts
+output/
+*.log
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# per-backend build/venv artifacts live inside the submodules (self-ignored),
+# but ignore stray local venvs at top level too
+.venv*/

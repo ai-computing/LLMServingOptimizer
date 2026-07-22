@@ -1,0 +1,9 @@
+# Planner-only dependencies (separate from the simulator core).
+# Install with: pip install -r requirements-planner.txt
+ortools>=9.10          # CP-SAT MILP solver (Stage 1)
+networkx>=3.2          # cluster topology graph
+pydantic>=2.6          # spec (YAML) validation
+pyyaml>=6.0            # spec parsing
+pandas>=2.2            # output CSV parsing / aggregation
+# optional
+# pymoo>=0.6           # (future: NSGA-II refinement stage)

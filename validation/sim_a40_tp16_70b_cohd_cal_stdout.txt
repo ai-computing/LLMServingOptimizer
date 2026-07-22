@@ -1,0 +1,1504 @@
+================================================================================
+[1m                                LLMServingSim2.0                                [0m
+[95m  A Unified Simulator for Heterogeneous Hardware and Serving Techniques in LLM  [0m
+================================================================================
+[96m     _    _    __  __ ___              _           ___ _       ___   __  
+    | |  | |  |  \/  / __| ___ _ ___ _(_)_ _  __ _/ __(_)_ __ |_  ) /  \ 
+    | |__| |__| |\/| \__ \/ -_) '_\ V / | ' \/ _` \__ \ | '  \ / / | () |
+    |____|____|_|  |_|___/\___|_|  \_/|_|_||_\__, |___/_|_|_|_/___(_)__/ 
+                                             |___/       [0m
+--------------------------------------------------------------------------------
+[95m                              Input configuration                               [0m
+
+  • [96mCluster config               [0m : cluster_config/a40_16gpu_tp16_70b_4tier_cohd_cal.json
+  • [96mDataset                      [0m : dataset/sharegpt_req100_rate10_llama.jsonl
+  • [96mNum requests                 [0m : 100
+  • [96mMax batch                    [0m : inf
+  • [96mMax batched tokens           [0m : 2048
+  • [96mBlock size (tokens)          [0m : 16
+  • [96mFP precision                 [0m : 16-bit
+  • [96mRequest routing              [0m : RR
+  • [96mExpert routing               [0m : FAST
+  • [96mPrefix caching               [0m : DISABLED
+  • [96mPrefix caching scheme        [0m : xPU-Only
+  • [96mCentralized prefix caching   [0m : DISABLED
+  • [96mOffload attention to PIM     [0m : DISABLED
+  • [96mSub-batch interleaving       [0m : DISABLED
+  • [96mRealtime attention prediction[0m : DISABLED
+  • [96mPrioritize prefill           [0m : DISABLED
+  • [96mNetwork backend              [0m : analytical
+  • [96mLog interval (s)             [0m : 1.0
+  • [96mLog level                    [0m : WARNING
+--------------------------------------------------------------------------------
+[1m[96m▶ Starting simulation...
+[0m[0m
+[1.0s] [94mAvg prompt throughput: 44.0 tokens/s,[0m [94mAvg generation throughput: 4.0 tokens/s[0m
+        ├─Running Instance[0]: 50 reqs, Total # 16 NPUs, Each NPU Memory Usage 8425.83 MB (18.285 % Used)
+        ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+        └─Avg power consumption: 1038.95 W
+[2.0s] [94mAvg prompt throughput: 555.0 tokens/s,[0m [94mAvg generation throughput: 7.0 tokens/s[0m
+        ├─Running Instance[0]: 50 reqs, Total # 16 NPUs, Each NPU Memory Usage 8425.83 MB (18.285 % Used)
+        ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+        └─Avg power consumption: 674.0 W
+[3.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 0.0 tokens/s[0m
+        ├─Running Instance[0]: 50 reqs, Total # 16 NPUs, Each NPU Memory Usage 8467.39 MB (18.375 % Used)
+        ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+        └─Avg power consumption: 0.0 W
+[4.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 0.0 tokens/s[0m
+        ├─Running Instance[0]: 50 reqs, Total # 16 NPUs, Each NPU Memory Usage 8467.39 MB (18.375 % Used)
+        ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+        └─Avg power consumption: 13570720145.87 W
+[5.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 0.0 tokens/s[0m
+        ├─Running Instance[0]: 100 reqs, Total # 16 NPUs, Each NPU Memory Usage 8467.39 MB (18.375 % Used)
+        ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+        └─Avg power consumption: 674.0 W
+[6.0s] [94mAvg prompt throughput: 2038.0 tokens/s,[0m [94mAvg generation throughput: 23.0 tokens/s[0m
+        ├─Running Instance[0]: 100 reqs, Total # 16 NPUs, Each NPU Memory Usage 8467.39 MB (18.375 % Used)
+        ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+        └─Avg power consumption: 674.0 W
+[7.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 0.0 tokens/s[0m
+        ├─Running Instance[0]: 100 reqs, Total # 16 NPUs, Each NPU Memory Usage 8490.52 MB (18.426 % Used)
+        ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+        └─Avg power consumption: 0.0 W
+[8.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 0.0 tokens/s[0m
+        ├─Running Instance[0]: 100 reqs, Total # 16 NPUs, Each NPU Memory Usage 8490.52 MB (18.426 % Used)
+        ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+        └─Avg power consumption: 26268255208.35 W
+[9.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 0.0 tokens/s[0m
+        ├─Running Instance[0]: 100 reqs, Total # 16 NPUs, Each NPU Memory Usage 8490.52 MB (18.426 % Used)
+        ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+        └─Avg power consumption: 674.0 W
+[10.0s] [94mAvg prompt throughput: 1026.0 tokens/s,[0m [94mAvg generation throughput: 34.0 tokens/s[0m
+         ├─Running Instance[0]: 100 reqs, Total # 16 NPUs, Each NPU Memory Usage 8490.52 MB (18.426 % Used)
+         ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+         └─Avg power consumption: 674.0 W
+[11.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 0.0 tokens/s[0m
+         ├─Running Instance[0]: 100 reqs, Total # 16 NPUs, Each NPU Memory Usage 8516.14 MB (18.481 % Used)
+         ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+         └─Avg power consumption: 0.0 W
+[12.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 0.0 tokens/s[0m
+         ├─Running Instance[0]: 100 reqs, Total # 16 NPUs, Each NPU Memory Usage 8516.14 MB (18.481 % Used)
+         ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+         └─Avg power consumption: 22325649999.09 W
+[13.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 0.0 tokens/s[0m
+         ├─Running Instance[0]: 100 reqs, Total # 16 NPUs, Each NPU Memory Usage 8516.14 MB (18.481 % Used)
+         ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+         └─Avg power consumption: 674.0 W
+[14.0s] [94mAvg prompt throughput: 1243.0 tokens/s,[0m [94mAvg generation throughput: 38.0 tokens/s[0m
+         ├─Running Instance[0]: 100 reqs, Total # 16 NPUs, Each NPU Memory Usage 8516.14 MB (18.481 % Used)
+         ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+         └─Avg power consumption: 674.0 W
+[15.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 0.0 tokens/s[0m
+         ├─Running Instance[0]: 100 reqs, Total # 16 NPUs, Each NPU Memory Usage 8556.45 MB (18.569 % Used)
+         ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+         └─Avg power consumption: 0.0 W
+[16.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 0.0 tokens/s[0m
+         ├─Running Instance[0]: 100 reqs, Total # 16 NPUs, Each NPU Memory Usage 8556.45 MB (18.569 % Used)
+         ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+         └─Avg power consumption: 13687031451.57 W
+[17.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 0.0 tokens/s[0m
+         ├─Running Instance[0]: 100 reqs, Total # 16 NPUs, Each NPU Memory Usage 8556.45 MB (18.569 % Used)
+         ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+         └─Avg power consumption: 674.0 W
+[18.0s] [94mAvg prompt throughput: 1969.0 tokens/s,[0m [94mAvg generation throughput: 43.0 tokens/s[0m
+         ├─Running Instance[0]: 100 reqs, Total # 16 NPUs, Each NPU Memory Usage 8556.45 MB (18.569 % Used)
+         ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+         └─Avg power consumption: 674.0 W
+[19.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 0.0 tokens/s[0m
+         ├─Running Instance[0]: 100 reqs, Total # 16 NPUs, Each NPU Memory Usage 8598.02 MB (18.659 % Used)
+         ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+         └─Avg power consumption: 0.0 W
+[20.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 0.0 tokens/s[0m
+         ├─Running Instance[0]: 100 reqs, Total # 16 NPUs, Each NPU Memory Usage 8598.02 MB (18.659 % Used)
+         ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+         └─Avg power consumption: 13687266152.37 W
+[21.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 0.0 tokens/s[0m
+         ├─Running Instance[0]: 100 reqs, Total # 16 NPUs, Each NPU Memory Usage 8598.02 MB (18.659 % Used)
+         ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+         └─Avg power consumption: 674.0 W
+[22.0s] [94mAvg prompt throughput: 1996.0 tokens/s,[0m [94mAvg generation throughput: 50.0 tokens/s[0m
+         ├─Running Instance[0]: 100 reqs, Total # 16 NPUs, Each NPU Memory Usage 8598.02 MB (18.659 % Used)
+         ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+         └─Avg power consumption: 674.0 W
+[23.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 0.0 tokens/s[0m
+         ├─Running Instance[0]: 100 reqs, Total # 16 NPUs, Each NPU Memory Usage 8634.58 MB (18.738 % Used)
+         ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+         └─Avg power consumption: 0.0 W
+[24.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 0.0 tokens/s[0m
+         ├─Running Instance[0]: 100 reqs, Total # 16 NPUs, Each NPU Memory Usage 8634.58 MB (18.738 % Used)
+         ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+         └─Avg power consumption: 15044010160.14 W
+[25.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 0.0 tokens/s[0m
+         ├─Running Instance[0]: 100 reqs, Total # 16 NPUs, Each NPU Memory Usage 8634.58 MB (18.738 % Used)
+         ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+         └─Avg power consumption: 674.0 W
+[26.0s] [94mAvg prompt throughput: 1745.0 tokens/s,[0m [94mAvg generation throughput: 58.0 tokens/s[0m
+         ├─Running Instance[0]: 100 reqs, Total # 16 NPUs, Each NPU Memory Usage 8634.58 MB (18.738 % Used)
+         ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+         └─Avg power consumption: 674.0 W
+[27.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 0.0 tokens/s[0m
+         ├─Running Instance[0]: 100 reqs, Total # 16 NPUs, Each NPU Memory Usage 8668.02 MB (18.811 % Used)
+         ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+         └─Avg power consumption: 0.0 W
+[28.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 0.0 tokens/s[0m
+         ├─Running Instance[0]: 100 reqs, Total # 16 NPUs, Each NPU Memory Usage 8668.02 MB (18.811 % Used)
+         ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+         └─Avg power consumption: 16389128011.81 W
+[29.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 0.0 tokens/s[0m
+         ├─Running Instance[0]: 100 reqs, Total # 16 NPUs, Each NPU Memory Usage 8668.02 MB (18.811 % Used)
+         ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+         └─Avg power consumption: 674.0 W
+[30.0s] [94mAvg prompt throughput: 1640.0 tokens/s,[0m [94mAvg generation throughput: 64.0 tokens/s[0m
+         ├─Running Instance[0]: 100 reqs, Total # 16 NPUs, Each NPU Memory Usage 8668.02 MB (18.811 % Used)
+         ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+         └─Avg power consumption: 674.0 W
+[31.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 0.0 tokens/s[0m
+         ├─Running Instance[0]: 100 reqs, Total # 16 NPUs, Each NPU Memory Usage 8698.02 MB (18.876 % Used)
+         ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+         └─Avg power consumption: 0.0 W
+[32.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 0.0 tokens/s[0m
+         ├─Running Instance[0]: 100 reqs, Total # 16 NPUs, Each NPU Memory Usage 8698.02 MB (18.876 % Used)
+         ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+         └─Avg power consumption: 18336902568.64 W
+[33.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 0.0 tokens/s[0m
+         ├─Running Instance[0]: 100 reqs, Total # 16 NPUs, Each NPU Memory Usage 8698.02 MB (18.876 % Used)
+         ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+         └─Avg power consumption: 674.0 W
+[34.0s] [94mAvg prompt throughput: 1468.0 tokens/s,[0m [94mAvg generation throughput: 68.0 tokens/s[0m
+         ├─Running Instance[0]: 100 reqs, Total # 16 NPUs, Each NPU Memory Usage 8698.02 MB (18.876 % Used)
+         ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+         └─Avg power consumption: 674.0 W
+[35.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 0.0 tokens/s[0m
+         ├─Running Instance[0]: 100 reqs, Total # 16 NPUs, Each NPU Memory Usage 8739.89 MB (18.967 % Used)
+         ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+         └─Avg power consumption: 0.0 W
+[36.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 0.0 tokens/s[0m
+         ├─Running Instance[0]: 100 reqs, Total # 16 NPUs, Each NPU Memory Usage 8739.89 MB (18.967 % Used)
+         ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+         └─Avg power consumption: 13706446148.45 W
+[37.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 0.0 tokens/s[0m
+         ├─Running Instance[0]: 100 reqs, Total # 16 NPUs, Each NPU Memory Usage 8739.89 MB (18.967 % Used)
+         ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+         └─Avg power consumption: 674.0 W
+[38.0s] [94mAvg prompt throughput: 1977.0 tokens/s,[0m [94mAvg generation throughput: 75.0 tokens/s[0m
+         ├─Running Instance[0]: 99 reqs, Total # 16 NPUs, Each NPU Memory Usage 8739.27 MB (18.965 % Used)
+         ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+         └─Avg power consumption: 674.0 W
+[39.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 0.0 tokens/s[0m
+         ├─Running Instance[0]: 99 reqs, Total # 16 NPUs, Each NPU Memory Usage 8780.52 MB (19.055 % Used)
+         ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+         └─Avg power consumption: 0.0 W
+[40.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 0.0 tokens/s[0m
+         ├─Running Instance[0]: 99 reqs, Total # 16 NPUs, Each NPU Memory Usage 8780.52 MB (19.055 % Used)
+         ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+         └─Avg power consumption: 13707207578.95 W
+[41.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 0.0 tokens/s[0m
+         ├─Running Instance[0]: 99 reqs, Total # 16 NPUs, Each NPU Memory Usage 8780.52 MB (19.055 % Used)
+         ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+         └─Avg power consumption: 674.0 W
+[42.0s] [94mAvg prompt throughput: 1960.0 tokens/s,[0m [94mAvg generation throughput: 84.0 tokens/s[0m
+         ├─Running Instance[0]: 99 reqs, Total # 16 NPUs, Each NPU Memory Usage 8780.52 MB (19.055 % Used)
+         ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+         └─Avg power consumption: 674.0 W
+[43.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 0.0 tokens/s[0m
+         ├─Running Instance[0]: 99 reqs, Total # 16 NPUs, Each NPU Memory Usage 8821.45 MB (19.144 % Used)
+         ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+         └─Avg power consumption: 0.0 W
+[44.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 0.0 tokens/s[0m
+         ├─Running Instance[0]: 99 reqs, Total # 16 NPUs, Each NPU Memory Usage 8821.45 MB (19.144 % Used)
+         ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+         └─Avg power consumption: 14164205207.73 W
+[45.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 0.0 tokens/s[0m
+         ├─Running Instance[0]: 99 reqs, Total # 16 NPUs, Each NPU Memory Usage 8821.45 MB (19.144 % Used)
+         ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+         └─Avg power consumption: 674.0 W
+[46.0s] [94mAvg prompt throughput: 1886.0 tokens/s,[0m [94mAvg generation throughput: 96.0 tokens/s[0m
+         ├─Running Instance[0]: 98 reqs, Total # 16 NPUs, Each NPU Memory Usage 8821.14 MB (19.143 % Used)
+         ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+         └─Avg power consumption: 674.0 W
+[47.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 0.0 tokens/s[0m
+         ├─Running Instance[0]: 98 reqs, Total # 16 NPUs, Each NPU Memory Usage 8853.64 MB (19.214 % Used)
+         ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+         └─Avg power consumption: 0.0 W
+[48.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 0.0 tokens/s[0m
+         ├─Running Instance[0]: 98 reqs, Total # 16 NPUs, Each NPU Memory Usage 8853.64 MB (19.214 % Used)
+         ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+         └─Avg power consumption: 17785233043.83 W
+[49.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 0.0 tokens/s[0m
+         ├─Running Instance[0]: 98 reqs, Total # 16 NPUs, Each NPU Memory Usage 8853.64 MB (19.214 % Used)
+         ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+         └─Avg power consumption: 674.0 W
+[50.0s] [94mAvg prompt throughput: 1480.0 tokens/s,[0m [94mAvg generation throughput: 98.0 tokens/s[0m
+         ├─Running Instance[0]: 97 reqs, Total # 16 NPUs, Each NPU Memory Usage 8846.45 MB (19.198 % Used)
+         ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+         └─Avg power consumption: 674.0 W
+[51.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 0.0 tokens/s[0m
+         ├─Running Instance[0]: 97 reqs, Total # 16 NPUs, Each NPU Memory Usage 8848.02 MB (19.201 % Used)
+         ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+         └─Avg power consumption: 0.0 W
+[52.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 0.0 tokens/s[0m
+         ├─Running Instance[0]: 97 reqs, Total # 16 NPUs, Each NPU Memory Usage 8848.02 MB (19.201 % Used)
+         ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+         └─Avg power consumption: 379941032090.79 W
+[53.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 0.0 tokens/s[0m
+         ├─Running Instance[0]: 97 reqs, Total # 16 NPUs, Each NPU Memory Usage 8848.02 MB (19.201 % Used)
+         ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+         └─Avg power consumption: 674.0 W
+[54.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 97.0 tokens/s[0m
+         ├─Running Instance[0]: 97 reqs, Total # 16 NPUs, Each NPU Memory Usage 8848.02 MB (19.201 % Used)
+         ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+         └─Avg power consumption: 674.0 W
+[55.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 0.0 tokens/s[0m
+         ├─Running Instance[0]: 97 reqs, Total # 16 NPUs, Each NPU Memory Usage 8848.95 MB (19.203 % Used)
+         ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+         └─Avg power consumption: 0.0 W
+[56.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 0.0 tokens/s[0m
+         ├─Running Instance[0]: 97 reqs, Total # 16 NPUs, Each NPU Memory Usage 8848.95 MB (19.203 % Used)
+         ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+         └─Avg power consumption: 379936491674.79 W
+[57.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 0.0 tokens/s[0m
+         ├─Running Instance[0]: 97 reqs, Total # 16 NPUs, Each NPU Memory Usage 8848.95 MB (19.203 % Used)
+         ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+         └─Avg power consumption: 674.0 W
+[58.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 97.0 tokens/s[0m
+         ├─Running Instance[0]: 97 reqs, Total # 16 NPUs, Each NPU Memory Usage 8848.95 MB (19.203 % Used)
+         ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+         └─Avg power consumption: 674.0 W
+[59.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 0.0 tokens/s[0m
+         ├─Running Instance[0]: 97 reqs, Total # 16 NPUs, Each NPU Memory Usage 8850.20 MB (19.206 % Used)
+         ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+         └─Avg power consumption: 0.0 W
+[60.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 0.0 tokens/s[0m
+         ├─Running Instance[0]: 97 reqs, Total # 16 NPUs, Each NPU Memory Usage 8850.20 MB (19.206 % Used)
+         ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+         └─Avg power consumption: 379936491674.8 W
+[61.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 0.0 tokens/s[0m
+         ├─Running Instance[0]: 97 reqs, Total # 16 NPUs, Each NPU Memory Usage 8850.20 MB (19.206 % Used)
+         ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+         └─Avg power consumption: 674.0 W
+[62.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 97.0 tokens/s[0m
+         ├─Running Instance[0]: 97 reqs, Total # 16 NPUs, Each NPU Memory Usage 8850.20 MB (19.206 % Used)
+         ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+         └─Avg power consumption: 674.0 W
+[63.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 0.0 tokens/s[0m
+         ├─Running Instance[0]: 97 reqs, Total # 16 NPUs, Each NPU Memory Usage 8851.77 MB (19.210 % Used)
+         ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+         └─Avg power consumption: 0.0 W
+[64.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 0.0 tokens/s[0m
+         ├─Running Instance[0]: 97 reqs, Total # 16 NPUs, Each NPU Memory Usage 8851.77 MB (19.210 % Used)
+         ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+         └─Avg power consumption: 379936491674.8 W
+[65.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 0.0 tokens/s[0m
+         ├─Running Instance[0]: 97 reqs, Total # 16 NPUs, Each NPU Memory Usage 8851.77 MB (19.210 % Used)
+         ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+         └─Avg power consumption: 674.0 W
+[66.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 97.0 tokens/s[0m
+         ├─Running Instance[0]: 97 reqs, Total # 16 NPUs, Each NPU Memory Usage 8851.77 MB (19.210 % Used)
+         ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+         └─Avg power consumption: 674.0 W
+[67.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 0.0 tokens/s[0m
+         ├─Running Instance[0]: 97 reqs, Total # 16 NPUs, Each NPU Memory Usage 8852.70 MB (19.212 % Used)
+         ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+         └─Avg power consumption: 0.0 W
+[68.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 0.0 tokens/s[0m
+         ├─Running Instance[0]: 97 reqs, Total # 16 NPUs, Each NPU Memory Usage 8852.70 MB (19.212 % Used)
+         ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+         └─Avg power consumption: 379936491674.85 W
+[69.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 0.0 tokens/s[0m
+         ├─Running Instance[0]: 97 reqs, Total # 16 NPUs, Each NPU Memory Usage 8852.70 MB (19.212 % Used)
+         ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+         └─Avg power consumption: 674.0 W
+[70.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 97.0 tokens/s[0m
+         ├─Running Instance[0]: 97 reqs, Total # 16 NPUs, Each NPU Memory Usage 8852.70 MB (19.212 % Used)
+         ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+         └─Avg power consumption: 674.0 W
+[71.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 0.0 tokens/s[0m
+         ├─Running Instance[0]: 97 reqs, Total # 16 NPUs, Each NPU Memory Usage 8854.89 MB (19.216 % Used)
+         ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+         └─Avg power consumption: 0.0 W
+[72.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 0.0 tokens/s[0m
+         ├─Running Instance[0]: 97 reqs, Total # 16 NPUs, Each NPU Memory Usage 8854.89 MB (19.216 % Used)
+         ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+         └─Avg power consumption: 379936491675.02 W
+[73.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 0.0 tokens/s[0m
+         ├─Running Instance[0]: 97 reqs, Total # 16 NPUs, Each NPU Memory Usage 8854.89 MB (19.216 % Used)
+         ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+         └─Avg power consumption: 674.0 W
+[74.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 97.0 tokens/s[0m
+         ├─Running Instance[0]: 97 reqs, Total # 16 NPUs, Each NPU Memory Usage 8854.89 MB (19.216 % Used)
+         ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+         └─Avg power consumption: 674.0 W
+[75.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 0.0 tokens/s[0m
+         ├─Running Instance[0]: 97 reqs, Total # 16 NPUs, Each NPU Memory Usage 8857.39 MB (19.222 % Used)
+         ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+         └─Avg power consumption: 0.0 W
+[76.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 0.0 tokens/s[0m
+         ├─Running Instance[0]: 97 reqs, Total # 16 NPUs, Each NPU Memory Usage 8857.39 MB (19.222 % Used)
+         ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+         └─Avg power consumption: 379936491675.03 W
+[77.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 0.0 tokens/s[0m
+         ├─Running Instance[0]: 97 reqs, Total # 16 NPUs, Each NPU Memory Usage 8857.39 MB (19.222 % Used)
+         ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+         └─Avg power consumption: 674.0 W
+[78.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 97.0 tokens/s[0m
+         ├─Running Instance[0]: 97 reqs, Total # 16 NPUs, Each NPU Memory Usage 8857.39 MB (19.222 % Used)
+         ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+         └─Avg power consumption: 674.0 W
+[79.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 0.0 tokens/s[0m
+         ├─Running Instance[0]: 97 reqs, Total # 16 NPUs, Each NPU Memory Usage 8859.58 MB (19.227 % Used)
+         ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+         └─Avg power consumption: 0.0 W
+[80.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 0.0 tokens/s[0m
+         ├─Running Instance[0]: 97 reqs, Total # 16 NPUs, Each NPU Memory Usage 8859.58 MB (19.227 % Used)
+         ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+         └─Avg power consumption: 379936491675.01 W
+[81.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 0.0 tokens/s[0m
+         ├─Running Instance[0]: 97 reqs, Total # 16 NPUs, Each NPU Memory Usage 8859.58 MB (19.227 % Used)
+         ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+         └─Avg power consumption: 674.0 W
+[82.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 97.0 tokens/s[0m
+         ├─Running Instance[0]: 97 reqs, Total # 16 NPUs, Each NPU Memory Usage 8859.58 MB (19.227 % Used)
+         ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+         └─Avg power consumption: 674.0 W
+[83.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 0.0 tokens/s[0m
+         ├─Running Instance[0]: 97 reqs, Total # 16 NPUs, Each NPU Memory Usage 8862.08 MB (19.232 % Used)
+         ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+         └─Avg power consumption: 0.0 W
+[84.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 0.0 tokens/s[0m
+         ├─Running Instance[0]: 97 reqs, Total # 16 NPUs, Each NPU Memory Usage 8862.08 MB (19.232 % Used)
+         ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+         └─Avg power consumption: 379936491675.02 W
+[85.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 0.0 tokens/s[0m
+         ├─Running Instance[0]: 97 reqs, Total # 16 NPUs, Each NPU Memory Usage 8862.08 MB (19.232 % Used)
+         ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+         └─Avg power consumption: 674.0 W
+[86.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 97.0 tokens/s[0m
+         ├─Running Instance[0]: 97 reqs, Total # 16 NPUs, Each NPU Memory Usage 8862.08 MB (19.232 % Used)
+         ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+         └─Avg power consumption: 674.0 W
+[87.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 0.0 tokens/s[0m
+         ├─Running Instance[0]: 97 reqs, Total # 16 NPUs, Each NPU Memory Usage 8864.27 MB (19.237 % Used)
+         ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+         └─Avg power consumption: 0.0 W
+[88.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 0.0 tokens/s[0m
+         ├─Running Instance[0]: 97 reqs, Total # 16 NPUs, Each NPU Memory Usage 8864.27 MB (19.237 % Used)
+         ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+         └─Avg power consumption: 379936491675.01 W
+[89.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 0.0 tokens/s[0m
+         ├─Running Instance[0]: 97 reqs, Total # 16 NPUs, Each NPU Memory Usage 8864.27 MB (19.237 % Used)
+         ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+         └─Avg power consumption: 674.0 W
+[90.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 97.0 tokens/s[0m
+         ├─Running Instance[0]: 96 reqs, Total # 16 NPUs, Each NPU Memory Usage 8861.14 MB (19.230 % Used)
+         ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+         └─Avg power consumption: 674.0 W
+[91.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 0.0 tokens/s[0m
+         ├─Running Instance[0]: 96 reqs, Total # 16 NPUs, Each NPU Memory Usage 8863.02 MB (19.234 % Used)
+         ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+         └─Avg power consumption: 0.0 W
+[92.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 0.0 tokens/s[0m
+         ├─Running Instance[0]: 96 reqs, Total # 16 NPUs, Each NPU Memory Usage 8863.02 MB (19.234 % Used)
+         ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+         └─Avg power consumption: 380064932308.58 W
+[93.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 0.0 tokens/s[0m
+         ├─Running Instance[0]: 96 reqs, Total # 16 NPUs, Each NPU Memory Usage 8863.02 MB (19.234 % Used)
+         ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+         └─Avg power consumption: 674.0 W
+[94.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 96.0 tokens/s[0m
+         ├─Running Instance[0]: 96 reqs, Total # 16 NPUs, Each NPU Memory Usage 8863.02 MB (19.234 % Used)
+         ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+         └─Avg power consumption: 674.0 W
+[95.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 0.0 tokens/s[0m
+         ├─Running Instance[0]: 96 reqs, Total # 16 NPUs, Each NPU Memory Usage 8864.58 MB (19.237 % Used)
+         ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+         └─Avg power consumption: 0.0 W
+[96.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 0.0 tokens/s[0m
+         ├─Running Instance[0]: 96 reqs, Total # 16 NPUs, Each NPU Memory Usage 8864.58 MB (19.237 % Used)
+         ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+         └─Avg power consumption: 380064929236.57 W
+[97.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 0.0 tokens/s[0m
+         ├─Running Instance[0]: 96 reqs, Total # 16 NPUs, Each NPU Memory Usage 8864.58 MB (19.237 % Used)
+         ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+         └─Avg power consumption: 674.0 W
+[98.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 96.0 tokens/s[0m
+         ├─Running Instance[0]: 96 reqs, Total # 16 NPUs, Each NPU Memory Usage 8864.58 MB (19.237 % Used)
+         ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+         └─Avg power consumption: 674.0 W
+[99.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 0.0 tokens/s[0m
+         ├─Running Instance[0]: 96 reqs, Total # 16 NPUs, Each NPU Memory Usage 8866.77 MB (19.242 % Used)
+         ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+         └─Avg power consumption: 0.0 W
+[100.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 0.0 tokens/s[0m
+          ├─Running Instance[0]: 96 reqs, Total # 16 NPUs, Each NPU Memory Usage 8866.77 MB (19.242 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 380064929236.56 W
+[101.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 0.0 tokens/s[0m
+          ├─Running Instance[0]: 96 reqs, Total # 16 NPUs, Each NPU Memory Usage 8866.77 MB (19.242 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 674.0 W
+[102.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 96.0 tokens/s[0m
+          ├─Running Instance[0]: 95 reqs, Total # 16 NPUs, Each NPU Memory Usage 8866.14 MB (19.241 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 674.0 W
+[103.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 0.0 tokens/s[0m
+          ├─Running Instance[0]: 95 reqs, Total # 16 NPUs, Each NPU Memory Usage 8867.70 MB (19.244 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 0.0 W
+[104.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 0.0 tokens/s[0m
+          ├─Running Instance[0]: 95 reqs, Total # 16 NPUs, Each NPU Memory Usage 8867.70 MB (19.244 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 380089284750.12 W
+[105.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 0.0 tokens/s[0m
+          ├─Running Instance[0]: 95 reqs, Total # 16 NPUs, Each NPU Memory Usage 8867.70 MB (19.244 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 674.0 W
+[106.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 95.0 tokens/s[0m
+          ├─Running Instance[0]: 94 reqs, Total # 16 NPUs, Each NPU Memory Usage 8846.14 MB (19.197 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 674.0 W
+[107.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 0.0 tokens/s[0m
+          ├─Running Instance[0]: 94 reqs, Total # 16 NPUs, Each NPU Memory Usage 8848.64 MB (19.203 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 0.0 W
+[108.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 0.0 tokens/s[0m
+          ├─Running Instance[0]: 94 reqs, Total # 16 NPUs, Each NPU Memory Usage 8848.64 MB (19.203 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 380096666791.68 W
+[109.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 0.0 tokens/s[0m
+          ├─Running Instance[0]: 94 reqs, Total # 16 NPUs, Each NPU Memory Usage 8848.64 MB (19.203 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 674.0 W
+[110.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 94.0 tokens/s[0m
+          ├─Running Instance[0]: 94 reqs, Total # 16 NPUs, Each NPU Memory Usage 8848.64 MB (19.203 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 674.0 W
+[111.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 0.0 tokens/s[0m
+          ├─Running Instance[0]: 94 reqs, Total # 16 NPUs, Each NPU Memory Usage 8851.14 MB (19.208 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 0.0 W
+[112.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 0.0 tokens/s[0m
+          ├─Running Instance[0]: 94 reqs, Total # 16 NPUs, Each NPU Memory Usage 8851.14 MB (19.208 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 380096663719.68 W
+[113.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 0.0 tokens/s[0m
+          ├─Running Instance[0]: 94 reqs, Total # 16 NPUs, Each NPU Memory Usage 8851.14 MB (19.208 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 674.0 W
+[114.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 94.0 tokens/s[0m
+          ├─Running Instance[0]: 94 reqs, Total # 16 NPUs, Each NPU Memory Usage 8851.14 MB (19.208 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 674.0 W
+[115.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 0.0 tokens/s[0m
+          ├─Running Instance[0]: 94 reqs, Total # 16 NPUs, Each NPU Memory Usage 8852.70 MB (19.212 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 0.0 W
+[116.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 0.0 tokens/s[0m
+          ├─Running Instance[0]: 94 reqs, Total # 16 NPUs, Each NPU Memory Usage 8852.70 MB (19.212 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 380096663719.7 W
+[117.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 0.0 tokens/s[0m
+          ├─Running Instance[0]: 94 reqs, Total # 16 NPUs, Each NPU Memory Usage 8852.70 MB (19.212 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 674.0 W
+[118.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 94.0 tokens/s[0m
+          ├─Running Instance[0]: 94 reqs, Total # 16 NPUs, Each NPU Memory Usage 8852.70 MB (19.212 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 674.0 W
+[119.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 0.0 tokens/s[0m
+          ├─Running Instance[0]: 94 reqs, Total # 16 NPUs, Each NPU Memory Usage 8853.33 MB (19.213 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 0.0 W
+[120.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 0.0 tokens/s[0m
+          ├─Running Instance[0]: 94 reqs, Total # 16 NPUs, Each NPU Memory Usage 8853.33 MB (19.213 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 380096663719.68 W
+[121.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 0.0 tokens/s[0m
+          ├─Running Instance[0]: 94 reqs, Total # 16 NPUs, Each NPU Memory Usage 8853.33 MB (19.213 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 674.0 W
+[122.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 94.0 tokens/s[0m
+          ├─Running Instance[0]: 94 reqs, Total # 16 NPUs, Each NPU Memory Usage 8853.33 MB (19.213 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 674.0 W
+[123.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 0.0 tokens/s[0m
+          ├─Running Instance[0]: 94 reqs, Total # 16 NPUs, Each NPU Memory Usage 8854.58 MB (19.216 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 0.0 W
+[124.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 0.0 tokens/s[0m
+          ├─Running Instance[0]: 94 reqs, Total # 16 NPUs, Each NPU Memory Usage 8854.58 MB (19.216 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 380096663719.71 W
+[125.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 0.0 tokens/s[0m
+          ├─Running Instance[0]: 94 reqs, Total # 16 NPUs, Each NPU Memory Usage 8854.58 MB (19.216 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 674.0 W
+[126.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 94.0 tokens/s[0m
+          ├─Running Instance[0]: 94 reqs, Total # 16 NPUs, Each NPU Memory Usage 8854.58 MB (19.216 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 674.0 W
+[127.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 0.0 tokens/s[0m
+          ├─Running Instance[0]: 94 reqs, Total # 16 NPUs, Each NPU Memory Usage 8856.14 MB (19.219 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 0.0 W
+[128.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 0.0 tokens/s[0m
+          ├─Running Instance[0]: 94 reqs, Total # 16 NPUs, Each NPU Memory Usage 8856.14 MB (19.219 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 380096663719.68 W
+[129.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 0.0 tokens/s[0m
+          ├─Running Instance[0]: 94 reqs, Total # 16 NPUs, Each NPU Memory Usage 8856.14 MB (19.219 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 674.0 W
+[130.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 94.0 tokens/s[0m
+          ├─Running Instance[0]: 94 reqs, Total # 16 NPUs, Each NPU Memory Usage 8856.14 MB (19.219 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 674.0 W
+[131.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 0.0 tokens/s[0m
+          ├─Running Instance[0]: 94 reqs, Total # 16 NPUs, Each NPU Memory Usage 8857.08 MB (19.221 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 0.0 W
+[132.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 0.0 tokens/s[0m
+          ├─Running Instance[0]: 94 reqs, Total # 16 NPUs, Each NPU Memory Usage 8857.08 MB (19.221 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 380096663719.68 W
+[133.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 0.0 tokens/s[0m
+          ├─Running Instance[0]: 94 reqs, Total # 16 NPUs, Each NPU Memory Usage 8857.08 MB (19.221 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 674.0 W
+[134.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 94.0 tokens/s[0m
+          ├─Running Instance[0]: 94 reqs, Total # 16 NPUs, Each NPU Memory Usage 8857.08 MB (19.221 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 674.0 W
+[135.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 0.0 tokens/s[0m
+          ├─Running Instance[0]: 94 reqs, Total # 16 NPUs, Each NPU Memory Usage 8858.95 MB (19.225 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 0.0 W
+[136.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 0.0 tokens/s[0m
+          ├─Running Instance[0]: 94 reqs, Total # 16 NPUs, Each NPU Memory Usage 8858.95 MB (19.225 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 380096663719.71 W
+[137.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 0.0 tokens/s[0m
+          ├─Running Instance[0]: 94 reqs, Total # 16 NPUs, Each NPU Memory Usage 8858.95 MB (19.225 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 674.0 W
+[138.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 94.0 tokens/s[0m
+          ├─Running Instance[0]: 93 reqs, Total # 16 NPUs, Each NPU Memory Usage 8858.02 MB (19.223 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 674.0 W
+[139.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 0.0 tokens/s[0m
+          ├─Running Instance[0]: 93 reqs, Total # 16 NPUs, Each NPU Memory Usage 8860.20 MB (19.228 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 0.0 W
+[140.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 0.0 tokens/s[0m
+          ├─Running Instance[0]: 93 reqs, Total # 16 NPUs, Each NPU Memory Usage 8860.20 MB (19.228 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 380096506433.27 W
+[141.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 0.0 tokens/s[0m
+          ├─Running Instance[0]: 93 reqs, Total # 16 NPUs, Each NPU Memory Usage 8860.20 MB (19.228 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 674.0 W
+[142.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 93.0 tokens/s[0m
+          ├─Running Instance[0]: 93 reqs, Total # 16 NPUs, Each NPU Memory Usage 8860.20 MB (19.228 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 674.0 W
+[143.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 0.0 tokens/s[0m
+          ├─Running Instance[0]: 93 reqs, Total # 16 NPUs, Each NPU Memory Usage 8862.39 MB (19.233 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 0.0 W
+[144.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 0.0 tokens/s[0m
+          ├─Running Instance[0]: 93 reqs, Total # 16 NPUs, Each NPU Memory Usage 8862.39 MB (19.233 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 380096503361.3 W
+[145.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 0.0 tokens/s[0m
+          ├─Running Instance[0]: 93 reqs, Total # 16 NPUs, Each NPU Memory Usage 8862.39 MB (19.233 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 674.0 W
+[146.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 93.0 tokens/s[0m
+          ├─Running Instance[0]: 93 reqs, Total # 16 NPUs, Each NPU Memory Usage 8862.39 MB (19.233 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 674.0 W
+[147.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 0.0 tokens/s[0m
+          ├─Running Instance[0]: 93 reqs, Total # 16 NPUs, Each NPU Memory Usage 8864.89 MB (19.238 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 0.0 W
+[148.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 0.0 tokens/s[0m
+          ├─Running Instance[0]: 93 reqs, Total # 16 NPUs, Each NPU Memory Usage 8864.89 MB (19.238 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 380096503361.26 W
+[149.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 0.0 tokens/s[0m
+          ├─Running Instance[0]: 93 reqs, Total # 16 NPUs, Each NPU Memory Usage 8864.89 MB (19.238 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 674.0 W
+[150.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 93.0 tokens/s[0m
+          ├─Running Instance[0]: 91 reqs, Total # 16 NPUs, Each NPU Memory Usage 8862.39 MB (19.233 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 674.0 W
+[151.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 0.0 tokens/s[0m
+          ├─Running Instance[0]: 91 reqs, Total # 16 NPUs, Each NPU Memory Usage 8864.58 MB (19.237 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 0.0 W
+[152.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 0.0 tokens/s[0m
+          ├─Running Instance[0]: 91 reqs, Total # 16 NPUs, Each NPU Memory Usage 8864.58 MB (19.237 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 380096188788.48 W
+[153.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 0.0 tokens/s[0m
+          ├─Running Instance[0]: 91 reqs, Total # 16 NPUs, Each NPU Memory Usage 8864.58 MB (19.237 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 674.0 W
+[154.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 91.0 tokens/s[0m
+          ├─Running Instance[0]: 91 reqs, Total # 16 NPUs, Each NPU Memory Usage 8864.58 MB (19.237 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 674.0 W
+[155.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 0.0 tokens/s[0m
+          ├─Running Instance[0]: 91 reqs, Total # 16 NPUs, Each NPU Memory Usage 8866.45 MB (19.241 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 0.0 W
+[156.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 0.0 tokens/s[0m
+          ├─Running Instance[0]: 91 reqs, Total # 16 NPUs, Each NPU Memory Usage 8866.45 MB (19.241 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 380096182644.48 W
+[157.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 0.0 tokens/s[0m
+          ├─Running Instance[0]: 91 reqs, Total # 16 NPUs, Each NPU Memory Usage 8866.45 MB (19.241 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 674.0 W
+[158.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 91.0 tokens/s[0m
+          ├─Running Instance[0]: 91 reqs, Total # 16 NPUs, Each NPU Memory Usage 8866.45 MB (19.241 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 674.0 W
+[159.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 0.0 tokens/s[0m
+          ├─Running Instance[0]: 91 reqs, Total # 16 NPUs, Each NPU Memory Usage 8868.02 MB (19.245 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 0.0 W
+[160.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 0.0 tokens/s[0m
+          ├─Running Instance[0]: 91 reqs, Total # 16 NPUs, Each NPU Memory Usage 8868.02 MB (19.245 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 380096182644.47 W
+[161.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 0.0 tokens/s[0m
+          ├─Running Instance[0]: 91 reqs, Total # 16 NPUs, Each NPU Memory Usage 8868.02 MB (19.245 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 674.0 W
+[162.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 91.0 tokens/s[0m
+          ├─Running Instance[0]: 90 reqs, Total # 16 NPUs, Each NPU Memory Usage 8868.95 MB (19.247 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 1234.45 W
+[163.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 180.0 tokens/s[0m
+          ├─Running Instance[0]: 90 reqs, Total # 16 NPUs, Each NPU Memory Usage 8872.70 MB (19.255 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 1234.45 W
+[164.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 90.0 tokens/s[0m
+          ├─Running Instance[0]: 90 reqs, Total # 16 NPUs, Each NPU Memory Usage 8875.20 MB (19.260 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 1234.45 W
+[165.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 180.0 tokens/s[0m
+          ├─Running Instance[0]: 90 reqs, Total # 16 NPUs, Each NPU Memory Usage 8877.39 MB (19.265 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 1234.45 W
+[166.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 90.0 tokens/s[0m
+          ├─Running Instance[0]: 90 reqs, Total # 16 NPUs, Each NPU Memory Usage 8878.64 MB (19.268 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 1234.45 W
+[167.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 179.0 tokens/s[0m
+          ├─Running Instance[0]: 89 reqs, Total # 16 NPUs, Each NPU Memory Usage 8859.27 MB (19.226 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 1239.83 W
+[168.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 89.0 tokens/s[0m
+          ├─Running Instance[0]: 89 reqs, Total # 16 NPUs, Each NPU Memory Usage 8860.83 MB (19.229 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 1239.83 W
+[169.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 178.0 tokens/s[0m
+          ├─Running Instance[0]: 89 reqs, Total # 16 NPUs, Each NPU Memory Usage 8865.20 MB (19.239 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 1239.83 W
+[170.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 89.0 tokens/s[0m
+          ├─Running Instance[0]: 89 reqs, Total # 16 NPUs, Each NPU Memory Usage 8867.39 MB (19.243 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 1239.83 W
+[171.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 177.0 tokens/s[0m
+          ├─Running Instance[0]: 86 reqs, Total # 16 NPUs, Each NPU Memory Usage 8853.95 MB (19.214 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 1250.91 W
+[172.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 86.0 tokens/s[0m
+          ├─Running Instance[0]: 86 reqs, Total # 16 NPUs, Each NPU Memory Usage 8855.52 MB (19.218 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 1256.62 W
+[173.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 172.0 tokens/s[0m
+          ├─Running Instance[0]: 86 reqs, Total # 16 NPUs, Each NPU Memory Usage 8858.64 MB (19.224 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 1256.62 W
+[174.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 86.0 tokens/s[0m
+          ├─Running Instance[0]: 86 reqs, Total # 16 NPUs, Each NPU Memory Usage 8860.83 MB (19.229 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 1256.69 W
+[175.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 172.0 tokens/s[0m
+          ├─Running Instance[0]: 86 reqs, Total # 16 NPUs, Each NPU Memory Usage 8864.27 MB (19.237 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 1256.69 W
+[176.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 86.0 tokens/s[0m
+          ├─Running Instance[0]: 86 reqs, Total # 16 NPUs, Each NPU Memory Usage 8864.89 MB (19.238 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 1256.69 W
+[177.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 172.0 tokens/s[0m
+          ├─Running Instance[0]: 86 reqs, Total # 16 NPUs, Each NPU Memory Usage 8867.70 MB (19.244 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 1256.69 W
+[178.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 86.0 tokens/s[0m
+          ├─Running Instance[0]: 86 reqs, Total # 16 NPUs, Each NPU Memory Usage 8868.64 MB (19.246 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 1256.69 W
+[179.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 172.0 tokens/s[0m
+          ├─Running Instance[0]: 86 reqs, Total # 16 NPUs, Each NPU Memory Usage 8872.39 MB (19.254 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 1256.69 W
+[180.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 86.0 tokens/s[0m
+          ├─Running Instance[0]: 85 reqs, Total # 16 NPUs, Each NPU Memory Usage 8858.33 MB (19.224 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 1262.51 W
+[181.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 170.0 tokens/s[0m
+          ├─Running Instance[0]: 85 reqs, Total # 16 NPUs, Each NPU Memory Usage 8862.70 MB (19.233 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 1262.51 W
+[182.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 170.0 tokens/s[0m
+          ├─Running Instance[0]: 85 reqs, Total # 16 NPUs, Each NPU Memory Usage 8865.83 MB (19.240 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 1262.51 W
+[183.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 85.0 tokens/s[0m
+          ├─Running Instance[0]: 85 reqs, Total # 16 NPUs, Each NPU Memory Usage 8867.70 MB (19.244 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 1262.51 W
+[184.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 169.0 tokens/s[0m
+          ├─Running Instance[0]: 84 reqs, Total # 16 NPUs, Each NPU Memory Usage 8867.08 MB (19.243 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 1265.53 W
+[185.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 84.0 tokens/s[0m
+          ├─Running Instance[0]: 84 reqs, Total # 16 NPUs, Each NPU Memory Usage 8869.27 MB (19.248 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 1265.53 W
+[186.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 168.0 tokens/s[0m
+          ├─Running Instance[0]: 83 reqs, Total # 16 NPUs, Each NPU Memory Usage 8864.89 MB (19.238 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 1268.53 W
+[187.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 83.0 tokens/s[0m
+          ├─Running Instance[0]: 82 reqs, Total # 16 NPUs, Each NPU Memory Usage 8864.58 MB (19.237 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 1277.72 W
+[188.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 164.0 tokens/s[0m
+          ├─Running Instance[0]: 82 reqs, Total # 16 NPUs, Each NPU Memory Usage 8867.08 MB (19.243 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 1277.72 W
+[189.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 163.0 tokens/s[0m
+          ├─Running Instance[0]: 81 reqs, Total # 16 NPUs, Each NPU Memory Usage 8863.33 MB (19.235 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 1284.01 W
+[190.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 81.0 tokens/s[0m
+          ├─Running Instance[0]: 81 reqs, Total # 16 NPUs, Each NPU Memory Usage 8865.52 MB (19.239 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 1284.01 W
+[191.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 161.0 tokens/s[0m
+          ├─Running Instance[0]: 80 reqs, Total # 16 NPUs, Each NPU Memory Usage 8863.95 MB (19.236 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 1290.42 W
+[192.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 160.0 tokens/s[0m
+          ├─Running Instance[0]: 80 reqs, Total # 16 NPUs, Each NPU Memory Usage 8867.08 MB (19.243 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 1290.42 W
+[193.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 80.0 tokens/s[0m
+          ├─Running Instance[0]: 80 reqs, Total # 16 NPUs, Each NPU Memory Usage 8868.95 MB (19.247 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 1290.42 W
+[194.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 160.0 tokens/s[0m
+          ├─Running Instance[0]: 80 reqs, Total # 16 NPUs, Each NPU Memory Usage 8872.39 MB (19.254 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 1290.42 W
+[195.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 80.0 tokens/s[0m
+          ├─Running Instance[0]: 80 reqs, Total # 16 NPUs, Each NPU Memory Usage 8874.27 MB (19.258 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 1290.42 W
+[196.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 160.0 tokens/s[0m
+          ├─Running Instance[0]: 80 reqs, Total # 16 NPUs, Each NPU Memory Usage 8875.83 MB (19.262 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 1290.42 W
+[197.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 160.0 tokens/s[0m
+          ├─Running Instance[0]: 80 reqs, Total # 16 NPUs, Each NPU Memory Usage 8878.64 MB (19.268 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 1290.42 W
+[198.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 80.0 tokens/s[0m
+          ├─Running Instance[0]: 80 reqs, Total # 16 NPUs, Each NPU Memory Usage 8879.58 MB (19.270 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 1290.42 W
+[199.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 160.0 tokens/s[0m
+          ├─Running Instance[0]: 80 reqs, Total # 16 NPUs, Each NPU Memory Usage 8882.70 MB (19.277 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 1290.42 W
+[200.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 160.0 tokens/s[0m
+          ├─Running Instance[0]: 80 reqs, Total # 16 NPUs, Each NPU Memory Usage 8887.08 MB (19.286 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 1290.42 W
+[201.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 80.0 tokens/s[0m
+          ├─Running Instance[0]: 79 reqs, Total # 16 NPUs, Each NPU Memory Usage 8885.52 MB (19.283 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 1296.98 W
+[202.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 158.0 tokens/s[0m
+          ├─Running Instance[0]: 78 reqs, Total # 16 NPUs, Each NPU Memory Usage 8877.70 MB (19.266 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 1300.31 W
+[203.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 156.0 tokens/s[0m
+          ├─Running Instance[0]: 78 reqs, Total # 16 NPUs, Each NPU Memory Usage 8880.83 MB (19.273 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 1303.68 W
+[204.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 78.0 tokens/s[0m
+          ├─Running Instance[0]: 78 reqs, Total # 16 NPUs, Each NPU Memory Usage 8883.02 MB (19.277 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 1303.68 W
+[205.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 156.0 tokens/s[0m
+          ├─Running Instance[0]: 78 reqs, Total # 16 NPUs, Each NPU Memory Usage 8885.83 MB (19.283 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 1303.68 W
+[206.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 156.0 tokens/s[0m
+          ├─Running Instance[0]: 78 reqs, Total # 16 NPUs, Each NPU Memory Usage 8887.39 MB (19.287 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 1303.68 W
+[207.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 78.0 tokens/s[0m
+          ├─Running Instance[0]: 78 reqs, Total # 16 NPUs, Each NPU Memory Usage 8888.95 MB (19.290 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 1303.68 W
+[208.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 155.0 tokens/s[0m
+          ├─Running Instance[0]: 77 reqs, Total # 16 NPUs, Each NPU Memory Usage 8888.33 MB (19.289 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 1310.52 W
+[209.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 154.0 tokens/s[0m
+          ├─Running Instance[0]: 76 reqs, Total # 16 NPUs, Each NPU Memory Usage 8889.27 MB (19.291 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 1313.99 W
+[210.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 76.0 tokens/s[0m
+          ├─Running Instance[0]: 76 reqs, Total # 16 NPUs, Each NPU Memory Usage 8891.45 MB (19.296 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 1317.5 W
+[211.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 151.0 tokens/s[0m
+          ├─Running Instance[0]: 74 reqs, Total # 16 NPUs, Each NPU Memory Usage 8889.27 MB (19.291 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 1328.28 W
+[212.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 148.0 tokens/s[0m
+          ├─Running Instance[0]: 74 reqs, Total # 16 NPUs, Each NPU Memory Usage 8892.08 MB (19.297 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 1331.96 W
+[213.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 74.0 tokens/s[0m
+          ├─Running Instance[0]: 74 reqs, Total # 16 NPUs, Each NPU Memory Usage 8893.33 MB (19.300 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 1331.96 W
+[214.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 147.0 tokens/s[0m
+          ├─Running Instance[0]: 73 reqs, Total # 16 NPUs, Each NPU Memory Usage 8891.45 MB (19.296 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 1339.43 W
+[215.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 145.0 tokens/s[0m
+          ├─Running Instance[0]: 70 reqs, Total # 16 NPUs, Each NPU Memory Usage 8871.45 MB (19.252 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 1354.89 W
+[216.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 139.0 tokens/s[0m
+          ├─Running Instance[0]: 69 reqs, Total # 16 NPUs, Each NPU Memory Usage 8867.70 MB (19.244 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 1371.1 W
+[217.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 138.0 tokens/s[0m
+          ├─Running Instance[0]: 69 reqs, Total # 16 NPUs, Each NPU Memory Usage 8869.58 MB (19.248 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 1371.1 W
+[218.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 138.0 tokens/s[0m
+          ├─Running Instance[0]: 69 reqs, Total # 16 NPUs, Each NPU Memory Usage 8873.33 MB (19.256 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 1371.1 W
+[219.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 69.0 tokens/s[0m
+          ├─Running Instance[0]: 69 reqs, Total # 16 NPUs, Each NPU Memory Usage 8874.89 MB (19.260 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 1371.1 W
+[220.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 138.0 tokens/s[0m
+          ├─Running Instance[0]: 69 reqs, Total # 16 NPUs, Each NPU Memory Usage 8878.33 MB (19.267 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 1371.1 W
+[221.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 136.0 tokens/s[0m
+          ├─Running Instance[0]: 67 reqs, Total # 16 NPUs, Each NPU Memory Usage 8861.77 MB (19.231 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 1388.09 W
+[222.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 134.0 tokens/s[0m
+          ├─Running Instance[0]: 65 reqs, Total # 16 NPUs, Each NPU Memory Usage 8858.95 MB (19.225 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 1396.9 W
+[223.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 128.0 tokens/s[0m
+          ├─Running Instance[0]: 63 reqs, Total # 16 NPUs, Each NPU Memory Usage 8850.83 MB (19.208 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 1424.06 W
+[224.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 126.0 tokens/s[0m
+          ├─Running Instance[0]: 63 reqs, Total # 16 NPUs, Each NPU Memory Usage 8851.77 MB (19.210 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 1424.06 W
+[225.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 126.0 tokens/s[0m
+          ├─Running Instance[0]: 63 reqs, Total # 16 NPUs, Each NPU Memory Usage 8853.64 MB (19.214 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 1424.06 W
+[226.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 126.0 tokens/s[0m
+          ├─Running Instance[0]: 63 reqs, Total # 16 NPUs, Each NPU Memory Usage 8855.83 MB (19.218 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 1424.06 W
+[227.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 125.0 tokens/s[0m
+          ├─Running Instance[0]: 62 reqs, Total # 16 NPUs, Each NPU Memory Usage 8847.39 MB (19.200 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 1433.66 W
+[228.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 124.0 tokens/s[0m
+          ├─Running Instance[0]: 62 reqs, Total # 16 NPUs, Each NPU Memory Usage 8850.83 MB (19.208 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 1433.66 W
+[229.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 124.0 tokens/s[0m
+          ├─Running Instance[0]: 62 reqs, Total # 16 NPUs, Each NPU Memory Usage 8853.64 MB (19.214 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 1433.66 W
+[230.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 123.0 tokens/s[0m
+          ├─Running Instance[0]: 60 reqs, Total # 16 NPUs, Each NPU Memory Usage 8844.27 MB (19.193 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 1448.75 W
+[231.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 120.0 tokens/s[0m
+          ├─Running Instance[0]: 60 reqs, Total # 16 NPUs, Each NPU Memory Usage 8846.45 MB (19.198 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 1453.91 W
+[232.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 120.0 tokens/s[0m
+          ├─Running Instance[0]: 60 reqs, Total # 16 NPUs, Each NPU Memory Usage 8847.39 MB (19.200 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 1453.91 W
+[233.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 120.0 tokens/s[0m
+          ├─Running Instance[0]: 60 reqs, Total # 16 NPUs, Each NPU Memory Usage 8849.27 MB (19.204 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 1453.91 W
+[234.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 119.0 tokens/s[0m
+          ├─Running Instance[0]: 59 reqs, Total # 16 NPUs, Each NPU Memory Usage 8847.70 MB (19.201 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 1464.45 W
+[235.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 118.0 tokens/s[0m
+          ├─Running Instance[0]: 59 reqs, Total # 16 NPUs, Each NPU Memory Usage 8850.83 MB (19.208 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 1464.45 W
+[236.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 118.0 tokens/s[0m
+          ├─Running Instance[0]: 59 reqs, Total # 16 NPUs, Each NPU Memory Usage 8853.95 MB (19.214 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 1464.45 W
+[237.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 177.0 tokens/s[0m
+          ├─Running Instance[0]: 59 reqs, Total # 16 NPUs, Each NPU Memory Usage 8857.70 MB (19.222 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 1464.45 W
+[238.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 118.0 tokens/s[0m
+          ├─Running Instance[0]: 59 reqs, Total # 16 NPUs, Each NPU Memory Usage 8860.83 MB (19.229 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 1464.45 W
+[239.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 117.0 tokens/s[0m
+          ├─Running Instance[0]: 58 reqs, Total # 16 NPUs, Each NPU Memory Usage 8858.02 MB (19.223 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 1475.28 W
+[240.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 115.0 tokens/s[0m
+          ├─Running Instance[0]: 57 reqs, Total # 16 NPUs, Each NPU Memory Usage 8856.14 MB (19.219 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 1486.39 W
+[241.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 114.0 tokens/s[0m
+          ├─Running Instance[0]: 57 reqs, Total # 16 NPUs, Each NPU Memory Usage 8857.39 MB (19.222 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 1486.39 W
+[242.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 113.0 tokens/s[0m
+          ├─Running Instance[0]: 56 reqs, Total # 16 NPUs, Each NPU Memory Usage 8856.45 MB (19.220 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 1497.83 W
+[243.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 112.0 tokens/s[0m
+          ├─Running Instance[0]: 56 reqs, Total # 16 NPUs, Each NPU Memory Usage 8859.58 MB (19.227 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 1497.83 W
+[244.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 166.0 tokens/s[0m
+          ├─Running Instance[0]: 55 reqs, Total # 16 NPUs, Each NPU Memory Usage 8844.27 MB (19.193 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 1509.59 W
+[245.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 110.0 tokens/s[0m
+          ├─Running Instance[0]: 55 reqs, Total # 16 NPUs, Each NPU Memory Usage 8846.45 MB (19.198 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 1509.59 W
+[246.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 109.0 tokens/s[0m
+          ├─Running Instance[0]: 54 reqs, Total # 16 NPUs, Each NPU Memory Usage 8839.58 MB (19.183 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 1521.7 W
+[247.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 108.0 tokens/s[0m
+          ├─Running Instance[0]: 54 reqs, Total # 16 NPUs, Each NPU Memory Usage 8840.52 MB (19.185 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 1521.7 W
+[248.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 160.0 tokens/s[0m
+          ├─Running Instance[0]: 53 reqs, Total # 16 NPUs, Each NPU Memory Usage 8838.95 MB (19.182 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 1534.16 W
+[249.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 106.0 tokens/s[0m
+          ├─Running Instance[0]: 53 reqs, Total # 16 NPUs, Each NPU Memory Usage 8841.45 MB (19.187 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 1534.16 W
+[250.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 105.0 tokens/s[0m
+          ├─Running Instance[0]: 52 reqs, Total # 16 NPUs, Each NPU Memory Usage 8840.52 MB (19.185 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 1547.0 W
+[251.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 154.0 tokens/s[0m
+          ├─Running Instance[0]: 50 reqs, Total # 16 NPUs, Each NPU Memory Usage 8829.89 MB (19.162 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 1564.72 W
+[252.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 100.0 tokens/s[0m
+          ├─Running Instance[0]: 50 reqs, Total # 16 NPUs, Each NPU Memory Usage 8831.77 MB (19.166 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 1573.85 W
+[253.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 100.0 tokens/s[0m
+          ├─Running Instance[0]: 50 reqs, Total # 16 NPUs, Each NPU Memory Usage 8833.33 MB (19.170 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 1573.85 W
+[254.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 149.0 tokens/s[0m
+          ├─Running Instance[0]: 49 reqs, Total # 16 NPUs, Each NPU Memory Usage 8826.14 MB (19.154 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 1583.17 W
+[255.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 97.0 tokens/s[0m
+          ├─Running Instance[0]: 48 reqs, Total # 16 NPUs, Each NPU Memory Usage 8823.02 MB (19.147 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 1602.41 W
+[256.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 144.0 tokens/s[0m
+          ├─Running Instance[0]: 48 reqs, Total # 16 NPUs, Each NPU Memory Usage 8826.77 MB (19.155 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 1602.41 W
+[257.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 96.0 tokens/s[0m
+          ├─Running Instance[0]: 48 reqs, Total # 16 NPUs, Each NPU Memory Usage 8829.27 MB (19.161 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 1602.41 W
+[258.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 143.0 tokens/s[0m
+          ├─Running Instance[0]: 47 reqs, Total # 16 NPUs, Each NPU Memory Usage 8815.52 MB (19.131 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 1612.34 W
+[259.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 94.0 tokens/s[0m
+          ├─Running Instance[0]: 46 reqs, Total # 16 NPUs, Each NPU Memory Usage 8812.08 MB (19.123 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 1625.05 W
+[260.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 134.0 tokens/s[0m
+          ├─Running Instance[0]: 42 reqs, Total # 16 NPUs, Each NPU Memory Usage 8794.58 MB (19.085 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 1676.77 W
+[261.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 84.0 tokens/s[0m
+          ├─Running Instance[0]: 41 reqs, Total # 16 NPUs, Each NPU Memory Usage 8787.39 MB (19.070 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 1709.36 W
+[262.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 123.0 tokens/s[0m
+          ├─Running Instance[0]: 41 reqs, Total # 16 NPUs, Each NPU Memory Usage 8789.89 MB (19.075 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 1718.6 W
+[263.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 123.0 tokens/s[0m
+          ├─Running Instance[0]: 41 reqs, Total # 16 NPUs, Each NPU Memory Usage 8793.02 MB (19.082 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 1718.6 W
+[264.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 123.0 tokens/s[0m
+          ├─Running Instance[0]: 41 reqs, Total # 16 NPUs, Each NPU Memory Usage 8796.45 MB (19.090 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 1718.6 W
+[265.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 82.0 tokens/s[0m
+          ├─Running Instance[0]: 40 reqs, Total # 16 NPUs, Each NPU Memory Usage 8786.77 MB (19.069 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 1728.01 W
+[266.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 120.0 tokens/s[0m
+          ├─Running Instance[0]: 39 reqs, Total # 16 NPUs, Each NPU Memory Usage 8763.95 MB (19.019 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 1744.07 W
+[267.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 117.0 tokens/s[0m
+          ├─Running Instance[0]: 39 reqs, Total # 16 NPUs, Each NPU Memory Usage 8765.20 MB (19.022 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 1757.28 W
+[268.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 117.0 tokens/s[0m
+          ├─Running Instance[0]: 39 reqs, Total # 16 NPUs, Each NPU Memory Usage 8768.33 MB (19.028 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 1757.28 W
+[269.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 115.0 tokens/s[0m
+          ├─Running Instance[0]: 38 reqs, Total # 16 NPUs, Each NPU Memory Usage 8765.83 MB (19.023 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 1777.71 W
+[270.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 114.0 tokens/s[0m
+          ├─Running Instance[0]: 38 reqs, Total # 16 NPUs, Each NPU Memory Usage 8768.95 MB (19.030 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 1777.71 W
+[271.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 113.0 tokens/s[0m
+          ├─Running Instance[0]: 37 reqs, Total # 16 NPUs, Each NPU Memory Usage 8764.89 MB (19.021 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 1791.76 W
+[272.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 109.0 tokens/s[0m
+          ├─Running Instance[0]: 35 reqs, Total # 16 NPUs, Each NPU Memory Usage 8735.83 MB (18.958 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 1828.52 W
+[273.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 105.0 tokens/s[0m
+          ├─Running Instance[0]: 35 reqs, Total # 16 NPUs, Each NPU Memory Usage 8738.33 MB (18.963 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 1843.91 W
+[274.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 102.0 tokens/s[0m
+          ├─Running Instance[0]: 33 reqs, Total # 16 NPUs, Each NPU Memory Usage 8717.70 MB (18.919 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 1884.25 W
+[275.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 99.0 tokens/s[0m
+          ├─Running Instance[0]: 33 reqs, Total # 16 NPUs, Each NPU Memory Usage 8720.52 MB (18.925 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 1892.65 W
+[276.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 132.0 tokens/s[0m
+          ├─Running Instance[0]: 33 reqs, Total # 16 NPUs, Each NPU Memory Usage 8722.39 MB (18.929 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 1892.65 W
+[277.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 99.0 tokens/s[0m
+          ├─Running Instance[0]: 33 reqs, Total # 16 NPUs, Each NPU Memory Usage 8723.33 MB (18.931 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 1892.65 W
+[278.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 98.0 tokens/s[0m
+          ├─Running Instance[0]: 32 reqs, Total # 16 NPUs, Each NPU Memory Usage 8714.89 MB (18.913 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 1909.85 W
+[279.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 96.0 tokens/s[0m
+          ├─Running Instance[0]: 32 reqs, Total # 16 NPUs, Each NPU Memory Usage 8717.08 MB (18.917 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 1918.63 W
+[280.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 127.0 tokens/s[0m
+          ├─Running Instance[0]: 31 reqs, Total # 16 NPUs, Each NPU Memory Usage 8710.52 MB (18.903 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 1932.05 W
+[281.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 92.0 tokens/s[0m
+          ├─Running Instance[0]: 30 reqs, Total # 16 NPUs, Each NPU Memory Usage 8698.95 MB (18.878 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 1964.47 W
+[282.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 120.0 tokens/s[0m
+          ├─Running Instance[0]: 30 reqs, Total # 16 NPUs, Each NPU Memory Usage 8700.20 MB (18.881 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 1974.03 W
+[283.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 90.0 tokens/s[0m
+          ├─Running Instance[0]: 30 reqs, Total # 16 NPUs, Each NPU Memory Usage 8702.39 MB (18.885 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 1974.03 W
+[284.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 90.0 tokens/s[0m
+          ├─Running Instance[0]: 28 reqs, Total # 16 NPUs, Each NPU Memory Usage 8673.64 MB (18.823 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 1993.57 W
+[285.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 112.0 tokens/s[0m
+          ├─Running Instance[0]: 28 reqs, Total # 16 NPUs, Each NPU Memory Usage 8676.14 MB (18.828 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 2034.47 W
+[286.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 110.0 tokens/s[0m
+          ├─Running Instance[0]: 27 reqs, Total # 16 NPUs, Each NPU Memory Usage 8659.89 MB (18.793 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 2058.61 W
+[287.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 81.0 tokens/s[0m
+          ├─Running Instance[0]: 26 reqs, Total # 16 NPUs, Each NPU Memory Usage 8653.64 MB (18.780 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 2077.98 W
+[288.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 101.0 tokens/s[0m
+          ├─Running Instance[0]: 25 reqs, Total # 16 NPUs, Each NPU Memory Usage 8649.89 MB (18.771 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 2136.46 W
+[289.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 98.0 tokens/s[0m
+          ├─Running Instance[0]: 24 reqs, Total # 16 NPUs, Each NPU Memory Usage 8644.89 MB (18.761 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 2164.39 W
+[290.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 96.0 tokens/s[0m
+          ├─Running Instance[0]: 24 reqs, Total # 16 NPUs, Each NPU Memory Usage 8645.83 MB (18.763 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 2173.94 W
+[291.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 94.0 tokens/s[0m
+          ├─Running Instance[0]: 23 reqs, Total # 16 NPUs, Each NPU Memory Usage 8633.02 MB (18.735 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 2203.35 W
+[292.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 92.0 tokens/s[0m
+          ├─Running Instance[0]: 23 reqs, Total # 16 NPUs, Each NPU Memory Usage 8635.20 MB (18.740 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 2213.41 W
+[293.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 92.0 tokens/s[0m
+          ├─Running Instance[0]: 22 reqs, Total # 16 NPUs, Each NPU Memory Usage 8622.39 MB (18.712 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 2223.6 W
+[294.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 107.0 tokens/s[0m
+          ├─Running Instance[0]: 21 reqs, Total # 16 NPUs, Each NPU Memory Usage 8607.08 MB (18.679 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 2289.95 W
+[295.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 84.0 tokens/s[0m
+          ├─Running Instance[0]: 21 reqs, Total # 16 NPUs, Each NPU Memory Usage 8608.95 MB (18.683 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 2298.92 W
+[296.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 84.0 tokens/s[0m
+          ├─Running Instance[0]: 21 reqs, Total # 16 NPUs, Each NPU Memory Usage 8610.83 MB (18.687 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 2298.92 W
+[297.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 105.0 tokens/s[0m
+          ├─Running Instance[0]: 21 reqs, Total # 16 NPUs, Each NPU Memory Usage 8613.02 MB (18.691 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 2298.92 W
+[298.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 81.0 tokens/s[0m
+          ├─Running Instance[0]: 20 reqs, Total # 16 NPUs, Each NPU Memory Usage 8600.83 MB (18.665 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 2345.32 W
+[299.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 80.0 tokens/s[0m
+          ├─Running Instance[0]: 20 reqs, Total # 16 NPUs, Each NPU Memory Usage 8603.02 MB (18.670 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 2345.32 W
+[300.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 100.0 tokens/s[0m
+          ├─Running Instance[0]: 20 reqs, Total # 16 NPUs, Each NPU Memory Usage 8605.83 MB (18.676 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 2345.32 W
+[301.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 80.0 tokens/s[0m
+          ├─Running Instance[0]: 20 reqs, Total # 16 NPUs, Each NPU Memory Usage 8606.77 MB (18.678 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 2345.32 W
+[302.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 100.0 tokens/s[0m
+          ├─Running Instance[0]: 20 reqs, Total # 16 NPUs, Each NPU Memory Usage 8608.33 MB (18.681 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 2345.32 W
+[303.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 80.0 tokens/s[0m
+          ├─Running Instance[0]: 20 reqs, Total # 16 NPUs, Each NPU Memory Usage 8610.20 MB (18.685 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 2345.32 W
+[304.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 100.0 tokens/s[0m
+          ├─Running Instance[0]: 20 reqs, Total # 16 NPUs, Each NPU Memory Usage 8612.39 MB (18.690 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 2345.32 W
+[305.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 79.0 tokens/s[0m
+          ├─Running Instance[0]: 19 reqs, Total # 16 NPUs, Each NPU Memory Usage 8604.89 MB (18.674 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 2369.54 W
+[306.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 95.0 tokens/s[0m
+          ├─Running Instance[0]: 19 reqs, Total # 16 NPUs, Each NPU Memory Usage 8606.77 MB (18.678 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 2394.88 W
+[307.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 76.0 tokens/s[0m
+          ├─Running Instance[0]: 19 reqs, Total # 16 NPUs, Each NPU Memory Usage 8609.27 MB (18.683 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 2395.52 W
+[308.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 95.0 tokens/s[0m
+          ├─Running Instance[0]: 19 reqs, Total # 16 NPUs, Each NPU Memory Usage 8610.52 MB (18.686 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 2395.52 W
+[309.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 71.0 tokens/s[0m
+          ├─Running Instance[0]: 16 reqs, Total # 16 NPUs, Each NPU Memory Usage 8577.70 MB (18.615 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 2502.73 W
+[310.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 80.0 tokens/s[0m
+          ├─Running Instance[0]: 16 reqs, Total # 16 NPUs, Each NPU Memory Usage 8580.20 MB (18.620 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 2561.94 W
+[311.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 95.0 tokens/s[0m
+          ├─Running Instance[0]: 15 reqs, Total # 16 NPUs, Each NPU Memory Usage 8572.70 MB (18.604 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 2582.44 W
+[312.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 75.0 tokens/s[0m
+          ├─Running Instance[0]: 15 reqs, Total # 16 NPUs, Each NPU Memory Usage 8573.33 MB (18.605 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 2624.8 W
+[313.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 75.0 tokens/s[0m
+          ├─Running Instance[0]: 15 reqs, Total # 16 NPUs, Each NPU Memory Usage 8575.83 MB (18.611 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 2624.8 W
+[314.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 73.0 tokens/s[0m
+          ├─Running Instance[0]: 14 reqs, Total # 16 NPUs, Each NPU Memory Usage 8564.58 MB (18.586 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 2664.57 W
+[315.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 79.0 tokens/s[0m
+          ├─Running Instance[0]: 13 reqs, Total # 16 NPUs, Each NPU Memory Usage 8556.77 MB (18.569 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 2763.99 W
+[316.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 65.0 tokens/s[0m
+          ├─Running Instance[0]: 13 reqs, Total # 16 NPUs, Each NPU Memory Usage 8558.95 MB (18.574 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 2763.99 W
+[317.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 78.0 tokens/s[0m
+          ├─Running Instance[0]: 13 reqs, Total # 16 NPUs, Each NPU Memory Usage 8560.52 MB (18.578 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 2763.99 W
+[318.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 61.0 tokens/s[0m
+          ├─Running Instance[0]: 12 reqs, Total # 16 NPUs, Each NPU Memory Usage 8550.83 MB (18.556 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 2841.97 W
+[319.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 72.0 tokens/s[0m
+          ├─Running Instance[0]: 12 reqs, Total # 16 NPUs, Each NPU Memory Usage 8553.02 MB (18.561 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 2841.97 W
+[320.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 72.0 tokens/s[0m
+          ├─Running Instance[0]: 12 reqs, Total # 16 NPUs, Each NPU Memory Usage 8554.58 MB (18.565 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 2841.97 W
+[321.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 72.0 tokens/s[0m
+          ├─Running Instance[0]: 12 reqs, Total # 16 NPUs, Each NPU Memory Usage 8556.14 MB (18.568 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 2841.97 W
+[322.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 60.0 tokens/s[0m
+          ├─Running Instance[0]: 12 reqs, Total # 16 NPUs, Each NPU Memory Usage 8557.70 MB (18.571 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 2841.97 W
+[323.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 72.0 tokens/s[0m
+          ├─Running Instance[0]: 12 reqs, Total # 16 NPUs, Each NPU Memory Usage 8558.33 MB (18.573 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 2841.97 W
+[324.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 70.0 tokens/s[0m
+          ├─Running Instance[0]: 11 reqs, Total # 16 NPUs, Each NPU Memory Usage 8545.20 MB (18.544 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 2882.82 W
+[325.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 66.0 tokens/s[0m
+          ├─Running Instance[0]: 11 reqs, Total # 16 NPUs, Each NPU Memory Usage 8546.45 MB (18.547 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 2925.23 W
+[326.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 66.0 tokens/s[0m
+          ├─Running Instance[0]: 11 reqs, Total # 16 NPUs, Each NPU Memory Usage 8547.08 MB (18.548 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 2925.23 W
+[327.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 64.0 tokens/s[0m
+          ├─Running Instance[0]: 10 reqs, Total # 16 NPUs, Each NPU Memory Usage 8538.95 MB (18.531 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 2969.3 W
+[328.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 60.0 tokens/s[0m
+          ├─Running Instance[0]: 9 reqs, Total # 16 NPUs, Each NPU Memory Usage 8529.58 MB (18.510 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 3030.55 W
+[329.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 54.0 tokens/s[0m
+          ├─Running Instance[0]: 9 reqs, Total # 16 NPUs, Each NPU Memory Usage 8530.52 MB (18.512 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 3110.88 W
+[330.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 63.0 tokens/s[0m
+          ├─Running Instance[0]: 9 reqs, Total # 16 NPUs, Each NPU Memory Usage 8532.08 MB (18.516 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 3110.88 W
+[331.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 54.0 tokens/s[0m
+          ├─Running Instance[0]: 9 reqs, Total # 16 NPUs, Each NPU Memory Usage 8532.39 MB (18.516 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 3110.88 W
+[332.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 63.0 tokens/s[0m
+          ├─Running Instance[0]: 9 reqs, Total # 16 NPUs, Each NPU Memory Usage 8534.27 MB (18.521 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 3110.88 W
+[333.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 54.0 tokens/s[0m
+          ├─Running Instance[0]: 9 reqs, Total # 16 NPUs, Each NPU Memory Usage 8535.20 MB (18.523 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 3110.88 W
+[334.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 63.0 tokens/s[0m
+          ├─Running Instance[0]: 9 reqs, Total # 16 NPUs, Each NPU Memory Usage 8536.77 MB (18.526 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 3110.88 W
+[335.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 54.0 tokens/s[0m
+          ├─Running Instance[0]: 9 reqs, Total # 16 NPUs, Each NPU Memory Usage 8537.70 MB (18.528 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 3110.88 W
+[336.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 63.0 tokens/s[0m
+          ├─Running Instance[0]: 9 reqs, Total # 16 NPUs, Each NPU Memory Usage 8538.02 MB (18.529 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 3110.79 W
+[337.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 54.0 tokens/s[0m
+          ├─Running Instance[0]: 9 reqs, Total # 16 NPUs, Each NPU Memory Usage 8539.89 MB (18.533 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 3110.59 W
+[338.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 54.0 tokens/s[0m
+          ├─Running Instance[0]: 9 reqs, Total # 16 NPUs, Each NPU Memory Usage 8540.83 MB (18.535 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 3110.59 W
+[339.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 63.0 tokens/s[0m
+          ├─Running Instance[0]: 9 reqs, Total # 16 NPUs, Each NPU Memory Usage 8542.39 MB (18.538 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 3110.59 W
+[340.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 54.0 tokens/s[0m
+          ├─Running Instance[0]: 9 reqs, Total # 16 NPUs, Each NPU Memory Usage 8543.33 MB (18.540 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 3110.59 W
+[341.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 60.0 tokens/s[0m
+          ├─Running Instance[0]: 8 reqs, Total # 16 NPUs, Each NPU Memory Usage 8531.45 MB (18.514 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 3171.95 W
+[342.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 56.0 tokens/s[0m
+          ├─Running Instance[0]: 8 reqs, Total # 16 NPUs, Each NPU Memory Usage 8533.02 MB (18.518 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 3219.89 W
+[343.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 48.0 tokens/s[0m
+          ├─Running Instance[0]: 8 reqs, Total # 16 NPUs, Each NPU Memory Usage 8533.95 MB (18.520 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 3219.89 W
+[344.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 55.0 tokens/s[0m
+          ├─Running Instance[0]: 7 reqs, Total # 16 NPUs, Each NPU Memory Usage 8509.89 MB (18.468 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 3251.28 W
+[345.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 45.0 tokens/s[0m
+          ├─Running Instance[0]: 6 reqs, Total # 16 NPUs, Each NPU Memory Usage 8498.02 MB (18.442 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 3411.9 W
+[346.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 48.0 tokens/s[0m
+          ├─Running Instance[0]: 6 reqs, Total # 16 NPUs, Each NPU Memory Usage 8498.95 MB (18.444 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 3445.06 W
+[347.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 40.0 tokens/s[0m
+          ├─Running Instance[0]: 4 reqs, Total # 16 NPUs, Each NPU Memory Usage 8473.64 MB (18.389 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 3629.24 W
+[348.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 30.0 tokens/s[0m
+          ├─Running Instance[0]: 3 reqs, Total # 16 NPUs, Each NPU Memory Usage 8461.77 MB (18.363 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 3812.21 W
+[349.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 25.0 tokens/s[0m
+          ├─Running Instance[0]: 2 reqs, Total # 16 NPUs, Each NPU Memory Usage 8438.95 MB (18.314 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 3986.68 W
+[350.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 18.0 tokens/s[0m
+          ├─Running Instance[0]: 2 reqs, Total # 16 NPUs, Each NPU Memory Usage 8439.27 MB (18.314 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 4120.08 W
+[351.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 15.0 tokens/s[0m
+          ├─Running Instance[0]: 1 reqs, Total # 16 NPUs, Each NPU Memory Usage 8426.45 MB (18.287 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 4204.41 W
+[352.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 10.0 tokens/s[0m
+          ├─Running Instance[0]: 1 reqs, Total # 16 NPUs, Each NPU Memory Usage 8426.45 MB (18.287 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 4318.03 W
+[353.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 10.0 tokens/s[0m
+          ├─Running Instance[0]: 1 reqs, Total # 16 NPUs, Each NPU Memory Usage 8426.77 MB (18.287 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 4318.03 W
+[354.0s] [94mAvg prompt throughput: 0.0 tokens/s,[0m [94mAvg generation throughput: 9.0 tokens/s[0m
+          ├─Running Instance[0]: 1 reqs, Total # 16 NPUs, Each NPU Memory Usage 8426.77 MB (18.287 % Used)
+          ├─Node[0]: Total CPU Memory Usage 0.00 MB, 0.000 % Used 
+          └─Avg power consumption: 4318.03 W
+--------------------------------------------------------------------------------
+[1m[96m▶ Exiting simulation...
+[0m[0m
+Checking Non-Exited Systems ...
+All Request Has Been Exited
+--------------------------------------------------------------------------------
+[1m[96m▶ Simulation results...
+[0m[0m
+Total simulation time: 0h 8m 13.199s
+--------------------------------------------------------------------------------
+[95m                               Throughput Results                               [0m
+--------------------------------------------------------------------------------
+Total requests:                                                     100
+Total clocks (ns):                                                  354936927730
+Total latency (s):                                                  354.937
+Total input tokens:                                                 21027
+Total generated tokens:                                             23339
+Request throughput (req/s):                                         0.28
+Average prompt throughput (tok/s):                                  59.24
+Average generation throughput (tok/s):                              65.76
+Total token throughput (tok/s):                                     125.00
+Throughput per 1.0 sec: [(44.0, 4.0), (555.0, 7.0), (0.0, 0.0), (0.0, 0.0), (0.0, 0.0), (2038.0, 23.0), (0.0, 0.0), (0.0, 0.0), (0.0, 0.0), (1026.0, 34.0), (0.0, 0.0), (0.0, 0.0), (0.0, 0.0), (1243.0, 38.0), (0.0, 0.0), (0.0, 0.0), (0.0, 0.0), (1969.0, 43.0), (0.0, 0.0), (0.0, 0.0), (0.0, 0.0), (1996.0, 50.0), (0.0, 0.0), (0.0, 0.0), (0.0, 0.0), (1745.0, 58.0), (0.0, 0.0), (0.0, 0.0), (0.0, 0.0), (1640.0, 64.0), (0.0, 0.0), (0.0, 0.0), (0.0, 0.0), (1468.0, 68.0), (0.0, 0.0), (0.0, 0.0), (0.0, 0.0), (1977.0, 75.0), (0.0, 0.0), (0.0, 0.0), (0.0, 0.0), (1960.0, 84.0), (0.0, 0.0), (0.0, 0.0), (0.0, 0.0), (1886.0, 96.0), (0.0, 0.0), (0.0, 0.0), (0.0, 0.0), (1480.0, 98.0), (0.0, 0.0), (0.0, 0.0), (0.0, 0.0), (0.0, 97.0), (0.0, 0.0), (0.0, 0.0), (0.0, 0.0), (0.0, 97.0), (0.0, 0.0), (0.0, 0.0), (0.0, 0.0), (0.0, 97.0), (0.0, 0.0), (0.0, 0.0), (0.0, 0.0), (0.0, 97.0), (0.0, 0.0), (0.0, 0.0), (0.0, 0.0), (0.0, 97.0), (0.0, 0.0), (0.0, 0.0), (0.0, 0.0), (0.0, 97.0), (0.0, 0.0), (0.0, 0.0), (0.0, 0.0), (0.0, 97.0), (0.0, 0.0), (0.0, 0.0), (0.0, 0.0), (0.0, 97.0), (0.0, 0.0), (0.0, 0.0), (0.0, 0.0), (0.0, 97.0), (0.0, 0.0), (0.0, 0.0), (0.0, 0.0), (0.0, 97.0), (0.0, 0.0), (0.0, 0.0), (0.0, 0.0), (0.0, 96.0), (0.0, 0.0), (0.0, 0.0), (0.0, 0.0), (0.0, 96.0), (0.0, 0.0), (0.0, 0.0), (0.0, 0.0), (0.0, 96.0), (0.0, 0.0), (0.0, 0.0), (0.0, 0.0), (0.0, 95.0), (0.0, 0.0), (0.0, 0.0), (0.0, 0.0), (0.0, 94.0), (0.0, 0.0), (0.0, 0.0), (0.0, 0.0), (0.0, 94.0), (0.0, 0.0), (0.0, 0.0), (0.0, 0.0), (0.0, 94.0), (0.0, 0.0), (0.0, 0.0), (0.0, 0.0), (0.0, 94.0), (0.0, 0.0), (0.0, 0.0), (0.0, 0.0), (0.0, 94.0), (0.0, 0.0), (0.0, 0.0), (0.0, 0.0), (0.0, 94.0), (0.0, 0.0), (0.0, 0.0), (0.0, 0.0), (0.0, 94.0), (0.0, 0.0), (0.0, 0.0), (0.0, 0.0), (0.0, 94.0), (0.0, 0.0), (0.0, 0.0), (0.0, 0.0), (0.0, 93.0), (0.0, 0.0), (0.0, 0.0), (0.0, 0.0), (0.0, 93.0), (0.0, 0.0), (0.0, 0.0), (0.0, 0.0), (0.0, 93.0), (0.0, 0.0), (0.0, 0.0), (0.0, 0.0), (0.0, 91.0), (0.0, 0.0), (0.0, 0.0), (0.0, 0.0), (0.0, 91.0), (0.0, 0.0), (0.0, 0.0), (0.0, 0.0), (0.0, 91.0), (0.0, 180.0), (0.0, 90.0), (0.0, 180.0), (0.0, 90.0), (0.0, 179.0), (0.0, 89.0), (0.0, 178.0), (0.0, 89.0), (0.0, 177.0), (0.0, 86.0), (0.0, 172.0), (0.0, 86.0), (0.0, 172.0), (0.0, 86.0), (0.0, 172.0), (0.0, 86.0), (0.0, 172.0), (0.0, 86.0), (0.0, 170.0), (0.0, 170.0), (0.0, 85.0), (0.0, 169.0), (0.0, 84.0), (0.0, 168.0), (0.0, 83.0), (0.0, 164.0), (0.0, 163.0), (0.0, 81.0), (0.0, 161.0), (0.0, 160.0), (0.0, 80.0), (0.0, 160.0), (0.0, 80.0), (0.0, 160.0), (0.0, 160.0), (0.0, 80.0), (0.0, 160.0), (0.0, 160.0), (0.0, 80.0), (0.0, 158.0), (0.0, 156.0), (0.0, 78.0), (0.0, 156.0), (0.0, 156.0), (0.0, 78.0), (0.0, 155.0), (0.0, 154.0), (0.0, 76.0), (0.0, 151.0), (0.0, 148.0), (0.0, 74.0), (0.0, 147.0), (0.0, 145.0), (0.0, 139.0), (0.0, 138.0), (0.0, 138.0), (0.0, 69.0), (0.0, 138.0), (0.0, 136.0), (0.0, 134.0), (0.0, 128.0), (0.0, 126.0), (0.0, 126.0), (0.0, 126.0), (0.0, 125.0), (0.0, 124.0), (0.0, 124.0), (0.0, 123.0), (0.0, 120.0), (0.0, 120.0), (0.0, 120.0), (0.0, 119.0), (0.0, 118.0), (0.0, 118.0), (0.0, 177.0), (0.0, 118.0), (0.0, 117.0), (0.0, 115.0), (0.0, 114.0), (0.0, 113.0), (0.0, 112.0), (0.0, 166.0), (0.0, 110.0), (0.0, 109.0), (0.0, 108.0), (0.0, 160.0), (0.0, 106.0), (0.0, 105.0), (0.0, 154.0), (0.0, 100.0), (0.0, 100.0), (0.0, 149.0), (0.0, 97.0), (0.0, 144.0), (0.0, 96.0), (0.0, 143.0), (0.0, 94.0), (0.0, 134.0), (0.0, 84.0), (0.0, 123.0), (0.0, 123.0), (0.0, 123.0), (0.0, 82.0), (0.0, 120.0), (0.0, 117.0), (0.0, 117.0), (0.0, 115.0), (0.0, 114.0), (0.0, 113.0), (0.0, 109.0), (0.0, 105.0), (0.0, 102.0), (0.0, 99.0), (0.0, 132.0), (0.0, 99.0), (0.0, 98.0), (0.0, 96.0), (0.0, 127.0), (0.0, 92.0), (0.0, 120.0), (0.0, 90.0), (0.0, 90.0), (0.0, 112.0), (0.0, 110.0), (0.0, 81.0), (0.0, 101.0), (0.0, 98.0), (0.0, 96.0), (0.0, 94.0), (0.0, 92.0), (0.0, 92.0), (0.0, 107.0), (0.0, 84.0), (0.0, 84.0), (0.0, 105.0), (0.0, 81.0), (0.0, 80.0), (0.0, 100.0), (0.0, 80.0), (0.0, 100.0), (0.0, 80.0), (0.0, 100.0), (0.0, 79.0), (0.0, 95.0), (0.0, 76.0), (0.0, 95.0), (0.0, 71.0), (0.0, 80.0), (0.0, 95.0), (0.0, 75.0), (0.0, 75.0), (0.0, 73.0), (0.0, 79.0), (0.0, 65.0), (0.0, 78.0), (0.0, 61.0), (0.0, 72.0), (0.0, 72.0), (0.0, 72.0), (0.0, 60.0), (0.0, 72.0), (0.0, 70.0), (0.0, 66.0), (0.0, 66.0), (0.0, 64.0), (0.0, 60.0), (0.0, 54.0), (0.0, 63.0), (0.0, 54.0), (0.0, 63.0), (0.0, 54.0), (0.0, 63.0), (0.0, 54.0), (0.0, 63.0), (0.0, 54.0), (0.0, 54.0), (0.0, 63.0), (0.0, 54.0), (0.0, 60.0), (0.0, 56.0), (0.0, 48.0), (0.0, 55.0), (0.0, 45.0), (0.0, 48.0), (0.0, 40.0), (0.0, 30.0), (0.0, 25.0), (0.0, 18.0), (0.0, 15.0), (0.0, 10.0), (0.0, 10.0), (0.0, 9.0)]
+--------------------------------------------------------------------------------
+[95m                             Power Modeling Results                             [0m
+--------------------------------------------------------------------------------
+Total energy consumption (kJ):                                      509.18
+--------------------------------------------------------------------------------
+Node 0 total energy consumption (kJ):                               509.18
+├─ Base Node energy consumption (J):                                70987.39
+├─ NPU energy consumption (J):                                      346308.24
+├─ CPU energy consumption (J):                                      30824.73
+├─ Memory energy consumption (J):                                   11357.98
+├─ Link energy consumption (J):                                     28401.92
+├─ NIC energy consumption (J):                                      14197.48
+└─ Storage energy consumption (J):                                  7098.74
+--------------------------------------------------------------------------------
+Power per 1.0 sec (W): [1038.95, 674.0, 13570720145.87, 674.0, 674.0, 26268255208.35, 674.0, 674.0, 22325649999.09, 674.0, 674.0, 13687031451.57, 674.0, 674.0, 13687266152.37, 674.0, 674.0, 15044010160.14, 674.0, 674.0, 16389128011.81, 674.0, 674.0, 18336902568.64, 674.0, 674.0, 13706446148.45, 674.0, 674.0, 13707207578.95, 674.0, 674.0, 14164205207.73, 674.0, 674.0, 17785233043.83, 674.0, 674.0, 379941032090.79, 674.0, 674.0, 379936491674.79, 674.0, 674.0, 379936491674.8, 674.0, 674.0, 379936491674.8, 674.0, 674.0, 379936491674.85, 674.0, 674.0, 379936491675.02, 674.0, 674.0, 379936491675.03, 674.0, 674.0, 379936491675.01, 674.0, 674.0, 379936491675.02, 674.0, 674.0, 379936491675.01, 674.0, 674.0, 380064932308.58, 674.0, 674.0, 380064929236.57, 674.0, 674.0, 380064929236.56, 674.0, 674.0, 380089284750.12, 674.0, 674.0, 380096666791.68, 674.0, 674.0, 380096663719.68, 674.0, 674.0, 380096663719.7, 674.0, 674.0, 380096663719.68, 674.0, 674.0, 380096663719.71, 674.0, 674.0, 380096663719.68, 674.0, 674.0, 380096663719.68, 674.0, 674.0, 380096663719.71, 674.0, 674.0, 380096506433.27, 674.0, 674.0, 380096503361.3, 674.0, 674.0, 380096503361.26, 674.0, 674.0, 380096188788.48, 674.0, 674.0, 380096182644.48, 674.0, 674.0, 380096182644.47, 674.0, 1234.45, 1234.45, 1234.45, 1234.45, 1234.45, 1239.83, 1239.83, 1239.83, 1239.83, 1250.91, 1256.62, 1256.62, 1256.69, 1256.69, 1256.69, 1256.69, 1256.69, 1256.69, 1262.51, 1262.51, 1262.51, 1262.51, 1265.53, 1265.53, 1268.53, 1277.72, 1277.72, 1284.01, 1284.01, 1290.42, 1290.42, 1290.42, 1290.42, 1290.42, 1290.42, 1290.42, 1290.42, 1290.42, 1290.42, 1296.98, 1300.31, 1303.68, 1303.68, 1303.68, 1303.68, 1303.68, 1310.52, 1313.99, 1317.5, 1328.28, 1331.96, 1331.96, 1339.43, 1354.89, 1371.1, 1371.1, 1371.1, 1371.1, 1371.1, 1388.09, 1396.9, 1424.06, 1424.06, 1424.06, 1424.06, 1433.66, 1433.66, 1433.66, 1448.75, 1453.91, 1453.91, 1453.91, 1464.45, 1464.45, 1464.45, 1464.45, 1464.45, 1475.28, 1486.39, 1486.39, 1497.83, 1497.83, 1509.59, 1509.59, 1521.7, 1521.7, 1534.16, 1534.16, 1547.0, 1564.72, 1573.85, 1573.85, 1583.17, 1602.41, 1602.41, 1602.41, 1612.34, 1625.05, 1676.77, 1709.36, 1718.6, 1718.6, 1718.6, 1728.01, 1744.07, 1757.28, 1757.28, 1777.71, 1777.71, 1791.76, 1828.52, 1843.91, 1884.25, 1892.65, 1892.65, 1892.65, 1909.85, 1918.63, 1932.05, 1964.47, 1974.03, 1974.03, 1993.57, 2034.47, 2058.61, 2077.98, 2136.46, 2164.39, 2173.94, 2203.35, 2213.41, 2223.6, 2289.95, 2298.92, 2298.92, 2298.92, 2345.32, 2345.32, 2345.32, 2345.32, 2345.32, 2345.32, 2345.32, 2369.54, 2394.88, 2395.52, 2395.52, 2502.73, 2561.94, 2582.44, 2624.8, 2624.8, 2664.57, 2763.99, 2763.99, 2763.99, 2841.97, 2841.97, 2841.97, 2841.97, 2841.97, 2841.97, 2882.82, 2925.23, 2925.23, 2969.3, 3030.55, 3110.88, 3110.88, 3110.88, 3110.88, 3110.88, 3110.88, 3110.88, 3110.79, 3110.59, 3110.59, 3110.59, 3110.59, 3171.95, 3219.89, 3219.89, 3251.28, 3411.9, 3445.06, 3629.24, 3812.21, 3986.68, 4120.08, 4204.41, 4318.03, 4318.03, 4318.03]
+--------------------------------------------------------------------------------
+[95m                                  Instance [0]                                  [0m
+--------------------------------------------------------------------------------
+------------------------------Time to First Token-------------------------------
+Mean TTFT (ms):                                                     62303.60
+Median TTFT (ms):                                                   60286.22
+P99 TTFT (ms):                                                      132421.87
+--------------------Time per Output Token (excl. 1st token)---------------------
+Mean TPOT (ms):                                                     1472.60
+Median TPOT (ms):                                                   884.80
+P99 TPOT (ms):                                                      11927.20
+------------------------------Inter-token Latency-------------------------------
+Mean ITL (ms):                                                      779.68
+Median ITL (ms):                                                    503.44
+P99 ITL (ms):                                                       12819.12
+--------------------------------------------------------------------------------
+Saving each request's information to output file: output/sim_tp16_70b_cohd_cal.csv

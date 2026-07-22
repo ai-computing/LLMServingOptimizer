@@ -1,0 +1,191 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "LLMServingSim cluster_config",
+  "description": "Schema derived from inference_serving/config_builder.py:build_cluster_config(). Used by DSE generator + dry-run validation.",
+  "type": "object",
+  "required": ["num_nodes", "link_bw", "link_latency", "nodes"],
+  "additionalProperties": false,
+  "properties": {
+    "num_nodes": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Must equal len(nodes)."
+    },
+    "link_bw": {
+      "type": "number",
+      "minimum": 0,
+      "description": "Inter-node link bandwidth (GB/s)."
+    },
+    "link_latency": {
+      "type": "number",
+      "minimum": 0,
+      "description": "Inter-node link latency (ns)."
+    },
+    "nodes": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/definitions/Node"}
+    },
+    "cxl_mem": {"$ref": "#/definitions/CxlMem"}
+  },
+
+  "definitions": {
+    "MemoryBlock": {
+      "type": "object",
+      "required": ["mem_size", "mem_bw", "mem_latency"],
+      "properties": {
+        "mem_size":    {"type": "number", "minimum": 0, "description": "GB"},
+        "mem_bw":      {"type": "number", "minimum": 0, "description": "GB/s"},
+        "mem_latency": {"type": "number", "minimum": 0, "description": "ns"}
+      }
+    },
+
+    "CpuMem": {
+      "allOf": [
+        {"$ref": "#/definitions/MemoryBlock"},
+        {
+          "type": "object",
+          "properties": {
+            "pim_config": {
+              "type": "string",
+              "description": "Required when --enable-attn-offloading. Name (no extension) of pim_config/<name>.ini."
+            }
+          }
+        }
+      ]
+    },
+
+    "CxlMem": {
+      "allOf": [
+        {"$ref": "#/definitions/MemoryBlock"},
+        {
+          "type": "object",
+          "properties": {
+            "num_devices": {"type": "integer", "minimum": 1, "default": 1}
+          }
+        }
+      ]
+    },
+
+    "Node": {
+      "type": "object",
+      "required": ["num_instances", "cpu_mem", "instances"],
+      "additionalProperties": false,
+      "properties": {
+        "num_instances": {"type": "integer", "minimum": 1, "description": "Must equal len(instances)."},
+        "cpu_mem":   {"$ref": "#/definitions/CpuMem"},
+        "instances": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"$ref": "#/definitions/Instance"}
+        },
+        "power": {"$ref": "#/definitions/PowerBlock"}
+      }
+    },
+
+    "Instance": {
+      "type": "object",
+      "required": ["model_name", "hardware", "npu_mem", "npu_num", "npu_group", "pd_type"],
+      "additionalProperties": true,
+      "properties": {
+        "model_name": {"type": "string", "description": "HuggingFace model id, e.g. meta-llama/Llama-3.1-8B"},
+        "hardware":   {"type": "string", "description": "Catalog key. Must have a profile under llm_profile/perf_models/<hw>/..."},
+        "npu_mem":    {"$ref": "#/definitions/MemoryBlock"},
+        "npu_num":    {"type": "integer", "minimum": 1},
+        "npu_group":  {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Number of pipeline (PP) stages. Must satisfy npu_group <= npu_num and npu_num % npu_group == 0."
+        },
+        "pd_type":    {"type": ["string", "null"], "enum": [null, "prefill", "decode"]},
+        "placement":  {"$ref": "#/definitions/Placement"}
+      }
+    },
+
+    "Placement": {
+      "type": "object",
+      "properties": {
+        "default": {"$ref": "#/definitions/PlacementSpec"},
+        "block":   {"type": "array", "items": {"$ref": "#/definitions/PlacementSpec"}},
+        "layer":   {"type": "object", "additionalProperties": {"$ref": "#/definitions/PlacementSpec"}}
+      }
+    },
+
+    "PlacementSpec": {
+      "type": "object",
+      "description": "Memory tier per layer/block. Lowercase strings. cxl may carry device index as 'cxl:0'.",
+      "properties": {
+        "weights":      {"type": "string", "pattern": "^(npu|cpu|cxl(:[0-9]+)?)$"},
+        "kv_loc":       {"type": "string", "pattern": "^(npu|cpu|cxl(:[0-9]+)?)$"},
+        "kv_evict_loc": {"type": "string", "pattern": "^(npu|cpu|cxl(:[0-9]+)?)$"}
+      }
+    },
+
+    "PowerBlock": {
+      "type": "object",
+      "required": ["base_node_power", "npu", "cpu", "dram", "link", "nic", "storage"],
+      "properties": {
+        "base_node_power": {"type": "number", "minimum": 0, "description": "W"},
+        "npu": {
+          "type": "object",
+          "minProperties": 1,
+          "description": "Keyed by hardware name. Each hardware appearing in instances[].hardware must have an entry.",
+          "additionalProperties": {
+            "type": "object",
+            "required": ["idle_power", "standby_power", "active_power", "standby_duration"],
+            "properties": {
+              "idle_power":       {"type": "number", "minimum": 0, "description": "W"},
+              "standby_power":    {"type": "number", "minimum": 0, "description": "W"},
+              "active_power":     {"type": "number", "minimum": 0, "description": "W"},
+              "standby_duration": {"type": "number", "minimum": 0, "description": "seconds"}
+            }
+          }
+        },
+        "cpu": {
+          "type": "object",
+          "required": ["idle_power", "active_power", "util"],
+          "properties": {
+            "idle_power":   {"type": "number", "minimum": 0, "description": "W"},
+            "active_power": {"type": "number", "minimum": 0, "description": "W"},
+            "util":         {"type": "number", "minimum": 0, "maximum": 1, "description": "duty cycle 0..1"}
+          }
+        },
+        "dram": {
+          "type": "object",
+          "description": "dimm_size + idle_power required when not using PIM. With --enable-attn-offloading only energy_per_bit is required.",
+          "properties": {
+            "dimm_size":      {"type": "number", "minimum": 0, "description": "GB per DIMM"},
+            "idle_power":     {"type": "number", "minimum": 0, "description": "W"},
+            "energy_per_bit": {"type": "number", "minimum": 0, "description": "pJ/bit"}
+          },
+          "required": ["energy_per_bit"]
+        },
+        "link": {
+          "type": "object",
+          "required": ["num_links", "idle_power", "energy_per_bit"],
+          "properties": {
+            "num_links":      {"type": "integer", "minimum": 0},
+            "idle_power":     {"type": "number", "minimum": 0, "description": "W"},
+            "energy_per_bit": {"type": "number", "minimum": 0, "description": "pJ/bit"}
+          }
+        },
+        "nic": {
+          "type": "object",
+          "required": ["num_nics", "idle_power"],
+          "properties": {
+            "num_nics":   {"type": "integer", "minimum": 0},
+            "idle_power": {"type": "number", "minimum": 0, "description": "W"}
+          }
+        },
+        "storage": {
+          "type": "object",
+          "required": ["num_devices", "idle_power"],
+          "properties": {
+            "num_devices": {"type": "integer", "minimum": 0},
+            "idle_power":  {"type": "number", "minimum": 0, "description": "W"}
+          }
+        }
+      }
+    }
+  }
+}

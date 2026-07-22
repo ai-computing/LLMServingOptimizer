@@ -1,0 +1,15 @@
+{"req_idx": 0, "input_toks": 25, "output_toks": 32, "actual_output_toks": 32, "arrival_time_ns": 0.0, "ttft_ns": 190264906, "tpot_ns": 43081079, "total_latency_ns": 1525795615}
+{"req_idx": 1, "input_toks": 19, "output_toks": 32, "actual_output_toks": 32, "arrival_time_ns": 15000000000.0, "ttft_ns": 80498033, "tpot_ns": 43060030, "total_latency_ns": 1415379723}
+{"req_idx": 2, "input_toks": 91, "output_toks": 32, "actual_output_toks": 32, "arrival_time_ns": 30000000000.0, "ttft_ns": 194460095, "tpot_ns": 43147155, "total_latency_ns": 1532033930}
+{"req_idx": 3, "input_toks": 23, "output_toks": 32, "actual_output_toks": 32, "arrival_time_ns": 45000000000.0, "ttft_ns": 116083744, "tpot_ns": 42802882, "total_latency_ns": 1442986712}
+{"req_idx": 4, "input_toks": 412, "output_toks": 32, "actual_output_toks": 32, "arrival_time_ns": 60000000000.0, "ttft_ns": 190712211, "tpot_ns": 43579646, "total_latency_ns": 1541702196}
+{"req_idx": 5, "input_toks": 8, "output_toks": 32, "actual_output_toks": 32, "arrival_time_ns": 75000000000.0, "ttft_ns": 115621738, "tpot_ns": 42951523, "total_latency_ns": 1447132010}
+{"req_idx": 6, "input_toks": 21, "output_toks": 32, "actual_output_toks": 32, "arrival_time_ns": 90000000000.0, "ttft_ns": 116544209, "tpot_ns": 42813634, "total_latency_ns": 1443781518}
+{"req_idx": 7, "input_toks": 50, "output_toks": 32, "actual_output_toks": 32, "arrival_time_ns": 105000000000.0, "ttft_ns": 59424302, "tpot_ns": 42804319, "total_latency_ns": 1386371012}
+{"req_idx": 8, "input_toks": 12, "output_toks": 32, "actual_output_toks": 32, "arrival_time_ns": 120000000000.0, "ttft_ns": 191413469, "tpot_ns": 51975952, "total_latency_ns": 1802681421}
+{"req_idx": 9, "input_toks": 21, "output_toks": 32, "actual_output_toks": 32, "arrival_time_ns": 135000000000.0, "ttft_ns": 117344115, "tpot_ns": 47743177, "total_latency_ns": 1597398545}
+{"req_idx": 10, "input_toks": 6, "output_toks": 32, "actual_output_toks": 32, "arrival_time_ns": 150000000000.0, "ttft_ns": 116908038, "tpot_ns": 51087853, "total_latency_ns": 1700641419}
+{"req_idx": 11, "input_toks": 31, "output_toks": 32, "actual_output_toks": 32, "arrival_time_ns": 165000000000.0, "ttft_ns": 186803539, "tpot_ns": 49514793, "total_latency_ns": 1721778895}
+{"req_idx": 12, "input_toks": 47, "output_toks": 32, "actual_output_toks": 32, "arrival_time_ns": 180000000000.0, "ttft_ns": 189199280, "tpot_ns": 51486721, "total_latency_ns": 1785298912}
+{"req_idx": 13, "input_toks": 11, "output_toks": 32, "actual_output_toks": 32, "arrival_time_ns": 195000000000.0, "ttft_ns": 187568257, "tpot_ns": 51496445, "total_latency_ns": 1783968629}
+{"req_idx": 14, "input_toks": 299, "output_toks": 32, "actual_output_toks": 0, "arrival_time_ns": 210000000000.0, "ttft_ns": 188383969, "tpot_ns": null, "total_latency_ns": 188394279}

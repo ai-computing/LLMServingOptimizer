@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block content %}
+<header class="page-header">
+    <h1>Sweep History</h1>
+    <p class="sub">All sweeps written to <code>output/web_sweeps/</code>, newest first.</p>
+</header>
+
+<section class="card">
+    {% if sweeps %}
+    <table class="run-table">
+        <thead>
+            <tr>
+                <th>Sweep ID</th>
+                <th>Created</th>
+                <th>State</th>
+                <th>Configs</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for s in sweeps %}
+            <tr>
+                <td><code>{{ s.sweep_id }}</code></td>
+                <td>{{ s.created_at or "—" }}</td>
+                <td><span class="badge badge-{{ s.state }}">{{ s.state }}</span></td>
+                <td>{{ s.config_count }}</td>
+                <td>
+                    <a class="btn-secondary" href="/sweep/{{ s.sweep_id }}">Progress</a>
+                    <a class="btn-secondary" href="/sweep/{{ s.sweep_id }}/results">Results</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p class="hint">No sweeps yet. <a href="/">Create one</a>.</p>
+    {% endif %}
+</section>
+{% endblock %}

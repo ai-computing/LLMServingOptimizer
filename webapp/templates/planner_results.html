@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block content %}
+<header class="page-header">
+    <h1>Planner results <span class="hint">{{ job_id }}</span></h1>
+    <p class="sub">Pareto-ranked candidates. ★ = Pareto front, highlighted row = best by weighted score.</p>
+</header>
+
+<section class="card">
+    <div class="actions">
+        <a id="dl-config" class="btn-primary" href="/api/planner/jobs/{{ job_id }}/download/config">Download best cluster_config.json</a>
+        <a class="btn-secondary" href="/planner">New run</a>
+    </div>
+</section>
+
+<section class="card">
+    <h2>Throughput vs. energy efficiency</h2>
+    <div id="pareto-plot" class="plot-wide" style="min-height:420px"></div>
+    <p id="plot-note" class="hint"></p>
+</section>
+
+<section class="card">
+    <h2>Candidates</h2>
+    <table class="run-table" id="results-table">
+        <thead><tr>
+            <th>Run</th><th>Batch</th><th>Pareto</th><th>SLO</th>
+            <th>TTFT (ms)</th><th>TPOT (ms)</th><th>ITL-p99 (ms)</th>
+            <th>Throughput</th><th>Toks/Wh</th><th>Score</th>
+        </tr></thead>
+        <tbody id="results-body"></tbody>
+    </table>
+</section>
+
+<section class="card">
+    <h2>Report</h2>
+    <pre id="report-md" class="cfg-log" style="white-space:pre-wrap"></pre>
+</section>
+
+<script>window.PLANNER_JOB_ID = "{{ job_id }}";</script>
+{% endblock %}
+{% block scripts %}
+<script src="{{ static('planner_results.js') }}"></script>
+{% endblock %}

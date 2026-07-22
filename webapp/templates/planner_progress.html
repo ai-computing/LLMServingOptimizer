@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block content %}
+<header class="page-header">
+    <h1>Planner run <span class="hint">{{ job_id }}</span></h1>
+    <p class="sub">Stage 1 (MILP) generates candidates; Stage 2 simulates each. Live progress below.</p>
+</header>
+
+<section class="card">
+    <div class="progress-summary">
+        <span>State: <span id="state" class="badge badge-queued">queued</span></span>
+        <span id="counts" style="margin-left: var(--space-md)"></span>
+        <a id="results-link" class="btn-primary" href="/planner/jobs/{{ job_id }}/results"
+           style="display:none; margin-left:auto">View results →</a>
+    </div>
+</section>
+
+<section class="card">
+    <h2>Candidates</h2>
+    <table class="run-table">
+        <thead><tr>
+            <th>Run</th><th>Hardware layout</th><th>Batch</th><th>State</th>
+            <th>TTFT (ms)</th><th>TPOT (ms)</th><th>ITL-p99 (ms)</th>
+            <th>Throughput</th><th>Toks/Wh</th><th>SLO</th>
+        </tr></thead>
+        <tbody id="cand-body"><tr><td colspan="10" class="hint">waiting for Stage 1…</td></tr></tbody>
+    </table>
+</section>
+
+<script>window.PLANNER_JOB_ID = "{{ job_id }}";</script>
+{% endblock %}
+{% block scripts %}
+<script src="{{ static('planner_progress.js') }}"></script>
+{% endblock %}

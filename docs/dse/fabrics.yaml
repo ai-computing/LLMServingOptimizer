@@ -1,0 +1,75 @@
+# 04 — DSE 상호연결망(fabric) 프리셋
+#
+# fabric = 하나의 "물리 박스"의 인터커넥트 토폴로지.
+# DSE는 후보의 TP 차수에 맞춰 이 티어들을 ASTRA-Sim의 hierarchical
+# tp_group_shape 로 자동 분해한다 (config_builder.py: _create_network_config).
+#
+# 구성 원칙:
+#   - tiers: 가장 안쪽(빠른) 계층부터 바깥(느린) 순서로 나열한다.
+#       size       : 이 계층이 묶는 NPU 수 (예: NVLink 쌍 = 2)
+#       bw_gbs     : 단방향 대역폭 (GB/s) — cluster_config link_bw 와 동일 단위
+#       latency_ns : 링크 지연 (ns). 보통 0
+#   - 모든 size 의 곱 = 박스 1대의 총 NPU 수.
+#   - TP=k 후보는 안쪽 티어부터 곱이 k 가 될 때까지 소비한다.
+#       예) tiers=[2,2,2] →  TP2: [2] / TP4: [2,2] / TP8: [2,2,2]
+#   - TP 차수가 티어로 깔끔히 분해되지 않으면(예: TP3) 가장 느린 티어
+#     대역폭을 스칼라로 사용하는 보수적 fallback 으로 내려간다.
+#
+# fabric 을 지정하지 않으면 DSE 는 03_catalog.yaml 의 hw 별
+# interconnect_bw_gbs (이종 구성은 최소값) 를 평면 스칼라로 사용한다.
+
+fabrics:
+
+  # 2-socket 호스트 버스 구조: 노드당 8 NPU, NPU 2개씩 NVLink bridge 로 묶고, 노드간 200G InfiniBand
+  # 로 최대 2 노드(16 NPU)까지. A40 뿐 아니라 이 물리 토폴로지를 쓰는 임의의 NPU 에 적용 가능하다
+  # (티어 대역폭은 A40 NVLink bridge 실측으로 보정됨 — 다른 NPU 는 값 조정 필요).
+  #   - TP<=8 : 한 박스 안 (nvlink/pcie/qpi) — cluster_config/a40_8gpu_tp8_70b_3tier.json 과 동일.
+  #   - TP16  : 4번째 ib 티어를 소비해 노드 경계를 넘는다 → tp_group_shape=[2,2,2,2],
+  #             link_bw=[52.8,24.5,21.0,25.0]. 검증된 cluster_config/a40_16gpu_tp16_70b_4tier*.json
+  #             와 동일한 토폴로지. (size 곱 = 16 = 2 노드 × 8 NPU)
+  2socket_8npu_nvlink_bridge_per_2slot:
+    description: "2-socket host, 8 NPU/node (NVLink bridge per 2): NVLink / intra-NUMA PCIe / cross-socket QPI / cross-node 200G IB"
+    tiers:
+      - {name: nvlink, size: 2, bw_gbs: 52.8, latency_ns: 0}
+      - {name: pcie,   size: 2, bw_gbs: 24.5, latency_ns: 0}
+      - {name: qpi,    size: 2, bw_gbs: 21.0, latency_ns: 0}
+      # 노드 경계: 200 Gbps InfiniBand = 25.0 GB/s 단방향. TP>8 인 후보만 이 티어를 소비한다.
+      # 실제 NCCL IB all-reduce + vLLM TP16 으로 검증 (validation/MULTINODE_TP16_REPORT_KO.md).
+      - {name: ib,     size: 2, bw_gbs: 25.0, latency_ns: 0}
+    # Load-dependent TP all-reduce overhead the bandwidth-only collective misses.
+    # Two tiers, each gated independently in trace_generator.py:_collective_overhead_ns:
+    #   - socket_size=4 : TP group crosses the cross-socket QPI boundary (TP8). TP<=4 untouched.
+    #     Calibrated vs real vLLM on A40 (validation/VALIDATION_A40_REPORT.md):
+    #     closes TP8 70B gap 619.8->305.3 (vLLM 305.8) and 8B +106%->-7.5%.
+    #   - node_size=8 : TP group crosses the cross-node IB boundary (TP16). TP<=8 untouched.
+    #     Calibrated vs real NCCL IB all-reduce + vLLM (validation/MULTINODE_TP16_REPORT_KO.md);
+    #     matches cluster_config/a40_16gpu_tp16_70b_4tier_cohd.json.
+    collective_overhead: {enabled: true, socket_size: 4, floor_ns: 70000, per_token_ns: 10000, node_size: 8, node_floor_ns: 105000, node_per_token_ns: 18000}
+
+  # 위와 동일한 2-socket / 8 NPU-per-node / 노드간 200G IB 구조지만 NVLink 가 없는 버전.
+  # NVLink 를 지원하지 않는 NPU (예: Furiosa RNGD) 용 — 소켓 안 NPU 들은 전부 PCIe 로만 연결된다.
+  #   - pcie: 소켓당 4 NPU 를 PCIe 4.0 x16(32 GB/s 단방향)로 묶음 (RNGD 카탈로그 interconnect_bw_gbs=32 와 동일).
+  #   - qpi : 소켓 간(UPI/QPI). ib: 노드 간 200G InfiniBand.
+  #   분해 예) TP4 → [4](1소켓 내) / TP8 → [4,2](소켓 교차) / TP16 → [4,2,2](노드 교차 IB).
+  2socket_8npu_pcie_only:
+    description: "2-socket host, 8 NPU/node, no NVLink (PCIe-only, e.g. RNGD): PCIe / cross-socket QPI / cross-node 200G IB"
+    tiers:
+      - {name: pcie, size: 4, bw_gbs: 32.0, latency_ns: 0}   # 소켓당 4 NPU, PCIe 4.0 x16
+      - {name: qpi,  size: 2, bw_gbs: 21.0, latency_ns: 0}   # 소켓 간
+      - {name: ib,   size: 2, bw_gbs: 25.0, latency_ns: 0}   # 노드 간 200 Gbps IB
+    # 게이팅 구조는 NVLink 판과 동일(socket_size=4: TP>4 소켓 교차 / node_size=8: TP>8 노드 교차).
+    # 단, overhead 상수는 A40+NVLink 보정값을 상속한 것으로 PCIe-only(RNGD)용 실측 보정은 미완 —
+    # 정량 결과를 신뢰하려면 RNGD all-reduce 실측으로 floor/per_token 재보정 필요.
+    collective_overhead: {enabled: true, socket_size: 4, floor_ns: 70000, per_token_ns: 10000, node_size: 8, node_floor_ns: 105000, node_per_token_ns: 18000}
+
+  # 8-GPU NVLink full mesh (예: A100/H100 SXM DGX 노드의 단일 NVLink 도메인).
+  nvlink_8gpu:
+    description: "8-GPU single NVLink domain (DGX-class SXM node)"
+    tiers:
+      - {name: nvlink, size: 8, bw_gbs: 600.0, latency_ns: 0}
+
+  # PCIe 전용 4-GPU 박스 (NVLink 없는 consumer/workstation).
+  pcie_4gpu:
+    description: "4-GPU PCIe-only box (no NVLink)"
+    tiers:
+      - {name: pcie, size: 4, bw_gbs: 32.0, latency_ns: 0}

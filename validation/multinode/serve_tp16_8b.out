@@ -1,0 +1,7 @@
+==> Ray cluster resources:
+ 1 node_8554b40725b1a2e2abd5c0fe2e3ab7e598b55f4f1e586b4ff9c5fc29
+ 1 node_b197a4e49cd34f810d67e8fb3f99639a493c829f9d503023572b11ee
+ 0.0/16.0 GPU
+==> Launching vLLM serve (TP=16, ray backend) on port 8016 ...
+==> Waiting for server health (up to 20 min: 16-way NCCL/IB init is slow) ...
+vLLM TP16 ready after 27*5s

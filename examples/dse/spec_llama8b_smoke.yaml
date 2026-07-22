@@ -1,0 +1,42 @@
+# Smallest end-to-end DSE smoke test.
+# Pool: A6000 1~2 (cheap homogeneous). Llama-3.1-8B fits in 1 A6000 (16GB < 40GB).
+# Target ≤ 6 candidates so CI can finish in ~3 min on a 20-core box.
+
+resource_pool:
+  items:
+    - hw: A6000
+      min: 1
+      max: 2
+
+model:
+  name: meta-llama/Llama-3.1-8B
+  fp: 16
+
+workload:
+  dataset: dataset/example_trace.jsonl
+  num_req: 5
+  timeout_s: 120
+
+constraints:
+  ttft_p99_ms: null            # no SLO floor for smoke
+  tpot_p99_ms: null
+  itl_p99_ms: null
+  throughput_min_tok_s: null
+  energy_max_wh: null
+
+features:
+  allow_pd_disagg: true
+  prefix_caching: false
+
+search:
+  max_combinations: 6           # cap to ~6
+  sampling_strategy: random
+  random_seed: 42
+
+weights:
+  ttft: 0.3
+  tpot: 0.2
+  throughput: 0.3
+  power: 0.2
+
+top_n: 3

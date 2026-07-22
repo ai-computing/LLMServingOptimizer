@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+{% block content %}
+<header class="page-header">
+    <h1>DSE Results</h1>
+    <p class="sub">Job: <code>{{ job_id }}</code></p>
+</header>
+
+<section class="card">
+    <h2>SLO Filter</h2>
+    <p class="hint">임계값을 조정하면 조건을 만족하는 후보만 아래 표에 표시됩니다. 슬라이더와 숫자 입력이 연동됩니다.</p>
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:var(--space-md); margin-top:10px">
+
+        <div style="display:flex; align-items:center; gap:8px">
+            <span style="min-width:120px; font-size:0.9em">TTFT p99 ≤</span>
+            <input id="slo-ttft" type="range" style="flex:1">
+            <input id="slo-ttft-num" type="number" step="any" style="width:90px">
+            <span class="hint">ms</span>
+        </div>
+
+        <div style="display:flex; align-items:center; gap:8px">
+            <span style="min-width:120px; font-size:0.9em">TPOT p99 ≤</span>
+            <input id="slo-tpot" type="range" style="flex:1">
+            <input id="slo-tpot-num" type="number" step="any" style="width:90px">
+            <span class="hint">ms</span>
+        </div>
+
+        <div style="display:flex; align-items:center; gap:8px">
+            <span style="min-width:120px; font-size:0.9em">Throughput ≥</span>
+            <input id="slo-tp" type="range" style="flex:1">
+            <input id="slo-tp-num" type="number" step="any" style="width:90px">
+            <span class="hint">tok/s</span>
+        </div>
+
+        <div style="display:flex; align-items:center; gap:8px">
+            <span style="min-width:120px; font-size:0.9em">Tok/Wh ≥</span>
+            <input id="slo-tokwh" type="range" style="flex:1">
+            <input id="slo-tokwh-num" type="number" step="any" style="width:90px">
+            <span class="hint">tok/Wh</span>
+        </div>
+
+    </div>
+    <div class="actions" style="margin-top:var(--space-md)">
+        <button id="btn-slo-reset" class="btn-secondary" type="button">Reset filters</button>
+        <span id="slo-count" class="hint"></span>
+    </div>
+</section>
+
+<section class="card">
+    <h2>Ranking Policies</h2>
+    <p class="hint">가중치를 조정하고 Apply Ranking을 클릭하면 재시뮬레이션 없이 점수와 Top-N 순위가 다시 계산됩니다.</p>
+    <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: var(--space-md);">
+        <label>TTFT <input id="rw-ttft" type="range" min="0" max="100" value="20"> <span id="rw-ttft-v">20</span></label>
+        <label>TPOT <input id="rw-tpot" type="range" min="0" max="100" value="20"> <span id="rw-tpot-v">20</span></label>
+        <label>Throughput <input id="rw-tp" type="range" min="0" max="100" value="20"> <span id="rw-tp-v">20</span></label>
+        <label>Energy <input id="rw-power" type="range" min="0" max="100" value="20"> <span id="rw-power-v">20</span></label>
+        <label>Tok/Wh <input id="rw-tokwh" type="range" min="0" max="100" value="20"> <span id="rw-tokwh-v">20</span></label>
+    </div>
+    <div class="cc-row" style="margin-top: var(--space-md)">
+        <button id="btn-rerank" class="btn-primary" type="button">Apply Ranking</button>
+    </div>
+</section>
+
+<section class="card">
+    <h2>Candidate Ranking <span id="top-n-label" class="hint"></span></h2>
+    <table id="top-n-table" class="matrix-table">
+        <thead><tr>
+            <th>Rank</th><th>Candidate</th><th>Hardware</th><th>Parallelism</th><th>P/D</th>
+            <th>TTFT p99 (ms)</th><th>TPOT p99 (ms)</th><th>Throughput (tok/s)</th><th>Tok/Wh</th><th>Score</th>
+        </tr></thead>
+        <tbody id="top-n-body"></tbody>
+    </table>
+</section>
+
+<section class="card">
+    <h2>Pareto Frontier</h2>
+    <label class="inline-label">X-axis
+        <select id="pareto-x">
+            <option value="p99_ttft_ms" selected>TTFT p99 (ms)</option>
+            <option value="p99_tpot_ms">TPOT p99 (ms)</option>
+            <option value="total_token_tp">Throughput (tok/s)</option>
+            <option value="tok_per_wh">Tok/Wh</option>
+            <option value="total_energy_wh">Energy (Wh)</option>
+        </select>
+    </label>
+    <label class="inline-label">Y-axis
+        <select id="pareto-y">
+            <option value="total_token_tp" selected>Throughput (tok/s)</option>
+            <option value="tok_per_wh">Tok/Wh</option>
+            <option value="p99_ttft_ms">TTFT p99 (ms)</option>
+            <option value="p99_tpot_ms">TPOT p99 (ms)</option>
+            <option value="total_energy_wh">Energy (Wh)</option>
+        </select>
+    </label>
+    <span id="pareto-auto-badge" class="badge-cached" style="display:none">auto</span>
+    <div id="pareto-plot" class="plot plot-wide"></div>
+</section>
+
+<section class="card">
+    <h2>Radar Comparison</h2>
+    <div id="radar-plot" class="plot plot-wide"></div>
+</section>
+
+<section class="card">
+    <h2>Downloads</h2>
+    <div class="actions">
+        <a class="btn-secondary" href="/api/dse/jobs/{{ job_id }}/download.zip">All artifacts (.zip)</a>
+    </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const JOB_ID = {{ job_id|tojson }};
+</script>
+<script src="{{ static('dse_results.js') }}"></script>
+{% endblock %}

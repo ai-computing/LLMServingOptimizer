@@ -1,0 +1,50 @@
+# Example heterogeneous-cluster planner spec.
+# All (hardware, model, tp) combinations below have complete profiles under
+# llm_profile/perf_models/ (verify with: python -m planner.cli --spec <this> --validate-only).
+
+model:
+  name: "meta-llama/Llama-3.1-8B"
+  fp: 16
+
+workload:
+  dataset: "dataset/sharegpt_req100_rate10_llama.jsonl"
+  num_req: 100
+
+topology:
+  nodes:
+    - id: node0
+      devices:
+        - {name: H100,  count: 2, mem_gb: 80}
+        - {name: A6000, count: 4, mem_gb: 48}
+    - id: node1
+      devices:
+        - {name: A5000, count: 2, mem_gb: 24}
+  links:
+    - {src: node0, dst: node1, bandwidth: "200Gbps", latency: "0.0005ms"}
+  intra_node_bandwidth: "600GBps"
+  # Optional hierarchical TP fabric -> cluster_config.tp_group_shape.
+  # tp_group_shape: [2, 2]
+
+profiles:
+  perf_root: "llm_profile/perf_models"
+
+requirements:
+  ttft_ms:    {constraint: "<=", value: 500}
+  tpot_ms:    {constraint: "<=", value: 50}
+  itl_p99_ms: {constraint: "<=", value: 80}
+  objectives:
+    - {metric: throughput,  direction: max, weight: 0.6}
+    - {metric: toks_per_wh, direction: max, weight: 0.4}
+
+search_space:
+  pd_disaggregation: false
+  tp_choices:  [1, 2, 4]
+  pp_choices:  [1]                 # PP is not a cluster_config knob (see PLAN §5.3)
+  xpyd_prefill_range: [1, 4]
+  xpyd_decode_range:  [1, 6]
+  batch_tokens_choices: [2048, 4096]
+
+solver:
+  top_k: 6
+  time_limit_sec: 60
+  pareto_epsilon_steps: 5

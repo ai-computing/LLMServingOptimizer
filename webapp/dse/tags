@@ -1,0 +1,141 @@
+!_TAG_FILE_FORMAT	2	/extended format; --format=1 will not append ;" to lines/
+!_TAG_FILE_SORTED	1	/0=unsorted, 1=sorted, 2=foldcase/
+!_TAG_OUTPUT_EXCMD	mixed	/number, pattern, mixed, or combineV2/
+!_TAG_OUTPUT_FILESEP	slash	/slash or backslash/
+!_TAG_OUTPUT_MODE	u-ctags	/u-ctags or e-ctags/
+!_TAG_PATTERN_LENGTH_LIMIT	96	/0 for no limit/
+!_TAG_PROC_CWD	/home/swsok/inference_test/simulators/LLMServingSim/webapp/dse/	//
+!_TAG_PROGRAM_AUTHOR	Universal Ctags Team	//
+!_TAG_PROGRAM_NAME	Universal Ctags	/Derived from Exuberant Ctags/
+!_TAG_PROGRAM_URL	https://ctags.io/	/official site/
+!_TAG_PROGRAM_VERSION	5.9.0	//
+API 엔드포인트	README.md	/^## API 엔드포인트$/;"	s	chapter:`webapp/dse/` — Design Space Exploration
+CandidateConfig	core/schemas.py	/^class CandidateConfig(BaseModel):$/;"	c
+Constraints	core/schemas.py	/^class Constraints(BaseModel):$/;"	c
+DSE_ROOT	server/routes.py	/^DSE_ROOT = OUTPUT_DIR.parent \/ "dse_jobs"$/;"	v
+FeatureFlags	core/schemas.py	/^class FeatureFlags(BaseModel):$/;"	c
+HwAllocation	core/schemas.py	/^class HwAllocation(BaseModel):$/;"	c
+JobSpec	core/schemas.py	/^class JobSpec(BaseModel):$/;"	c
+ModelSpec	core/schemas.py	/^class ModelSpec(BaseModel):$/;"	c
+ObjectiveWeights	core/schemas.py	/^class ObjectiveWeights(BaseModel):$/;"	c
+PLAN 문서	README.md	/^## PLAN 문서$/;"	s	chapter:`webapp/dse/` — Design Space Exploration
+RankedResults	core/schemas.py	/^class RankedResults(BaseModel):$/;"	c
+ResourcePool	core/schemas.py	/^class ResourcePool(BaseModel):$/;"	c
+SearchConfig	core/schemas.py	/^class SearchConfig(BaseModel):$/;"	c
+SimulationResult	core/schemas.py	/^class SimulationResult(BaseModel):$/;"	c
+Spec 파일 예시	README.md	/^## Spec 파일 예시$/;"	s	chapter:`webapp/dse/` — Design Space Exploration
+WorkloadSpec	core/schemas.py	/^class WorkloadSpec(BaseModel):$/;"	c
+_CATALOG_YAML	core/generator.py	/^_CATALOG_YAML = Path(__file__).resolve().parents[3] \/ "docs" \/ "dse" \/ "03_catalog.yaml"$/;"	v
+_MAX_RETRY_ROUNDS	core/runner.py	/^_MAX_RETRY_ROUNDS = 3$/;"	v
+_MEM_SAFETY	core/stage1_filters.py	/^_MEM_SAFETY = 0.85    # weight shard must fit within 85 % of HBM$/;"	v
+_NS	cli.py	/^    from types import SimpleNamespace as _NS$/;"	x	function:cmd_explore	file:	nameref:unknown:SimpleNamespace
+_OBJECTIVES	core/ranker.py	/^_OBJECTIVES = {$/;"	v
+__all__	server/__init__.py	/^__all__ = ["dse_router"]$/;"	v
+_aggregate_npu_mem_gb	core/generator.py	/^def _aggregate_npu_mem_gb(hw_counts: dict[str, int], hw_meta: dict[str, Any]) -> float:$/;"	f	typeref:typename:float
+_check_range	core/schemas.py	/^    def _check_range(self) -> "HwAllocation":$/;"	m	class:HwAllocation	typeref:typename:"HwAllocation"
+_coarse_memory_prune	core/generator.py	/^def _coarse_memory_prune(hw_counts: dict[str, int], model_meta: dict[str, Any],$/;"	f	typeref:typename:bool
+_collect_results	core/runner.py	/^def _collect_results($/;"	f	typeref:typename:list[SimulationResult]
+_config_spec_to_candidate	core/generator.py	/^def _config_spec_to_candidate($/;"	f	typeref:typename:CandidateConfig
+_dominates	core/ranker.py	/^def _dominates(a: list[float], b: list[float], directions: list[str]) -> bool:$/;"	f	typeref:typename:bool
+_enumerate_hw_counts	core/generator.py	/^def _enumerate_hw_counts(spec: JobSpec) -> list[dict[str, int]]:$/;"	f	typeref:typename:list[dict[str,int]]
+_execute_job	server/routes.py	/^async def _execute_job(job_id: str, spec: JobSpec) -> None:$/;"	f	typeref:typename:None
+_find_cached	server/routes.py	/^def _find_cached(spec_hash: str) -> str | None:$/;"	f	typeref:typename:str|None
+_hw_counts_to_instance_groups	core/generator.py	/^def _hw_counts_to_instance_groups($/;"	f	typeref:typename:list[dict]
+_hw_signature	core/ranker.py	/^def _hw_signature(result: SimulationResult, candidates_by_label: dict[str, Any]) -> tuple:$/;"	f	typeref:typename:tuple
+_job_dir	server/routes.py	/^def _job_dir(job_id: str) -> Path:$/;"	f	typeref:typename:Path
+_list_jobs	server/routes.py	/^def _list_jobs() -> list[dict]:$/;"	f	typeref:typename:list[dict]
+_load_candidates_meta	server/routes.py	/^def _load_candidates_meta(job_dir: Path) -> dict[str, dict]:$/;"	f	typeref:typename:dict[str,dict]
+_load_spec	server/routes.py	/^def _load_spec(job_dir: Path) -> JobSpec:$/;"	f	typeref:typename:JobSpec
+_min_mem_bw_gbs	core/stage1_filters.py	/^def _min_mem_bw_gbs(hw_counts: dict[str, int], hw_meta: dict) -> float:$/;"	f	typeref:typename:float
+_min_mem_gb	core/stage1_filters.py	/^def _min_mem_gb(hw_counts: dict[str, int], hw_meta: dict) -> float:$/;"	f	typeref:typename:float
+_non_empty	core/schemas.py	/^    def _non_empty(self) -> "ResourcePool":$/;"	m	class:ResourcePool	typeref:typename:"ResourcePool"
+_normalize	core/schemas.py	/^    def _normalize(self) -> "ObjectiveWeights":$/;"	m	class:ObjectiveWeights	typeref:typename:"ObjectiveWeights"
+_normalize_minmax	core/ranker.py	/^def _normalize_minmax(values: list[float], direction: str) -> list[float]:$/;"	f	typeref:typename:list[float]
+_now_id	cli.py	/^def _now_id(name: str = "dse") -> str:$/;"	f	typeref:typename:str
+_now_id	server/routes.py	/^def _now_id(name: str = "dse") -> str:$/;"	f	typeref:typename:str
+_sample	core/generator.py	/^def _sample($/;"	f	typeref:typename:list[CandidateConfig]
+_spec_hash	server/routes.py	/^def _spec_hash(spec: JobSpec) -> str:$/;"	f	typeref:typename:str
+_total_tdp_w	core/stage1_filters.py	/^def _total_tdp_w(hw_counts: dict[str, int], hw_meta: dict) -> float:$/;"	f	typeref:typename:float
+_weight_gb	core/stage1_filters.py	/^def _weight_gb(model_meta: dict, fp: int) -> float:$/;"	f	typeref:typename:float
+`webapp/dse/` — Design Space Exploration	README.md	/^# `webapp\/dse\/` — Design Space Exploration$/;"	c
+allow_cxl	core/schemas.py	/^    allow_cxl: bool = False$/;"	v	class:FeatureFlags	typeref:typename:bool
+allow_pd_disagg	core/schemas.py	/^    allow_pd_disagg: bool = True$/;"	v	class:FeatureFlags	typeref:typename:bool
+allow_pim	core/schemas.py	/^    allow_pim: bool = False$/;"	v	class:FeatureFlags	typeref:typename:bool
+api_catalog	server/routes.py	/^async def api_catalog() -> JSONResponse:$/;"	f	typeref:typename:JSONResponse
+api_create_job	server/routes.py	/^async def api_create_job(spec: JobSpec, background: BackgroundTasks) -> JSONResponse:$/;"	f	typeref:typename:JSONResponse
+api_delete_job	server/routes.py	/^async def api_delete_job(job_id: str) -> JSONResponse:$/;"	f	typeref:typename:JSONResponse
+api_download_zip	server/routes.py	/^async def api_download_zip(job_id: str) -> StreamingResponse:$/;"	f	typeref:typename:StreamingResponse
+api_dry_run	server/routes.py	/^async def api_dry_run(spec: JobSpec) -> JSONResponse:$/;"	f	typeref:typename:JSONResponse
+api_events	server/routes.py	/^async def api_events(job_id: str) -> StreamingResponse:$/;"	f	typeref:typename:StreamingResponse
+api_get_job	server/routes.py	/^async def api_get_job(job_id: str) -> JSONResponse:$/;"	f	typeref:typename:JSONResponse
+api_get_results	server/routes.py	/^async def api_get_results(job_id: str) -> JSONResponse:$/;"	f	typeref:typename:JSONResponse
+api_list_jobs	server/routes.py	/^async def api_list_jobs() -> JSONResponse:$/;"	f	typeref:typename:JSONResponse
+api_rerank	server/routes.py	/^async def api_rerank(job_id: str, body: dict) -> JSONResponse:$/;"	f	typeref:typename:JSONResponse
+apply_stage1_filters	core/stage1_filters.py	/^def apply_stage1_filters($/;"	f	typeref:typename:tuple[list[Any],dict[str,int]]
+attn_offloading	core/schemas.py	/^    attn_offloading: bool = False$/;"	v	class:FeatureFlags	typeref:typename:bool
+build_power_template_from_catalog	core/config_builder.py	/^def build_power_template_from_catalog($/;"	f	typeref:typename:dict[str,Any]|None
+check_candidate	core/stage1_filters.py	/^def check_candidate($/;"	f	typeref:typename:bool
+cluster_config_path	core/schemas.py	/^    cluster_config_path: Optional[str] = None$/;"	v	class:SimulationResult	typeref:typename:Optional[str]
+cmd_explore	cli.py	/^def cmd_explore(args: argparse.Namespace) -> int:$/;"	f	typeref:typename:int
+compute_scores	core/ranker.py	/^def compute_scores(results: list[SimulationResult],$/;"	f	typeref:typename:None
+constraints	core/schemas.py	/^    constraints: Constraints = Field(default_factory=Constraints)$/;"	v	class:JobSpec	typeref:typename:Constraints
+dataset	core/schemas.py	/^    dataset: Optional[str] = None$/;"	v	class:WorkloadSpec	typeref:typename:Optional[str]
+dry_run_detail	core/generator.py	/^def dry_run_detail($/;"	f	typeref:typename:tuple[int,int,list[dict]]
+dry_run_validate	core/config_builder.py	/^def dry_run_validate(cluster_json_path: Path) -> tuple[bool, str | None]:$/;"	f	typeref:typename:tuple[bool,str|None]
+dse_router	server/routes.py	/^dse_router = APIRouter()$/;"	v
+energy_max_wh	core/schemas.py	/^    energy_max_wh: Optional[float] = Field(None, ge=0)$/;"	v	class:Constraints	typeref:typename:Optional[float]
+error	core/schemas.py	/^    error: Optional[str] = None$/;"	v	class:SimulationResult	typeref:typename:Optional[str]
+event_stream	server/routes.py	/^    async def event_stream():$/;"	f	function:api_events	file:
+features	core/schemas.py	/^    features: FeatureFlags = Field(default_factory=FeatureFlags)$/;"	v	class:JobSpec	typeref:typename:FeatureFlags
+filter_kv_heads	core/stage1_filters.py	/^def filter_kv_heads($/;"	f	typeref:typename:str|None
+filter_memory	core/stage1_filters.py	/^def filter_memory($/;"	f	typeref:typename:str|None
+filter_power	core/stage1_filters.py	/^def filter_power($/;"	f	typeref:typename:str|None
+filter_roofline_decode	core/stage1_filters.py	/^def filter_roofline_decode($/;"	f	typeref:typename:str|None
+filter_slo	core/ranker.py	/^def filter_slo(results: list[SimulationResult], cons: Constraints) -> None:$/;"	f	typeref:typename:None
+filter_tokwh_roofline	core/stage1_filters.py	/^def filter_tokwh_roofline($/;"	f	typeref:typename:str|None
+fp	core/schemas.py	/^    fp: Literal[8, 16, 32] = 16$/;"	v	class:ModelSpec	typeref:typename:Literal[8, 16, 32]
+generate_candidates	core/generator.py	/^def generate_candidates($/;"	f	typeref:typename:list[CandidateConfig]
+itl_p99_ms	core/schemas.py	/^    itl_p99_ms: Optional[float] = Field(None, ge=0)$/;"	v	class:Constraints	typeref:typename:Optional[float]
+load_metadata	core/generator.py	/^def load_metadata() -> dict[str, Any]:$/;"	f	typeref:typename:dict[str,Any]
+log_path	core/schemas.py	/^    log_path: Optional[str] = None$/;"	v	class:SimulationResult	typeref:typename:Optional[str]
+main	cli.py	/^def main() -> int:$/;"	f	typeref:typename:int
+max	core/schemas.py	/^    max: int = Field(..., ge=0)$/;"	v	class:HwAllocation	typeref:typename:int
+max_combinations	core/schemas.py	/^    max_combinations: int = Field(20, ge=1)$/;"	v	class:SearchConfig	typeref:typename:int
+meets_slo	core/schemas.py	/^    meets_slo: bool = True$/;"	v	class:SimulationResult	typeref:typename:bool
+metrics	core/schemas.py	/^    metrics: dict[str, Any] = Field(default_factory=dict)$/;"	v	class:SimulationResult	typeref:typename:dict[str, Any]
+min	core/schemas.py	/^    min: int = Field(0, ge=0)$/;"	v	class:HwAllocation	typeref:typename:int
+model_config	core/schemas.py	/^    model_config = {"arbitrary_types_allowed": True}$/;"	v	class:CandidateConfig
+num_req	core/schemas.py	/^    num_req: int = Field(100, ge=1)$/;"	v	class:WorkloadSpec	typeref:typename:int
+on_pareto	core/schemas.py	/^    on_pareto: bool = False$/;"	v	class:SimulationResult	typeref:typename:bool
+pareto_frontier	core/ranker.py	/^def pareto_frontier(results: list[SimulationResult],$/;"	f	typeref:typename:list[int]
+power	core/schemas.py	/^    power: float = Field(0.25, ge=0)$/;"	v	class:ObjectiveWeights	typeref:typename:float
+power_max_w	core/schemas.py	/^    power_max_w: Optional[float] = Field(None, ge=0)$/;"	v	class:Constraints	typeref:typename:Optional[float]
+prefix_caching	core/schemas.py	/^    prefix_caching: bool = False$/;"	v	class:FeatureFlags	typeref:typename:bool
+random_seed	core/schemas.py	/^    random_seed: int = 0$/;"	v	class:SearchConfig	typeref:typename:int
+rank_candidates	core/ranker.py	/^def rank_candidates($/;"	f	typeref:typename:RankedResults
+raw_csv_path	core/schemas.py	/^    raw_csv_path: Optional[str] = None$/;"	v	class:SimulationResult	typeref:typename:Optional[str]
+run_dse_job	core/runner.py	/^async def run_dse_job($/;"	f	typeref:typename:list[SimulationResult]
+run_dse_job_sync	core/runner.py	/^def run_dse_job_sync($/;"	f	typeref:typename:list[SimulationResult]
+sampling_strategy	core/schemas.py	/^    sampling_strategy: Literal["random", "grid"] = "random"$/;"	v	class:SearchConfig	typeref:typename:Literal["random", "grid"]
+score	core/schemas.py	/^    score: Optional[float] = None$/;"	v	class:SimulationResult	typeref:typename:Optional[float]
+search	core/schemas.py	/^    search: SearchConfig = Field(default_factory=SearchConfig)$/;"	v	class:JobSpec	typeref:typename:SearchConfig
+sub_batch_interleaving	core/schemas.py	/^    sub_batch_interleaving: bool = False$/;"	v	class:FeatureFlags	typeref:typename:bool
+throughput	core/schemas.py	/^    throughput: float = Field(0.25, ge=0)$/;"	v	class:ObjectiveWeights	typeref:typename:float
+throughput_min_tok_s	core/schemas.py	/^    throughput_min_tok_s: Optional[float] = Field(None, ge=0)$/;"	v	class:Constraints	typeref:typename:Optional[float]
+timeout_s	core/schemas.py	/^    timeout_s: Optional[int] = Field(None, ge=10,$/;"	v	class:WorkloadSpec	typeref:typename:Optional[int]
+tokwh	core/schemas.py	/^    tokwh: float = Field(0.0, ge=0,$/;"	v	class:ObjectiveWeights	typeref:typename:float
+tokwh_min	core/schemas.py	/^    tokwh_min: Optional[float] = Field(None, ge=0,$/;"	v	class:Constraints	typeref:typename:Optional[float]
+top_n	core/ranker.py	/^def top_n(results: list[SimulationResult], n: int,$/;"	f	typeref:typename:list[int]
+top_n	core/schemas.py	/^    top_n: int = Field(5, ge=1)$/;"	v	class:JobSpec	typeref:typename:int
+total_max_npus	core/schemas.py	/^    total_max_npus: Optional[int] = Field(None, ge=1,$/;"	v	class:ResourcePool	typeref:typename:Optional[int]
+tpot	core/schemas.py	/^    tpot: float = Field(0.25, ge=0)$/;"	v	class:ObjectiveWeights	typeref:typename:float
+tpot_p99_ms	core/schemas.py	/^    tpot_p99_ms: Optional[float] = Field(None, ge=0)$/;"	v	class:Constraints	typeref:typename:Optional[float]
+ttft	core/schemas.py	/^    ttft: float = Field(0.25, ge=0)$/;"	v	class:ObjectiveWeights	typeref:typename:float
+ttft_p99_ms	core/schemas.py	/^    ttft_p99_ms: Optional[float] = Field(None, ge=0)$/;"	v	class:Constraints	typeref:typename:Optional[float]
+weights	core/schemas.py	/^    weights: ObjectiveWeights = Field(default_factory=ObjectiveWeights)$/;"	v	class:JobSpec	typeref:typename:ObjectiveWeights
+write_candidate_cluster_json	core/config_builder.py	/^def write_candidate_cluster_json($/;"	f	typeref:typename:Path
+디렉토리 구조	README.md	/^## 디렉토리 구조$/;"	s	chapter:`webapp/dse/` — Design Space Exploration
+모듈 단위 테스트	README.md	/^## 모듈 단위 테스트$/;"	s	chapter:`webapp/dse/` — Design Space Exploration
+빠른 시작 — CLI	README.md	/^## 빠른 시작 — CLI$/;"	s	chapter:`webapp/dse/` — Design Space Exploration
+빠른 시작 — Web UI	README.md	/^## 빠른 시작 — Web UI$/;"	s	chapter:`webapp/dse/` — Design Space Exploration
+알려진 제약 / 알아둘 점	README.md	/^## 알려진 제약 \/ 알아둘 점$/;"	s	chapter:`webapp/dse/` — Design Space Exploration

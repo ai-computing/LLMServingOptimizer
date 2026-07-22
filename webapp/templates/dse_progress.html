@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block content %}
+<header class="page-header">
+    <h1>DSE Progress</h1>
+    <p class="sub">Job: <code>{{ job_id }}</code></p>
+</header>
+
+<section class="card">
+    <div class="actions">
+        <div id="dse-progress-summary" class="progress-summary">Progress: 0/0 done</div>
+        <button id="btn-cancel" class="btn-secondary" type="button">Cancel</button>
+        <a id="btn-results" class="btn-primary disabled" href="/dse/jobs/{{ job_id }}/results">Open Results</a>
+    </div>
+    <div class="progress-bar"><div id="progress-fill" class="progress-fill" style="width: 0%"></div></div>
+</section>
+
+<section class="card">
+    <h2>Live Trade-off (TTFT vs Throughput)</h2>
+    <p class="hint">Each marker = one candidate's completed simulation. Color = total energy (Wh, lower is darker). Click a dot to highlight that candidate in the table below; click again to clear.</p>
+    <div id="dse-live-plot" class="plot plot-wide"></div>
+</section>
+
+<section class="card">
+    <h2>Live Trade-off (Energy vs Throughput)</h2>
+    <p class="hint">Same candidates plotted with Energy on the x-axis. Click/hover interactions mirror the chart above.</p>
+    <div id="dse-energy-plot" class="plot plot-wide"></div>
+</section>
+
+<section class="card">
+    <h2>Live Trade-off (TPOT p99 vs Throughput)</h2>
+    <p class="hint">TPOT p99 on the x-axis (lower is better). Click/hover interactions mirror the charts above.</p>
+    <div id="dse-tpot-plot" class="plot plot-wide"></div>
+</section>
+
+<section class="card">
+    <h2>Live Trade-off (Tokens/Wh vs Throughput)</h2>
+    <p class="hint">Energy efficiency on the x-axis (higher is better). Click/hover interactions mirror the charts above.</p>
+    <div id="dse-tokwh-plot" class="plot plot-wide"></div>
+</section>
+
+<section class="card">
+    <h2>Candidates</h2>
+    <table id="dse-runs" class="matrix-table">
+        <thead><tr><th>Candidate</th><th>Hardware</th><th>State</th><th>TTFT p99 (ms)</th><th>TPOT p99 (ms)</th><th>Throughput (tok/s)</th><th>Energy (Wh)</th><th>Tok/Wh</th><th>Elapsed (s)</th></tr></thead>
+        <tbody id="dse-runs-body"></tbody>
+    </table>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const JOB_ID = {{ job_id|tojson }};
+</script>
+<script src="{{ static('dse_progress.js') }}"></script>
+{% endblock %}

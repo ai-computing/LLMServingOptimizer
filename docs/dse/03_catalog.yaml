@@ -1,0 +1,231 @@
+# 03 — DSE 도구가 참조할 hardware / model 카탈로그
+#
+# 구성 원칙:
+#   - `hardware.<hw>`: 단일 NPU 카드 / 칩의 메타데이터 (DSE의 사전 필터 + power template 생성용)
+#   - `models.<vendor/model>`: HF config.json에서 추출 + 추정 파라미터 수
+#   - `availability`: 어떤 (hw, model, tp) 조합이 perf profile을 가지고 있는지
+#     (build_catalog()와 동일한 정보를 사람이 읽을 수 있는 형태로 정리)
+#
+# 정확성:
+#   - hardware 단가(unit_cost_usd)는 시점에 따라 변동. 참고용
+#   - active_power / idle_power는 vendor spec 또는 nvidia-smi 실측 기준
+#   - peak_flops_fp16_tflops는 vendor spec sheet에서 가져옴
+#   - RNGD idle 37.44 W는 본 프로젝트의 furiosa-smi 측정값 (llm_profile/profiler/power/rngd_power_log.txt)
+
+hardware:
+
+  A100:
+    family: "NVIDIA Ampere (datacenter)"
+    mem_size_gb: 80                       # HBM2e 80 GB (SXM4)
+    mem_bw_gbs: 2000                      # HBM2e, ~2039 GB/s
+    mem_type: "HBM2e"
+    peak_flops_fp16_tflops: 312           # BF16 dense, sparsity disabled
+    tdp_w: 400                            # SXM4 (PCIe는 300W)
+    idle_power_w: 50                      # 추정
+    standby_power_w: 150                  # 추정
+    standby_duration_s: 15                # 추정
+    unit_cost_usd: 15000
+    interconnect_bw_gbs: 600             # NVLink 3.0, 600 GB/s aggregate
+
+  A6000:
+    family: "NVIDIA Ampere"
+    mem_size_gb: 40
+    mem_bw_gbs: 768
+    mem_type: "GDDR6X"
+    peak_flops_fp16_tflops: 309.7        # tensor core, sparsity disabled
+    tdp_w: 300
+    idle_power_w: 25
+    standby_power_w: 115                  # observed cooldown tail
+    standby_duration_s: 18
+    unit_cost_usd: 5000                   # workstation list ~ varies $4500-5500
+    interconnect_bw_gbs: 32              # PCIe 4.0 x16 단방향, NVLink 없음
+    # power profile (cluster_config/single_node_power_instance.json와 일치)
+
+  H100:
+    family: "NVIDIA Hopper"
+    mem_size_gb: 80                       # SXM 80GB / PCIe 80GB. NVL은 94GB
+    mem_bw_gbs: 3350                      # HBM3, SXM 기준. PCIe는 ~2000
+    mem_type: "HBM3"
+    peak_flops_fp16_tflops: 989           # SXM, sparsity disabled (PCIe는 ~756)
+    tdp_w: 700                            # SXM5 (PCIe는 350)
+    idle_power_w: 70                      # PCIe 기준 추정
+    standby_power_w: 250                  # 추정
+    standby_duration_s: 15                # 추정 — H100 실측 필요
+    unit_cost_usd: 30000
+    interconnect_bw_gbs: 900             # NVLink 4.0, 900 GB/s aggregate (SXM 기준)
+
+  RNGD:
+    family: "FuriosaAI Renegade"
+    mem_size_gb: 40                       # HBM3 4×10GB stacks (또는 8×6GB 변형). 변형별 다름
+    mem_bw_gbs: 1500
+    mem_type: "HBM3"
+    peak_flops_fp16_tflops: 256           # vendor spec, ~256 TFLOPS BF16
+    tdp_w: 150
+    idle_power_w: 37.44                   # furiosa-smi 측정 (rngd_power_log.txt)
+    standby_power_w: 38.40                # 거의 idle과 동일 (P-state cooldown 없음)
+    standby_duration_s: 2
+    unit_cost_usd: 8000                   # 추정 (공개 단가 없음)
+    interconnect_bw_gbs: 32              # PCIe 4.0 x16 추정 (공개 스펙 없음)
+
+  RTX3090:
+    family: "NVIDIA Ampere (consumer)"
+    mem_size_gb: 24
+    mem_bw_gbs: 936
+    mem_type: "GDDR6X"
+    peak_flops_fp16_tflops: 142
+    tdp_w: 350
+    idle_power_w: 30
+    standby_power_w: 120                  # 추정
+    standby_duration_s: 18                # 추정 (A6000과 유사 P-state)
+    unit_cost_usd: 1500
+    interconnect_bw_gbs: 16              # PCIe 3.0 x16 단방향 (consumer, NVLink 없음)
+
+  TPU-v6e-1:
+    family: "Google TPU v6e (Trillium)"
+    mem_size_gb: 16                       # per chip
+    mem_bw_gbs: 1640
+    mem_type: "HBM2e"
+    peak_flops_fp16_tflops: 232           # bf16, dense
+    tdp_w: 190                            # 추정 (v6e 공개 스펙 제한적)
+    idle_power_w: 40                      # 추정
+    standby_power_w: 50                   # 추정
+    standby_duration_s: 5                 # 추정
+    unit_cost_usd: null                   # cloud-only (가용 시간 단가는 별도 모델 필요)
+    interconnect_bw_gbs: 460             # ICI (Inter-Chip Interconnect), 460 GB/s
+
+  A5000:
+    family: "NVIDIA Ampere"
+    mem_size_gb: 24                        # GDDR6X 24 GB
+    mem_bw_gbs: 768                        # ~768 GB/s
+    mem_type: "GDDR6X"
+    peak_flops_fp16_tflops: 222.2          # tensor core, sparsity disabled
+    tdp_w: 230
+    idle_power_w: 20                       # 추정
+    standby_power_w: 90                    # 추정 (A6000과 유사 P-state)
+    standby_duration_s: 18                 # 추정
+    unit_cost_usd: 2500                    # workstation list ~ 추정
+    interconnect_bw_gbs: 32               # PCIe 4.0 x16 단방향, NVLink 없음
+
+  A40:
+    family: "NVIDIA Ampere (datacenter / pro-viz)"
+    mem_size_gb: 45                        # 48 GB GDDR6 physical; 45 usable (a40 cluster config과 일치)
+    mem_bw_gbs: 696                        # GDDR6, 696 GB/s
+    mem_type: "GDDR6"
+    peak_flops_fp16_tflops: 149.7          # tensor core, sparsity disabled
+    tdp_w: 300
+    idle_power_w: 15                       # cluster_config/a40_8gpu_tp8_70b_3tier.json과 일치
+    standby_power_w: 18
+    standby_duration_s: 18
+    unit_cost_usd: 4500                    # datacenter/workstation list ~ 변동
+    interconnect_bw_gbs: 112              # NVLink bridge (2-way) ~112 GB/s aggregate. fabric 지정 시 그 값이 우선
+
+# ----------------------------------------------------------------------------
+
+models:
+
+  meta-llama/Llama-3.1-8B:
+    params_b: 8.03
+    hidden_size: 4096
+    num_hidden_layers: 32
+    num_attention_heads: 32
+    num_key_value_heads: 8                # GQA
+    intermediate_size: 14336
+    vocab_size: 128256
+    # weight_size = params_b × bytes_per_param
+    weight_size_fp16_gb: 16               # 8B × 2 bytes
+    weight_size_fp8_gb: 8
+    architecture: "dense decoder"
+
+  meta-llama/Llama-3.1-70B:
+    params_b: 70.6
+    hidden_size: 8192
+    num_hidden_layers: 80
+    num_attention_heads: 64
+    num_key_value_heads: 8
+    intermediate_size: 28672
+    vocab_size: 128256
+    weight_size_fp16_gb: 141
+    weight_size_fp8_gb: 70.5
+    architecture: "dense decoder"
+
+  mistralai/Mixtral-8x7B-v0.1:
+    params_b: 46.7                        # 8 experts × ~7B with sharing
+    active_params_b: 12.9                 # top-2 expert routing
+    hidden_size: 4096
+    num_hidden_layers: 32
+    num_attention_heads: 32
+    num_key_value_heads: 8
+    intermediate_size: 14336
+    num_local_experts: 8
+    num_experts_per_tok: 2
+    vocab_size: 32000
+    weight_size_fp16_gb: 93
+    weight_size_fp8_gb: 46.5
+    architecture: "sparse MoE"
+
+  microsoft/Phi-mini-MoE-instruct:
+    params_b: 3.8                         # 16 experts × ~0.24B
+    active_params_b: 0.48                 # top-2 routing × small experts
+    hidden_size: 4096
+    num_hidden_layers: 32
+    num_attention_heads: 32
+    num_key_value_heads: 8
+    intermediate_size: 960
+    num_local_experts: 16
+    num_experts_per_tok: 2
+    vocab_size: 32064
+    weight_size_fp16_gb: 7.6
+    weight_size_fp8_gb: 3.8
+    architecture: "sparse MoE (compact)"
+
+# ----------------------------------------------------------------------------
+
+# Profile 가용성 — webapp.hardware_catalog.build_catalog()의 출력과 일치.
+# (hardware, model) -> 사용 가능한 tp 값들. tp{N}/predictions/*.csv (or .pkl)이 있어야 함.
+
+availability:
+
+  A100:
+    "meta-llama/Llama-3.1-8B":           [1, 2]
+    "meta-llama/Llama-3.1-70B":          [1, 2, 4]
+
+  A6000:
+    "meta-llama/Llama-3.1-8B":           [1, 2]
+    "microsoft/Phi-mini-MoE-instruct":    [1, 2]
+
+  H100:
+    "meta-llama/Llama-3.1-8B":           [1, 2]      # synthetic predictions (scaled from A6000 — see CLAUDE.md)
+    "meta-llama/Llama-3.1-70B":          [4]         # tp1/tp2는 incomplete (predictions 없음)
+    "mistralai/Mixtral-8x7B-v0.1":       [4]         # tp1/tp2는 incomplete
+
+  RNGD:
+    "meta-llama/Llama-3.1-8B":           [1, 2]      # tp2 extrapolated from tp1 via A6000 ratios
+
+  RTX3090:
+    "meta-llama/Llama-3.1-8B":           []         # layers/attention 디렉토리는 있으나 predictions 누락
+    # 사용 가능한 조합 없음 (incomplete 처리됨)
+
+  TPU-v6e-1:
+    "meta-llama/Llama-3.1-8B":           [1]
+
+  A5000:
+    "meta-llama/Llama-3.1-8B":           [1, 2, 4]
+
+  A40:
+    "meta-llama/Llama-3.1-8B":           [1, 2, 4, 8]
+    "meta-llama/Llama-3.1-70B":          [4, 8]
+
+# ----------------------------------------------------------------------------
+
+# DSE generator 사전 필터 규칙 (요약 — generator.py에서 코드로 구현):
+#
+#   1. (hw, model) ∉ availability → 그 조합 제외
+#   2. tp ∉ availability[hw][model] → 해당 parallelism layout 제외
+#   3. sum(npu_num for inst in instances) × hardware[hw].mem_size_gb < model.weight_size_fp16_gb → 메모리 부족 제외
+#      (실제로는 TP-shard 후 per-NPU 메모리도 검사: weight / tp ≤ mem_size)
+#   4. 모델이 MoE이면 active_params_b 기준, dense는 params_b 기준
+#   5. heterogeneous combined-mode (mixed hw + all pd_type=null) → enumerate.py가 차단
+#   6. heterogeneous P/D with combined > prefill+decode → enumerate.py가 차단
+#
+# DSE generator는 이 카탈로그를 로드 후, webapp.hardware_catalog.build_catalog()와
+# 교차 검증 (불일치 시 build_catalog가 더 정확 — 실제 디렉토리 스캔 결과).

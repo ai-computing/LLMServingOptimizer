@@ -1,0 +1,544 @@
+/* LLMServingSim Web UI — clean minimal CSS */
+
+:root {
+    --primary: #2563eb;
+    --primary-dark: #1d4ed8;
+    --secondary: #475569;
+    --danger: #dc2626;
+    --success: #16a34a;
+    --warning: #d97706;
+    --bg: #f8fafc;
+    --surface: #ffffff;
+    --border: #e2e8f0;
+    --text: #0f172a;
+    --text-muted: #64748b;
+    --code-bg: #f1f5f9;
+    --shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+    --radius: 8px;
+    --space-xs: 4px;
+    --space-sm: 8px;
+    --space-md: 16px;
+    --space-lg: 24px;
+    --space-xl: 32px;
+    --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --font-mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+    margin: 0;
+    padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-sans);
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+a { color: var(--primary); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+h1 { font-size: 24px; margin: 0 0 var(--space-sm) 0; font-weight: 600; }
+h2 { font-size: 18px; margin: 0 0 var(--space-md) 0; font-weight: 600; }
+h3 { font-size: 15px; margin: var(--space-md) 0 var(--space-sm) 0; font-weight: 600; }
+
+code {
+    font-family: var(--font-mono);
+    background: var(--code-bg);
+    padding: 1px 5px;
+    border-radius: 4px;
+    font-size: 0.92em;
+}
+
+/* === Layout === */
+
+.navbar {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 0 var(--space-lg);
+}
+
+.nav-inner {
+    max-width: 1280px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 56px;
+}
+
+.nav-logo {
+    font-weight: 700;
+    font-size: 16px;
+    color: var(--text);
+}
+.nav-logo:hover { text-decoration: none; }
+
+.nav-links a {
+    margin-left: var(--space-lg);
+    color: var(--text-muted);
+    font-weight: 500;
+}
+.nav-links a:hover { color: var(--primary); text-decoration: none; }
+.nav-links a.active {
+    color: var(--primary);
+    border-bottom: 2px solid var(--primary);
+    padding-bottom: 2px;
+}
+
+.container {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: var(--space-lg);
+}
+
+.page-header {
+    margin-bottom: var(--space-lg);
+}
+.page-header .sub {
+    color: var(--text-muted);
+    margin: 0;
+}
+
+.card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: var(--space-lg);
+    margin-bottom: var(--space-lg);
+    box-shadow: var(--shadow);
+}
+
+.hint { color: var(--text-muted); font-size: 13px; margin-top: var(--space-sm); }
+
+/* === Tables === */
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: var(--space-sm) 0;
+}
+
+th, td {
+    text-align: left;
+    padding: var(--space-sm) var(--space-md);
+    border-bottom: 1px solid var(--border);
+    vertical-align: middle;
+}
+
+thead th {
+    background: var(--code-bg);
+    font-weight: 600;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--text-muted);
+}
+
+tbody tr:hover { background: var(--bg); }
+
+.matrix-table td:nth-child(n+4) { font-family: var(--font-mono); text-align: right; padding-right: var(--space-xl); }
+/* Config column (first cell): truncate long heterogeneous labels with
+ * ellipsis so the table never pushes past the card boundary. The full
+ * label is preserved via the `title` attribute set in results.html. */
+.matrix-table td:first-child {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    max-width: 28ch;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.run-table td:nth-child(3) { font-family: var(--font-mono); }
+.cfg-log { font-family: var(--font-mono); font-size: 12px; color: var(--text-muted); max-width: 600px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* === Config Legend (shared across all charts on results page) ===
+ * Swatch + monospace label grid. Items wrap horizontally so 30+ configs
+ * fit gracefully. Each item has a title="" tooltip with the full label. */
+.config-legend {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: var(--space-sm) var(--space-md);
+    margin-top: var(--space-md);
+}
+.config-legend-item {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    min-width: 0;  /* lets ellipsis kick in for the inner label */
+}
+.config-legend-swatch {
+    flex: 0 0 14px;
+    width: 14px;
+    height: 14px;
+    border-radius: 3px;
+    border: 1px solid rgba(0,0,0,0.15);
+}
+.config-legend-label {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* === Forms === */
+
+label {
+    display: block;
+    margin-bottom: var(--space-sm);
+    font-size: 13px;
+    color: var(--text);
+}
+
+input[type=text], input[type=number], select {
+    width: 100%;
+    padding: 6px 10px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-size: 13px;
+    background: var(--surface);
+    color: var(--text);
+    font-family: inherit;
+}
+
+input[type=range] { width: 100%; }
+
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: var(--space-md);
+}
+
+.checkbox-row label, .radio-row label {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-right: var(--space-md);
+    font-weight: normal;
+}
+
+.inline-label {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-sm);
+    margin-right: var(--space-md);
+}
+.inline-label input, .inline-label select { width: auto; }
+
+.scenario-form table.instance-groups td input[type=number] { max-width: 100px; }
+
+/* === Buttons === */
+
+.btn-primary, .btn-secondary, .btn-danger {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    border: 1px solid transparent;
+    border-radius: 6px;
+    font-weight: 500;
+    font-size: 13px;
+    cursor: pointer;
+    font-family: inherit;
+    text-decoration: none;
+    transition: background 0.15s ease;
+}
+
+.btn-primary {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+}
+.btn-primary:hover { background: var(--primary-dark); text-decoration: none; }
+.btn-primary:disabled, .btn-primary.disabled { background: var(--text-muted); border-color: var(--text-muted); cursor: not-allowed; opacity: 0.7; pointer-events: none; }
+
+.btn-secondary {
+    background: var(--surface);
+    color: var(--text);
+    border-color: var(--border);
+}
+.btn-secondary:hover { background: var(--code-bg); text-decoration: none; }
+
+.btn-danger {
+    background: var(--danger);
+    color: white;
+    border-color: var(--danger);
+}
+.btn-danger:hover { background: #b91c1c; text-decoration: none; }
+
+.actions {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+    margin-bottom: var(--space-md);
+    flex-wrap: wrap;
+}
+
+/* === Tab bar === */
+
+.scenario-tabs-section {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+    margin-bottom: var(--space-md);
+    flex-wrap: wrap;
+}
+
+.tab-bar {
+    display: flex;
+    gap: 4px;
+}
+
+.tab-btn {
+    padding: 8px 14px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    border-radius: 6px 6px 0 0;
+    cursor: pointer;
+    font-size: 13px;
+    font-family: inherit;
+    color: var(--text-muted);
+}
+.tab-btn.active {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+    font-weight: 500;
+}
+.tab-btn .tab-close {
+    margin-left: 6px;
+    opacity: 0.7;
+}
+.tab-btn .tab-close:hover { opacity: 1; }
+
+/* === Status badges === */
+
+.badge {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+.badge-queued    { background: #e2e8f0; color: #475569; }
+.badge-running   { background: #dbeafe; color: var(--primary); animation: pulse 1.5s ease-in-out infinite; }
+.badge-done      { background: #dcfce7; color: var(--success); }
+.badge-failed    { background: #fee2e2; color: var(--danger); }
+.badge-cancelled { background: #ffedd5; color: var(--warning); }
+.badge-unknown   { background: #f1f5f9; color: var(--text-muted); }
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50%      { opacity: 0.55; }
+}
+
+/* === Progress bar === */
+
+.progress-bar {
+    height: 8px;
+    background: var(--code-bg);
+    border-radius: 4px;
+    overflow: hidden;
+    margin: var(--space-sm) 0 var(--space-md) 0;
+}
+.progress-fill {
+    height: 100%;
+    background: var(--primary);
+    transition: width 0.3s ease;
+}
+.progress-summary { font-weight: 500; }
+
+/* === Charts === */
+
+.chart-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
+    gap: var(--space-md);
+}
+
+.plot {
+    width: 100%;
+    height: 360px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+}
+.plot-wide { height: 480px; }
+
+/* === Toast === */
+
+.toast-host {
+    position: fixed;
+    top: 24px;
+    right: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    z-index: 1000;
+}
+
+.toast {
+    padding: 10px 16px;
+    border-radius: 6px;
+    background: var(--text);
+    color: white;
+    font-size: 13px;
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.18);
+    animation: toastIn 0.2s ease;
+}
+.toast-success { background: var(--success); }
+.toast-error   { background: var(--danger); }
+.toast-warn    { background: var(--warning); }
+
+@keyframes toastIn {
+    from { opacity: 0; transform: translateY(-8px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+/* === Loading spinner === */
+
+.spinner {
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    border: 2px solid rgba(255,255,255,0.4);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    margin-right: 6px;
+    vertical-align: -2px;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* === Misc === */
+
+.warning-banner {
+    background: #fef3c7;
+    border: 1px solid #fbbf24;
+    color: #92400e;
+    padding: 10px 14px;
+    border-radius: 6px;
+    margin-bottom: var(--space-md);
+    font-size: 13px;
+}
+
+#enum-results .preview-section { margin-top: var(--space-lg); }
+#enum-results .preview-section h3 { margin-top: 0; }
+
+@media (max-width: 720px) {
+    .chart-grid { grid-template-columns: 1fr; }
+    .nav-inner { flex-direction: column; height: auto; padding: var(--space-sm) 0; gap: var(--space-sm); }
+    .container { padding: var(--space-md); }
+}
+
+/* === Cluster Config Builder === */
+
+.cc-row {
+    display: flex;
+    align-items: flex-end;
+    gap: var(--space-md);
+    margin-bottom: var(--space-md);
+    flex-wrap: wrap;
+}
+.cc-row label { margin-bottom: 0; }
+.cc-row label input, .cc-row label select { display: block; margin-top: 4px; width: 100%; }
+
+.cc-node {
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: var(--space-md);
+    margin-bottom: var(--space-md);
+    background: var(--bg);
+}
+.cc-node > header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: var(--space-sm);
+}
+.cc-rm-node {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 18px;
+    color: var(--text-muted);
+    line-height: 1;
+    padding: 0 4px;
+}
+.cc-rm-node:hover { color: var(--danger); }
+
+.cc-inst {
+    display: flex;
+    align-items: flex-end;
+    gap: var(--space-sm);
+    padding: var(--space-sm) 0;
+    border-bottom: 1px solid var(--border);
+    flex-wrap: wrap;
+}
+.cc-inst:last-child { border-bottom: none; }
+.cc-inst > label {
+    margin-bottom: 0;
+    font-size: 12px;
+    white-space: nowrap;
+}
+.cc-inst select { width: auto; }
+.cc-inst .cc-hw    { min-width: 100px; }
+.cc-inst .cc-model { min-width: 200px; }
+.cc-mem-details { font-size: 12px; }
+.cc-mem-details summary { cursor: pointer; color: var(--text-muted); user-select: none; }
+.cc-mem-details input { width: 90px; }
+
+.cc-rm-inst {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 18px;
+    color: var(--text-muted);
+    line-height: 1;
+    padding: 0 4px;
+    align-self: center;
+}
+.cc-rm-inst:hover { color: var(--danger); }
+
+.cc-status { font-size: 13px; }
+.cc-status-ok    { color: var(--success); }
+.cc-status-error { color: var(--danger); white-space: pre-line; }
+
+/* === Best-value highlight in Configuration Matrix === */
+.best-cell {
+    background: #fef08a !important;
+    font-weight: 600;
+}
+
+/* Click-to-highlight: persistent selection (toggle by clicking same dot again).
+ * Soft yellow + 3px primary-color left accent. */
+.row-highlighted {
+    background-color: #fff3bf !important;
+    box-shadow: inset 3px 0 0 var(--primary);
+}
+
+/* Hover preview: temporary tint while the cursor sits on a scatter dot.
+ * Lighter than the click style so a row that's BOTH selected and hovered
+ * still reads as "selected" first (click rule wins via DOM order — but the
+ * background here is intentionally subtler to layer cleanly). */
+.row-hover-preview:not(.row-highlighted) {
+    background-color: rgba(255, 243, 191, 0.45) !important;
+}
+
+/* Simulation cache hit badge shown in the DSE progress table */
+.badge-cached {
+    background: #e6f4ea;
+    color: #1a7431;
+    font-size: 0.72em;
+    font-weight: 600;
+    padding: 1px 5px;
+    border-radius: 3px;
+    vertical-align: middle;
+}

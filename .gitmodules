@@ -1,0 +1,7 @@
+[submodule "backends/legacy"]
+	path = backends/legacy
+	url = https://github.com/ai-computing/LLMServingSim.git
+	branch = backend-legacy
+[submodule "backends/upstream"]
+	path = backends/upstream
+	url = https://github.com/casys-kaist/LLMServingSim.git

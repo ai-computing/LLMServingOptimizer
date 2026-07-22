@@ -1,0 +1,24 @@
+{
+    "num_nodes": 1,
+    "link_bw": [52.8, 24.5],
+    "link_latency": [0, 0],
+    "tp_group_shape": [2, 2],
+    "nodes": [{
+        "num_instances": 1,
+        "cpu_mem": {"mem_size": 256, "mem_bw": 256, "mem_latency": 0},
+        "instances": [{
+            "model_name": "meta-llama/Llama-3.1-70B", "hardware": "A40",
+            "npu_mem": {"mem_size": 45, "mem_bw": 696, "mem_latency": 0},
+            "npu_num": 4, "npu_group": 1, "pd_type": null
+        }],
+        "power": {
+            "base_node_power": 100,
+            "npu": {"A40": {"idle_power": 15, "standby_power": 18, "active_power": 300, "standby_duration": 18}},
+            "cpu": {"idle_power": 10, "active_power": 150, "util": 0.15},
+            "dram": {"dimm_size": 32, "idle_power": 2.0, "energy_per_bit": 6.0},
+            "link": {"num_links": 4, "idle_power": 5, "energy_per_bit": 4.0},
+            "nic": {"num_nics": 1, "idle_power": 20},
+            "storage": {"num_devices": 2, "idle_power": 5}
+        }
+    }]
+}

@@ -1,0 +1,42 @@
+# Phase 5 demo scenario from PLAN_webapp_dse_detail.md §5.4:
+#   "H100 1~4 범위에서 Llama-3.1-70B를 TTFT p99 ≤ 500ms로 서빙하는 최적 조합"
+#
+# Note: H100/Llama-3.1-70B is only profiled at tp4 in this codebase.
+# generator will auto-prune combinations whose memory can't hold 70B fp16 (141 GB).
+# 4× H100 80GB = 320 GB → fits, supports tp4.
+
+resource_pool:
+  items:
+    - hw: H100
+      min: 1
+      max: 4
+  total_max_npus: 8
+
+model:
+  name: meta-llama/Llama-3.1-70B
+  fp: 16
+
+workload:
+  dataset: dataset/sharegpt_req100_rate10_llama.jsonl
+  num_req: 50          # demo: keep it shorter
+  timeout_s: 600       # 70B/H100 sims take longer
+
+constraints:
+  ttft_p99_ms: 500
+  power_max_w: 3000
+
+features:
+  allow_pd_disagg: true
+
+search:
+  max_combinations: 16
+  sampling_strategy: random
+  random_seed: 7
+
+weights:
+  ttft: 0.35
+  tpot: 0.15
+  throughput: 0.35
+  power: 0.15
+
+top_n: 5

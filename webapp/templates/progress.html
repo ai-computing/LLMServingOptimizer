@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block content %}
+<header class="page-header">
+    <h1>Sweep Progress</h1>
+    <p class="sub">Sweep ID: <code>{{ sweep_id }}</code></p>
+</header>
+
+<section class="card">
+    <div class="actions">
+        <div id="progress-summary" class="progress-summary">Progress: 0/0 done</div>
+        <button id="btn-cancel" class="btn-danger" type="button">Cancel</button>
+        <a id="btn-results" class="btn-primary disabled" href="/sweep/{{ sweep_id }}/results">View Results</a>
+    </div>
+    <div class="progress-bar"><div id="progress-fill" class="progress-fill" style="width: 0%"></div></div>
+
+    <table class="run-table" id="run-table">
+        <thead>
+            <tr>
+                <th>Config</th>
+                <th>Status</th>
+                <th>Elapsed</th>
+                <th>Last log line</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for label, entry in status.configs.items() %}
+            <tr data-label="{{ label }}">
+                <td class="cfg-label">{{ label }}</td>
+                <td><span class="badge badge-{{ entry.state }}">{{ entry.state }}</span></td>
+                <td class="cfg-elapsed">—</td>
+                <td class="cfg-log"></td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</section>
+{% endblock %}
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        if (window.LLMSS && LLMSS.initProgressPage) {
+            LLMSS.initProgressPage({{ sweep_id|tojson }}, {{ status_json|safe }});
+        }
+    });
+</script>
+{% endblock %}
