@@ -10,13 +10,16 @@ LLMServingOptimizer/
 │   ├── legacy/        # ai-computing/LLMServingSim fork (branch backend-legacy)
 │   └── upstream/      # casys-kaist/LLMServingSim v1.1+ (pinned)
 ├── sim_backends/      # 백엔드 어댑터 (CLI/config/CSV semantics 차이 흡수)
-├── webapp/            # FastAPI DSE UI  (백엔드 선택 드롭다운)
+├── webapp/            # FastAPI 웹 UI (단일 실행/sweep + dse/ 자동 탐색)
 ├── planner/           # MILP/Max-Flow 서빙 플래너 (spec.backend로 선택)
 ├── tests/             # DSE 서브시스템 pytest
 ├── cluster_config/    # legacy 포맷 구성 (+ upstream/ 하위: 신 포맷)
 ├── dataset/           # 워크로드 jsonl
+├── examples/dse/      # DSE 탐색 spec 예시 (smoke/70B demo)
 ├── profiles/upstream/ # 자체 프로파일한 신포맷 프로파일 (예: A5000)
 ├── validation/        # vLLM 실측 대조 스크립트/리포트
+├── docs/              # 검증 리포트, 설계 문서 (PLAN_*.md)
+├── output/            # 시뮬레이션 결과 (dse_jobs/ 포함)
 └── scripts/setup.sh   # 전체 환경 셋업 (submodule→빌드→venv→심링크)
 ```
 
@@ -25,6 +28,7 @@ LLMServingOptimizer/
 ```bash
 git clone --recurse-submodules <this-repo>
 ./scripts/setup.sh
+pip install -r requirements-planner.txt   # planner 사용 시 (ortools, networkx, pydantic, pandas)
 ```
 
 ## 백엔드 개요
@@ -57,9 +61,31 @@ print(b.parse_stdout(proc.stdout))
 **webapp:** `./scripts/serve_webapp.sh` → http://localhost:8000 — Workload 카드의
 "Simulator backend" 드롭다운으로 선택.
 
-**planner:** spec YAML에 `backend: upstream` 한 줄 추가 (기본 legacy).
+**DSE (자동 설계공간 탐색):** 웹 UI는 http://localhost:8000/dse/explore, CLI는:
+```bash
+python -m webapp.dse.cli explore --spec examples/dse/spec_llama8b_smoke.yaml --job-name smoke
+./scripts/demo_dse.sh    # 위 smoke spec 원라인 데모 + Top-N 출력
+```
+결과는 `output/dse_jobs/<timestamp>-<name>/` (top_n/pareto/all_candidates.json).
+상세: [webapp/dse/README.md](webapp/dse/README.md)
 
-**테스트:** `pytest tests/`
+**planner (이종 클러스터 자원 할당):**
+```bash
+python -m planner.cli --spec planner/specs/example_hetero_8gpu.yaml --validate-only  # spec 검증만
+python -m planner.cli --spec planner/specs/example_hetero_8gpu.yaml --dry-run        # Stage-1만 (시뮬 없음)
+python -m planner.cli --spec planner/specs/example_hetero_8gpu.yaml --out-dir planner_out/ --jobs 8
+```
+spec YAML에 `backend: upstream` 한 줄 추가로 백엔드 선택 (기본 legacy).
+상세: [planner/README.md](planner/README.md)
+
+**DP 파티션 시뮬레이션:** 루트의 `run_dp_partition.py`(DP=N을 N개 단일 인스턴스
+시뮬의 max로 근사) / `run_dp_comparison.py`(실측 vLLM DP 스케일링과 대조).
+
+**테스트:**
+```bash
+pytest tests/            # DSE 서브시스템
+pytest planner/tests/    # planner (MILP solver, renderer, mock evaluator)
+```
 
 ## 주의사항 (검증된 퀴크)
 
