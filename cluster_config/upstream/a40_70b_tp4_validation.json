@@ -1,0 +1,35 @@
+{
+    "num_nodes": 1,
+    "tp_group_shape": [2, 2],
+    "link_bw": [52.8, 24.5],
+    "link_latency": [0, 0],
+    "collective_overhead": {
+        "enabled": true,
+        "floor_ns": 52000,
+        "per_token_ns": 6000
+    },
+    "nodes": [
+        {
+            "num_instances": 1,
+            "cpu_mem": {
+                "mem_size": 128,
+                "mem_bw": 256,
+                "mem_latency": 0
+            },
+            "instances": [
+                {
+                    "model_name": "meta-llama/Llama-3.1-70B",
+                    "hardware": "A40",
+                    "npu_mem": {
+                        "mem_size": 48,
+                        "mem_bw": 696,
+                        "mem_latency": 0
+                    },
+                    "num_npus": 4,
+                    "tp_size": 4,
+                    "pd_type": null
+                }
+            ]
+        }
+    ]
+}
