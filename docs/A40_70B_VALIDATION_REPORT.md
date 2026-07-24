@@ -80,6 +80,37 @@ TP4/TP8 전체 백분위 (개선 후):
 4. **skew 생략 영향 제한적**: 70B 프로파일은 skew 없이 pooled 상수 alpha를 쓰지만 TPOT이 잘 맞음 —
    이 워크로드의 decode kv 분포가 극단적으로 치우치지 않기 때문. 정밀 개선 시 `--only-skew`로 보강 가능.
 
+## NVLink vs PCIe 실측 ablation (vLLM, 70B)
+
+같은 vLLM 벤치를 **NVLink 사용(기본)** vs **`NCCL_P2P_DISABLE=1`(전 채널 SHM, NVLink P2P 비활성)**
+로 실행해 인터커넥트 기여를 격리했다. NVLink-OFF가 실제로 전 채널 SHM으로 바뀜은 NCCL 로그로 확인
+(world=4: 16/16 `via SHM/direct/direct`; NVLink-ON은 `P2P/CUMEM`(NVLink 페어)+`SHM`(tier간) 혼합).
+동일 워크로드·설정, 로컬 Instruct 가중치.
+
+| 지표 | TP4 NVLink | TP4 PCIe(SHM) | Δ | TP8 NVLink | TP8 PCIe(SHM) | Δ |
+|---|---|---|---|---|---|---|
+| Gen tput (tok/s) | 272.2 | 258.5 | **-5.0%** | 164.8 | 223.8 | **+35.8% ⚠︎역전** |
+| TTFT mean (ms) | 2754.6 | 3964.9 | +43.9% | 17330.2 | 9701.9 | **-44.0% ⚠︎역전** |
+| TPOT mean (ms) | 201.7 | 230.9 | +14.4% | 493.1 | 339.8 | **-31.1% ⚠︎역전** |
+| Latency mean (s) | 35.7 | 39.8 | +11.3% | 80.3 | 56.4 | **-29.8% ⚠︎역전** |
+
+(Δ = PCIe 대비 NVLink; 양수 = NVLink 끄면 나빠짐 = NVLink 이득)
+
+**결론:**
+- **TP4 (소켓 내: NVLink 페어 2개 + PCIe 브리지) — NVLink가 도움**. 끄면 gen -5%, TTFT +44%,
+  TPOT +14%, Latency +11%. 프리필(TTFT)은 큰 메시지라 대역폭 지배 → NVLink 이득이 크고(+44%),
+  디코드(TPOT)는 작은 메시지라 latency 지배 → 이득이 중간(+14%). 8B ablation·§ 8B 리포트와 동일 물리.
+- **TP8 (소켓 간: 페어 NVLink + cross-socket SHM) — NVLink가 오히려 손해 (부호 역전)**. 끄면
+  gen **+35.8%**, Latency **-29.8%** 로 더 빠르다. 소켓을 넘는 8-way all-reduce가 빠른 NVLink 홉과
+  느린 SHM 홉이 섞인 **불균형 링**이 되어, 균일 SHM보다 파이프라이닝이 나쁘기 때문(NVSwitch 없는
+  2-소켓 A40의 알려진 현상). legacy §4.6의 70B TP8 결과(NVLink off → gen +29.7%, makespan -24.2%)를
+  독립적으로 재현.
+
+**시뮬 관점 함의**: 이 부호 역전이 **TP8의 collective를 소켓 간 SHM(느린 tier, `link_bw=21`)이
+지배하는 것으로 모델링**한 근거다. 시뮬의 `tp_group_shape=[2,2,2]`에서 가장 느린 tier(QPI/SYS)와
+그 위의 collective-overhead가 TP8의 실제 comm-bound 동작을 재현하며, NVLink(빠른 tier)만으로는
+TP8 성능을 예측할 수 없음을 실측이 직접 뒷받침한다.
+
 ## 개선 여지
 
 - TTFT 큐잉 모델링(§ 8B 리포트와 공통 과제) — TP8 Latency 초과의 주 원인.
@@ -91,5 +122,5 @@ TP4/TP8 전체 백분위 (개선 후):
 - 프로파일: `profiles/upstream/A40/meta-llama/Llama-3.1-70B/bf16/`
 - 클러스터 구성: `cluster_config/upstream/a40_70b_tp{4,8}_validation.json`
 - 시뮬: `output/a40_70b_validation/sim_tp{4,8}.{csv,log}` (+ `_noovh` 개선 전 베이스라인)
-- 실측: `output/a40_70b_validation/bench_tp{4,8}/`
+- 실측: `output/a40_70b_validation/bench_tp{4,8}/` (NVLink) + `bench_tp{4,8}_pcie/` (NVLink OFF ablation)
 - 비교: `output/a40_70b_validation/bench_tp{4,8}/validation/`
