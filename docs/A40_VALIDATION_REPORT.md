@@ -170,6 +170,35 @@ busbw NVLink ~40 / PCIe ~8.8 / QPI ~1 GB/s. QPI floor 71.5µs·per-token≈8µs�
   기준의 정의차 — legacy와 동일하게 TPOT·throughput·순서를 비교 기준으로 삼는다. TP8 Latency
   +21.5% 초과도 이 TTFT 정의차에서 파생.
 
+### 전송 경로 검증 — 실측 NVLink 사용 + 시뮬 대역폭 반영 (2026-07-24)
+
+모델링 전제(NVLink/PCIe/소켓간 위계)가 실제와 일치하는지 양쪽에서 직접 확인했다.
+
+**(A) 실측 vLLM은 NVLink를 사용했다** (`NCCL_DEBUG=INFO` + `nvidia-smi nvlink` 카운터,
+`validation/nvlink_probe.py`). NCCL 토폴로지 탐지가 GPU 페어 링크를 `NVL`(48), 페어 간을
+`PHB`(PCIe, 24), 소켓 간을 `SYS`(16)로 인식:
+
+| TP | GPU 세트 | NCCL 채널 transport | NVLink |
+|---|---|---|---|
+| 2 | 0,1 | 8/8 `P2P/CUMEM` (NVL 링크) | 100% NVLink |
+| 4 | 0–3 | 16 `P2P/CUMEM` + 16 `SHM/direct` | 페어 NVLink + 브리지 SHM |
+| 8 | 0–7 | 8 `P2P/CUMEM` + 8 `SHM/direct` | 페어 NVLink + 소켓간 SHM |
+
+world=2에서 200×32MB all-reduce 동안 GPU0 NVLink Data Tx가 **+6,400 MiB** 증가(실트래픽
+확인). NVSwitch가 없어 TP4/8은 **NVLink 페어 + 나머지 SHM(호스트 경유)** 의 혼합 전송 —
+§ negative scaling의 물리적 원인이자 tier 위계의 근거. (NCCL이 IB 플러그인은 로드하나
+단일 노드라 미사용.)
+
+**(B) 시뮬은 이 tier별 버스 속도를 반영한다 — 단 디코드는 latency-bound**. TP8 시뮬이 생성한
+ASTRA-Sim 입력은 `npus_count=[2,2,2]`, `bandwidth=[52.8,24.5,21.0]`,
+`all-reduce-implementation=["ring","ring","ring"]`(3차원). overhead를 끈 채
+tiered `[52.8,24.5,21.0]` vs uniform `[52.8,52.8,52.8]`로 돌리면 출력이 달라져(→ 대역폭이
+실제 사용됨) 있으나 디코드 TPOT은 **6.1ms vs 5.8ms(~5%)** 로 거의 불변이다. 실측 TPOT은
+99ms — 즉 **대역폭 항은 프리필(큰 메시지)에만 유효하고 디코드 collective 비용은 잡지 못한다**.
+디코드 all-reduce는 작은 메시지라 `메시지/대역폭`이 수 µs에 불과하고 고정 latency floor가
+지배하기 때문(§3.3의 legacy 결론과 동일). 디코드 갭 6→90ms는 전적으로 `collective_overhead`가
+채운다. 이것이 보정이 **계층형 대역폭 + 부하 의존 overhead** 두 부분으로 구성된 이유다.
+
 ## 개선 여지 (다음 단계 후보)
 
 - ~~계층적 링크 모델 + fork의 load-dependent collective-overhead 포팅~~ → **완료(위 "개선 적용" 절)**.
