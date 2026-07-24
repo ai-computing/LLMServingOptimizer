@@ -115,13 +115,69 @@ allreduce가 소켓 간 PCIe/SYS를 타면서 collective 비용이 폭증하기 
    경유 → TTFT 871ms, TPOT 99ms로 TP=4(74ms/21ms)보다 크게 나빠진다. 대규모 TP를 이 하드웨어에서
    쓰면 안 된다는 실측 근거이자, 시뮬이 이를 경고하지 못한다는 한계다.
 
+## 개선 적용: 계층형 토폴로지 + 부하 의존 collective-overhead 포팅 (2026-07-24)
+
+legacy fork의 보정(`validation/HETEROGENEOUS_NETWORK_REPORT_KO.md`)을 upstream에 포팅했다.
+두 부분: (1) `tp_group_shape`로 TP 그룹을 ASTRA-Sim 다차원 위계로 분해(A40 3-tier
+`[2,2,2]`, `link_bw=[52.8,24.5,21.0]` = NVLink/PCIe/QPI 실측 busbw), (2) o_proj·down_proj
+op latency에 `floor_ns + per_token_ns × n_decode`를 더하는 부하 의존 collective-overhead
+(opt-in, 기본 OFF, 미설정 시 트레이스 **바이트 동일** — 회귀 없음 확인).
+
+구현: `serving/core/config_builder.py`(tp_group_shape → `_compute_network_dims`,
+per-tier `link_bw`; `collective_overhead`를 cluster에 전달),
+`serving/core/trace_generator.py`(`_collective_overhead_ns`를 `_emit_layer`의 TP
+all-reduce 레이어에 적용), `serving/__main__.py`(cluster-global 설정 주입).
+(upstream 서브모듈 브랜치 `feat/hetero-collective-overhead`.)
+
+### 상수 캘리브레이션 (이 A40 / vLLM 0.19 / ShareGPT-100)
+
+직접 NCCL all-reduce 실측(`validation/nccl_allreduce_bench.py`)으로 tier별 지연 floor를
+확인: 16 KB(디코드) all-reduce floor = **NVLink 70.7µs / PCIe 52µs / QPI 71.5µs**, 유효
+busbw NVLink ~40 / PCIe ~8.8 / QPI ~1 GB/s. QPI floor 71.5µs·per-token≈8µs는 legacy의
+70µs/10µs를 독립적으로 재확인. 이후 실측 대비 5점 스윕(TPOT·throughput 기준)으로 확정:
+
+| tier(TP) | tp_group_shape | link_bw (GB/s) | collective_overhead (floor / per_token) |
+|---|---|---|---|
+| TP2 (NVLink) | — | 52.8 | 미적용 |
+| TP4 (PCIe) | [2,2] | [52.8, 24.5] | 52µs / 3µs |
+| TP8 (QPI) | [2,2,2] | [52.8, 24.5, 21.0] | 140µs / 20µs |
+
+### 결과 (Diff% = (sim − vLLM)/vLLM, Mean)
+
+| 지표 | | TP1 | TP2 | TP4 | TP8 |
+|---|---|---|---|---|---|
+| **TPOT** | 개선 전 | -0.1% | -9.1% | **-48.2%** | **-93.8%** |
+| | **개선 후** | -0.1% | **-7.1%** | **+5.3%** | **-8.6%** |
+| **Latency** | 개선 전 | -0.1% | -8.8% | **-46.3%** | **-90.8%** |
+| | **개선 후** | -0.1% | -6.9% | **+6.8%** | +21.5% |
+
+### 정성적 개선 — TP4↔TP8 순서 역전 해소
+
+| Latency Mean (s) | TP1 | TP2 | TP4 | TP8 |
+|---|---|---|---|---|
+| vLLM 실측 | 9.34 | 5.08 | 4.75 | **15.76** |
+| 개선 전 (단일 link_bw) | 9.32 | 4.64 | 2.55 | **1.45** ✗ |
+| **개선 후** | 9.32 | 4.73 | 5.07 | **19.14** ✓ |
+
+개선 전 시뮬은 TP가 커질수록 계속 빨라진다고 오판했으나(TP8 1.45s < TP4 2.55s), 개선 후
+**TP8 > TP4의 negative scaling을 실제와 일치하게 재현**한다(TPOT도 TP8 90.4ms ≫ TP4 22.3ms,
+실측 99.0 ≫ 21.2와 일치).
+
+- **TP4가 −46% → +7%로 교정**: 계층형 per-tier link_bw(PCIe 병목 반영) + 소폭 overhead.
+- **TP8 TPOT −94% → −8.6%**: collective-overhead가 소켓 간 QPI all-reduce의 latency floor를
+  임계경로에 주입. TPOT/throughput 기준(legacy와 동일 기준)에서 ±10% 이내.
+- **TTFT는 여전히 과소평가**(TP8 −85%): sim은 연산 완료 기준, 실측은 client 수신(큐잉 포함)
+  기준의 정의차 — legacy와 동일하게 TPOT·throughput·순서를 비교 기준으로 삼는다. TP8 Latency
+  +21.5% 초과도 이 TTFT 정의차에서 파생.
+
 ## 개선 여지 (다음 단계 후보)
 
-- 클러스터 구성에 **계층적 링크 모델** 도입: NVLink 페어 vs PCIe 브리지 vs 소켓간을 구분하는
-  per-dimension `link_bw`(upstream v1.1.0의 multi-dim topology 활용) 또는 실측 NCCL allreduce
-  대역폭/지연으로 캘리브레이션.
-- fork의 load-dependent collective-overhead 모델(commit `49556c6`)을 upstream에 포팅 검토.
-- TP=4/8 `link_bw`를 실측 NCCL allreduce로 역산해 재검증.
+- ~~계층적 링크 모델 + fork의 load-dependent collective-overhead 포팅~~ → **완료(위 "개선 적용" 절)**.
+- **TTFT 모델링**: 현재 sim은 큐잉을 포함한 client-side TTFT를 과소평가(TP8 −85%). TP8 Latency
+  +21.5% 초과도 여기서 파생 — decode 백프레셔로 인한 큐 대기 반영이 다음 과제.
+- **`per_token_ns`의 모델 크기 스케일**(legacy §5.7): 8B에서 캘리브레이션한 상수를 70B 등 다른
+  hidden_size로 옮길 때 per-token은 payload에 비례해 스케일해야 함(floor는 하드웨어 상수로 전이).
+- 멀티노드(TP16, InfiniBand tier) 확장: `tp_group_shape`에 노드 tier 추가 + IB 상수 캘리브레이션.
 
 ## 산출물
 

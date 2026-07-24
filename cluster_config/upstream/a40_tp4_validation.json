@@ -1,7 +1,13 @@
 {
     "num_nodes": 1,
-    "link_bw": 32,
-    "link_latency": 0,
+    "tp_group_shape": [2, 2],
+    "link_bw": [52.8, 24.5],
+    "link_latency": [0, 0],
+    "collective_overhead": {
+        "enabled": true,
+        "floor_ns": 52000,
+        "per_token_ns": 3000
+    },
     "nodes": [
         {
             "num_instances": 1,
