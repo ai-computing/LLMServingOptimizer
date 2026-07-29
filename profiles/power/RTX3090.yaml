@@ -1,0 +1,12 @@
+device:
+  name: RTX3090
+  active_w: 350
+  idle_w: 30
+  mem_gb: 24
+host_overhead:
+  base_w: 250
+  per_device_w: 15
+meta:
+  source: estimate
+  measured_at: '2026-07-29'
+  stack: datasheet/legacy-constant parity

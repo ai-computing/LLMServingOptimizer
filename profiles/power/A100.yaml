@@ -1,0 +1,12 @@
+device:
+  name: A100
+  active_w: 400
+  idle_w: 50
+  mem_gb: 80
+host_overhead:
+  base_w: 250
+  per_device_w: 15
+meta:
+  source: estimate
+  measured_at: '2026-07-29'
+  stack: datasheet/legacy-constant parity

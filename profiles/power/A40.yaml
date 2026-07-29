@@ -1,0 +1,12 @@
+device:
+  name: A40
+  active_w: 300
+  idle_w: 25
+  mem_gb: 48
+host_overhead:
+  base_w: 250
+  per_device_w: 15
+meta:
+  source: estimate
+  measured_at: '2026-07-29'
+  stack: datasheet/legacy-constant parity
