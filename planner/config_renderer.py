@@ -59,7 +59,10 @@ def _build_power_block(hardwares: set[str]) -> dict:
 
 
 def _wants_energy(spec: PlannerSpec) -> bool:
-    return any(o.metric == "toks_per_wh" for o in spec.requirements.objectives)
+    # power_w(min) mode also needs the simulator's power block so Stage-2 can
+    # report sim-energy-based power instead of the profile estimate
+    return any(o.metric in ("toks_per_wh", "power_w")
+               for o in spec.requirements.objectives)
 
 
 def render(
@@ -103,8 +106,9 @@ def render(
                     },
                     "pd_type": inst.pd_type,
                 }
-                if backend == "upstream":
-                    # upstream schema: one TP-t instance = num_npus=t, tp_size=t
+                if backend in ("upstream", "measured"):
+                    # upstream-style schema: one TP-t instance = num_npus=t, tp_size=t
+                    # (the measured backend consumes the same instance shape)
                     entry["num_npus"] = inst.tp
                     entry["tp_size"] = inst.tp
                 else:
@@ -133,7 +137,7 @@ def render(
         json.dump(config, f, indent=2)
 
     bt = batch_tokens if batch_tokens is not None else spec.search_space.batch_tokens_choices[0]
-    if backend == "upstream":
+    if backend in ("upstream", "measured"):
         cli_args = [
             "--cluster-config", rel_config,
             "--dtype", "bfloat16" if str(spec.model.fp) == "16" else "float32",

@@ -14,6 +14,7 @@ log = get_logger("planner.report")
 _CSV_FIELDS = [
     "run_id", "on_pareto", "passed", "score", "batch_tokens",
     "ttft_ms", "tpot_ms", "itl_p99_ms", "throughput_toks_s", "toks_per_wh",
+    "power_w", "power_source", "backend",
     "config_path", "status",
 ]
 
@@ -47,6 +48,9 @@ def write_reports(result: PlannerResult, out_dir: str | Path) -> dict[str, str]:
                 "itl_p99_ms": f"{m.itl_p99_ms:.3f}" if m else "",
                 "throughput_toks_s": f"{m.throughput_toks_s:.2f}" if m else "",
                 "toks_per_wh": f"{m.toks_per_wh:.2f}" if (m and m.toks_per_wh) else "",
+                "power_w": f"{m.power_w:.1f}" if (m and m.power_w is not None) else "",
+                "power_source": m.raw.get("power_source", "") if m else "",
+                "backend": getattr(result.spec, "backend", "legacy"),
                 "config_path": c.config_path,
                 "status": status,
             })
@@ -71,10 +75,24 @@ def write_reports(result: PlannerResult, out_dir: str | Path) -> dict[str, str]:
     if result.dry_run:
         lines.append("> **dry run** — Stage-1 + rendering only (no simulation).")
         lines.append("")
+    lines.append(f"- Backend: **{getattr(result.spec, 'backend', 'legacy')}**")
     lines.append(f"- Candidates rendered: **{len(result.candidates)}**")
     passing = [c for c in result.candidates if c.passed]
     lines.append(f"- Passed SLO: **{len(passing)}**")
     lines.append(f"- Pareto front: **{len(result.pareto)}**")
+    if result.infeasible_report is not None:
+        r = result.infeasible_report
+        lines += [
+            "",
+            "## Infeasible — Stage-1 diagnosis",
+            f"- bottleneck: **{r.bottleneck}**",
+            f"- detail: {r.detail}",
+        ]
+        if r.max_achievable_toks_s is not None:
+            lines.append(f"- max achievable demand: **{r.max_achievable_toks_s:.0f} toks/s** (proxy)")
+        if r.suggestions:
+            lines.append("- suggestions:")
+            lines += [f"  - {s}" for s in r.suggestions]
     if result.best is not None:
         b = result.best
         lines += [
@@ -89,6 +107,11 @@ def write_reports(result: PlannerResult, out_dir: str | Path) -> dict[str, str]:
                 f"- TTFT={m.ttft_ms:.2f} ms, TPOT={m.tpot_ms:.2f} ms, "
                 f"ITL-p99={m.itl_p99_ms:.2f} ms, throughput={m.throughput_toks_s:.1f} tok/s"
             )
+            if m.power_w is not None:
+                lines.append(
+                    f"- power={m.power_w:.1f} W "
+                    f"(source: {m.raw.get('power_source', 'unknown')})"
+                )
     lines += ["", "## All candidates", "", f"See `pareto.csv` ({len(result.candidates)} rows)."]
     md_path.write_text("\n".join(lines) + "\n")
     paths["report_md"] = str(md_path)

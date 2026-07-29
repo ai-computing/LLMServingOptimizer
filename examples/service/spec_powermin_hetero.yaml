@@ -1,0 +1,57 @@
+# P0 example: minimum-power recommendation under an SLO + service-scale demand
+# on a heterogeneous cluster (design doc §4.1, PLAN M4).
+#
+# Workload was synthesized with the M3 synthesizer (deterministic, seed 42):
+#   python -c "from service.workload_synth import ScaleSpec, synthesize; \
+#     synthesize(ScaleSpec(req_per_s=4, duration_s=25, preset='chat', seed=42), \
+#     'examples/service/synth_chat_rate4_25s.jsonl')"
+#
+# Run:
+#   python -m planner.cli --spec examples/service/spec_powermin_hetero.yaml \
+#     --out-dir planner_out/powermin --jobs 4
+
+model:
+  name: "meta-llama/Llama-3.1-8B"
+  fp: 16
+
+workload:
+  dataset: "examples/service/synth_chat_rate4_25s.jsonl"
+  num_req: 30
+
+topology:
+  nodes:
+    - id: node0
+      devices:
+        - {name: H100,  count: 2, mem_gb: 80}
+        - {name: A6000, count: 4, mem_gb: 48}
+    - id: node1
+      devices:
+        - {name: A5000, count: 2, mem_gb: 24}
+  links:
+    - {src: node0, dst: node1, bandwidth: "200Gbps", latency: "0.0005ms"}
+  intra_node_bandwidth: "600GBps"
+
+profiles:
+  perf_root: "llm_profile/perf_models"
+
+requirements:
+  ttft_ms:    {constraint: "<=", value: 2000}
+  tpot_ms:    {constraint: "<=", value: 100}
+  # service scale: 4 chat req/s ~= 2050 toks/s (resolved via the chat preset)
+  demand:
+    req_per_s: 4
+    preset: chat
+  objectives:
+    - {metric: power_w, direction: min, weight: 1.0}
+
+search_space:
+  pd_disaggregation: false
+  tp_choices:  [1, 2]
+  batch_tokens_choices: [2048]
+
+solver:
+  top_k: 4
+  time_limit_sec: 30
+  pareto_epsilon_steps: 3
+
+backend: legacy

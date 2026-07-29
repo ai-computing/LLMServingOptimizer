@@ -13,7 +13,7 @@ from typing import Literal, Optional
 import yaml
 from pydantic import BaseModel, Field, model_validator
 
-from .utils import load_model_config, scan_profile_catalog
+from .utils import LEGACY_ROOT, load_model_config, scan_profile_catalog
 
 VALID_OBJECTIVE_METRICS = {"throughput", "toks_per_wh", "power_w"}
 VALID_CONSTRAINT_METRICS = {"ttft_ms", "tpot_ms", "itl_p99_ms"}
@@ -110,6 +110,26 @@ class DemandSpec(BaseModel):
             )
         return self
 
+    def resolve_toks_per_s(self) -> float:
+        """Fill ``toks_per_s`` from req_per_s x E[in+out] when not given directly.
+
+        ``len_dist`` accepts explicit means ({input_mean, output_mean}); presets
+        resolve through the service-layer synthesizer (lazy import — the planner
+        core stays usable without the service package for direct toks_per_s specs).
+        """
+        if self.toks_per_s is not None:
+            return self.toks_per_s
+        if self.len_dist is not None:
+            per_req = float(self.len_dist.get("input_mean", 0)) + \
+                float(self.len_dist.get("output_mean", 0))
+            if per_req <= 0:
+                raise ValueError("demand.len_dist needs positive input_mean/output_mean")
+            self.toks_per_s = self.req_per_s * per_req
+            return self.toks_per_s
+        from service.workload_synth import demand_toks_per_s  # lazy service import
+        self.toks_per_s = demand_toks_per_s(self.req_per_s, preset=self.preset)
+        return self.toks_per_s
+
 
 class Requirements(BaseModel):
     # hard constraints (optional individually)
@@ -188,7 +208,12 @@ class PlannerSpec(BaseModel):
         except FileNotFoundError as e:
             problems.append(str(e))
 
-        catalog = scan_profile_catalog(Path(self.profiles.perf_root))
+        # relative perf_root is anchored at the legacy backend root (the profile
+        # layout documented in ProfilesSpec), not the caller's CWD
+        perf_root = Path(self.profiles.perf_root)
+        if not perf_root.is_absolute():
+            perf_root = LEGACY_ROOT / perf_root
+        catalog = scan_profile_catalog(perf_root)
         hardwares = {d.name for n in self.topology.nodes for d in n.devices}
         for hw in sorted(hardwares):
             key = (hw, self.model.name)
