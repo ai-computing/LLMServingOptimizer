@@ -1,14 +1,16 @@
-"""Backend registry: ``get_backend("legacy" | "upstream")``."""
+"""Backend registry: ``get_backend("legacy" | "upstream" | "measured")``."""
 from __future__ import annotations
 
 from .base import (BACKENDS_DIR, REPO_ROOT, ClusterSpec, InstanceSpec,
                    NodeSpec, ScenarioSpec, SimBackend)
 from .legacy import LegacyBackend
+from .measured.backend import MeasuredBackend
 from .upstream_v1 import UpstreamBackend
 
 _REGISTRY = {
     "legacy": LegacyBackend,
     "upstream": UpstreamBackend,
+    "measured": MeasuredBackend,
 }
 
 DEFAULT_BACKEND = "legacy"

@@ -168,7 +168,8 @@ def evaluate(
         return Metrics(**{k: v for k, v in d.items() if k != "infeasible"})
 
     run_args = _rebase_path_args(full_args, b.root, absolute=(backend != "legacy"))
-    entry = ["main.py"] if backend == "legacy" else ["-m", "serving"]
+    entry = {"legacy": ["main.py"], "upstream": ["-m", "serving"],
+             "measured": ["-m", "sim_backends.measured"]}[backend]
     cmd = [python_exe or b.python_exe(), *entry, *run_args]
     log.info("running: %s", " ".join(cmd))
     try:
