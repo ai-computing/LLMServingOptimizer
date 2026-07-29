@@ -1,0 +1,12 @@
+device:
+  name: TPU-v6e-1
+  active_w: 200
+  idle_w: 30
+  mem_gb: 32
+host_overhead:
+  base_w: 250
+  per_device_w: 15
+meta:
+  source: estimate
+  measured_at: '2026-07-29'
+  stack: datasheet/legacy-constant parity

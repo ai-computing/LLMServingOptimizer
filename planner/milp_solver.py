@@ -25,6 +25,7 @@ from dataclasses import dataclass
 from ortools.sat.python import cp_model
 
 from .graph_model import device_inventory
+from .power_profiles import device_active_w
 from .spec_schema import PlannerSpec
 from .types import Allocation, Device, Instance
 from .utils import (
@@ -42,10 +43,9 @@ _HW_REL_THROUGHPUT = {
     "H100": 6.0, "A100": 3.0, "A6000": 1.0, "A40": 1.1,
     "A40x": 1.1, "A5000": 0.8, "RTX3090": 0.9, "RNGD": 1.5, "TPU-v6e-1": 2.0,
 }
-_HW_ACTIVE_POWER = {
-    "H100": 700, "A100": 400, "A6000": 300, "A40": 300,
-    "A40x": 300, "A5000": 230, "RTX3090": 350, "RNGD": 150, "TPU-v6e-1": 200,
-}
+# Active power now resolves through planner.power_profiles (profiles/power/*.yaml
+# with a fallback to the legacy constants that used to live here as
+# _HW_ACTIVE_POWER — see power_profiles.LEGACY_ACTIVE_POWER_W).
 # KV-cache headroom assumed available per instance, expressed in tokens, for the
 # memory feasibility proxy (weights + this many tokens of KV must fit).
 _KV_RESERVE_TOKENS = 8192
@@ -110,7 +110,7 @@ def _enumerate_templates(spec: PlannerSpec, inv: list[Device]) -> list[_Template
                         role=role,
                         mem_gb=dev.mem_gb,
                         rel_throughput=_HW_REL_THROUGHPUT.get(dev.hardware, 1.0),
-                        power_w=_HW_ACTIVE_POWER.get(dev.hardware, 300),
+                        power_w=device_active_w(dev.hardware)[0],
                     )
                 )
     return templates
