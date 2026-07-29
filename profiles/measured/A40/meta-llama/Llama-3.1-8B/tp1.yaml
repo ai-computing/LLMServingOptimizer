@@ -1,0 +1,39 @@
+kind: capacity_curve
+hw: A40
+model: meta-llama/Llama-3.1-8B
+tp: 1
+idle_w: 25
+meta:
+  source: derived
+  stack: vllm-0.19
+  measured_at: '2026-07-29'
+  extra:
+    derived_from: validation/vllm_a40_tp1_results.jsonl
+    note: per-request tpot binned by mid-request concurrency; ttft binned by arrival
+      concurrency; curve keyed by in-system request count (incl. engine queue), so
+      admit_cap should stay unset
+points:
+- concurrency: 1
+  thr_toks_s: 20.2
+  ttft_ms: 133.8
+  tpot_ms: 49.5
+  itl_p99_ms: 54.8
+  avg_w: 180
+- concurrency: 65
+  thr_toks_s: 986.9
+  ttft_ms: 432.7
+  tpot_ms: 65.9
+  itl_p99_ms: 119.7
+  avg_w: 231.0
+- concurrency: 94
+  thr_toks_s: 1528.7
+  ttft_ms: 153.2
+  tpot_ms: 61.5
+  itl_p99_ms: 83.0
+  avg_w: 254.0
+- concurrency: 167
+  thr_toks_s: 2086.1
+  ttft_ms: 365.8
+  tpot_ms: 80.1
+  itl_p99_ms: 128.4
+  avg_w: 260

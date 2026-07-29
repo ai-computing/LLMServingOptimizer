@@ -1,0 +1,16 @@
+{
+  "nodes": [
+    {
+      "id": "node0",
+      "instances": [
+        {
+          "model_name": "meta-llama/Llama-3.1-8B",
+          "hardware": "A40",
+          "num_npus": 1,
+          "tp_size": 1
+        }
+      ]
+    }
+  ],
+  "routing": "RR"
+}
