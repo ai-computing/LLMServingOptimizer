@@ -83,9 +83,27 @@ spec YAML에 `backend: upstream` 한 줄 추가로 백엔드 선택 (기본 lega
 
 **테스트:**
 ```bash
-pytest tests/            # DSE 서브시스템
-pytest planner/tests/    # planner (MILP solver, renderer, mock evaluator)
+pytest -m unit                 # 전체 unit 스위트 (시뮬 빌드 불필요)
+pytest -m "unit or sim"        # 마일스톤 DoD: 시뮬 E2E 포함
+pytest tests/                  # DSE 서브시스템만
+pytest planner/tests/          # planner만 (MILP solver, renderer, mock evaluator)
 ```
+
+**전력 최적 서빙 추천 서비스 (`service/` + `sim_backends/measured/`):**
+「모델 + SLO + 규모」 제출 → SLO·수요를 만족하는 **최저 전력** 자원 조합 추천
+→ 확정 시 인벤토리 예약. planner의 power-min 모드(CP-SAT: min Σ전력 s.t.
+처리량 ≥ demand)와 제3 평가 백엔드 `measured`(실측 오라클 + 이벤트 시뮬,
+후보당 수 초·A40 TP1 평균 오차 16% vs upstream 80%)를 사용한다.
+
+```bash
+cp service/cluster_registry.example.yaml cluster_registry.yaml
+./scripts/serve_webapp.sh                    # → http://localhost:8000/service
+# CLI만으로 power-min 플래닝:
+python -m planner.cli --spec examples/service/spec_powermin_hetero.yaml --out-dir planner_out/powermin
+# 3자 대조(measured vs sim vs 실측): scripts/compare_backends.py
+```
+
+자세한 API/캠페인 가이드는 `service/README.md`, 계획서는 `PLAN_power_service.md` 참고.
 
 ## 주의사항 (검증된 퀴크)
 
