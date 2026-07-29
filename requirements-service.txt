@@ -1,0 +1,6 @@
+# Service-layer dependencies (PLAN_power_service.md M0).
+# The planner deps (requirements-planner.txt) are also required.
+fastapi
+uvicorn
+pydantic>=2
+pyyaml
