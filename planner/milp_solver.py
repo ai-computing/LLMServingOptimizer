@@ -25,9 +25,9 @@ from dataclasses import dataclass
 from ortools.sat.python import cp_model
 
 from .graph_model import device_inventory
-from .power_profiles import device_active_w
+from .power_profiles import device_active_w, host_overhead_w
 from .spec_schema import PlannerSpec
-from .types import Allocation, Device, Instance
+from .types import Allocation, Device, InfeasibleReport, Instance
 from .utils import (
     estimate_kv_bytes_per_token,
     estimate_weight_bytes,
@@ -59,6 +59,15 @@ _KV_RESERVE_TOKENS = 8192
 _KV_EXPORT_PER_UNIT_GBPS = 1.0
 # integerization factor for CP-SAT (works in units of 1/_FLOW_SCALE GB/s)
 _FLOW_SCALE = 1000
+
+# --- power-min mode constants (design doc §4.1) ----------------------------
+# Calibration between the unitless Stage-1 throughput proxy and real token
+# rate: tokens/s produced by 1.0 proxy unit (A6000 tp1 serving an 8B model,
+# coarse). Overridable per spec via requirements.demand.proxy_toks_per_unit;
+# Stage 2 remains the final judge of whether demand is truly met.
+_PROXY_TOKS_PER_UNIT = 1000.0
+# headroom sweep granularity: level k requires thr >= demand * (1 + k*delta)
+_HEADROOM_DELTA = 0.10
 
 
 @dataclass(frozen=True)
@@ -275,9 +284,199 @@ def _solve_once(spec, templates, inv, graph, objective, sense, extra=None):
     return counts, thr_val, pwr_val
 
 
+def _is_power_min(spec: PlannerSpec) -> bool:
+    return any(o.metric == "power_w" for o in spec.requirements.objectives)
+
+
+def _demand_proxy_units(spec: PlannerSpec) -> float:
+    """Demand in Stage-1 proxy units (raises when unresolved or absent)."""
+    d = spec.requirements.demand
+    if d is None:
+        raise ValueError("power-min mode requires requirements.demand")
+    if d.toks_per_s is None:
+        raise ValueError(
+            "demand.req_per_s must be resolved to toks_per_s (via the workload "
+            "synthesizer) before Stage-1 solving"
+        )
+    unit = d.proxy_toks_per_unit if d.proxy_toks_per_unit else _PROXY_TOKS_PER_UNIT
+    return d.toks_per_s / unit
+
+
+def _node_host_base_w(spec: PlannerSpec, node_id: str) -> float:
+    """Host base power for one node: spec override, else max of the node's
+    hardware power-profile host_overhead.base_w values, else 0."""
+    node = next((nd for nd in spec.topology.nodes if nd.id == node_id), None)
+    if node is None:
+        return 0.0
+    if node.host_base_w is not None:
+        return float(node.host_base_w)
+    vals = [host_overhead_w(d.name).base_w for d in node.devices]
+    return max(vals) if vals else 0.0
+
+
+def _solve_power_min_level(spec, templates, inv, graph, thr_floor_scaled: int,
+                           host_w: dict[str, float]):
+    """min(device power + host base power) s.t. thr_proxy >= floor.
+
+    Returns (counts, thr_val, pwr_val, host_val) or None if infeasible.
+    ``used[h]`` is a per-node activation boolean: any instance on node h forces
+    used[h]=1 (sum of counts <= device_cap * used); minimization drives it to 0
+    on empty hosts.
+    """
+    model, n, thr_expr, pwr_expr = _build_base_model(spec, templates, inv, graph)
+    model.Add(thr_expr >= thr_floor_scaled)
+
+    host_terms = []
+    used_by_node: dict[str, object] = {}
+    for node_id in sorted({t.node_id for t in templates}):
+        base_w = int(round(host_w.get(node_id, 0.0)))
+        n_on_node = [n[i] for i, t in enumerate(templates) if t.node_id == node_id]
+        if not n_on_node or base_w <= 0:
+            continue
+        cap = sum(d.count for d in inv if d.node_id == node_id)
+        used = model.NewBoolVar(f"used_{node_id}")
+        model.Add(sum(n_on_node) <= max(1, cap) * used)
+        used_by_node[node_id] = used
+        host_terms.append(base_w * used)
+
+    model.Minimize(pwr_expr + sum(host_terms))
+
+    solver = cp_model.CpSolver()
+    solver.parameters.max_time_in_seconds = max(1, spec.solver.time_limit_sec)
+    solver.parameters.num_search_workers = 8
+    status = solver.Solve(model)
+    if status not in (cp_model.OPTIMAL, cp_model.FEASIBLE):
+        return None
+    counts = {i: int(solver.Value(n[i])) for i in n if solver.Value(n[i]) > 0}
+    if not counts:
+        return None
+    thr_val = sum(int(round(templates[i].rel_throughput * templates[i].tp * _THR_SCALE)) * c
+                  for i, c in counts.items())
+    pwr_val = sum(int(round(templates[i].power_w * templates[i].tp)) * c
+                  for i, c in counts.items())
+    active_nodes = {templates[i].node_id for i in counts}
+    host_val = sum(int(round(host_w.get(v, 0.0))) for v in active_nodes)
+    return counts, thr_val, pwr_val, host_val
+
+
+def _diagnose_infeasible(spec, templates, inv, graph,
+                         demand_units: float) -> InfeasibleReport:
+    """Identify which constraint family blocks the power-min model (§6:
+    infeasible is a first-class result)."""
+    unit = (spec.requirements.demand.proxy_toks_per_unit
+            if spec.requirements.demand and spec.requirements.demand.proxy_toks_per_unit
+            else _PROXY_TOKS_PER_UNIT)
+    if not templates:
+        return InfeasibleReport(
+            bottleneck="memory",
+            detail="no instance template fits: every (hardware, tp) combination "
+                   "exceeds per-device memory for this model",
+            suggestions=["allow higher tp in search_space.tp_choices",
+                         "use devices with more memory",
+                         "reduce model size / precision"],
+        )
+    # Is the structural model solvable at all (demand floor removed)?
+    res = _solve_once(spec, templates, inv, graph, "thr", "max")
+    if res is not None:
+        max_units = res[1] / _THR_SCALE
+        if max_units < demand_units:
+            factor = demand_units / max_units if max_units > 0 else float("inf")
+            return InfeasibleReport(
+                bottleneck="demand",
+                detail=(f"demand {demand_units * unit:.0f} toks/s exceeds the max "
+                        f"achievable {max_units * unit:.0f} toks/s (proxy) on the "
+                        f"available inventory"),
+                max_achievable_toks_s=max_units * unit,
+                suggestions=[
+                    f"reduce demand to <= {max_units * unit:.0f} toks/s",
+                    f"add ~{max(0, math.ceil((factor - 1) * 100))}% more device capacity",
+                ],
+            )
+        return InfeasibleReport(
+            bottleneck="structure",
+            detail="demand fits within max achievable throughput yet the joint "
+                   "model is UNSAT (interaction between balance/link constraints)",
+            max_achievable_toks_s=max_units * unit,
+            suggestions=["widen xpyd ranges", "relax link constraints"],
+        )
+    if spec.search_space.pd_disaggregation and graph.number_of_edges() > 0:
+        return InfeasibleReport(
+            bottleneck="links",
+            detail="structural model UNSAT with P/D flow constraints active; "
+                   "cross-node KV link bandwidth is the likely blocker",
+            suggestions=["increase inter-node link bandwidth",
+                         "disable pd_disaggregation",
+                         "co-locate prefill and decode on one node"],
+        )
+    return InfeasibleReport(
+        bottleneck="availability",
+        detail="structural model UNSAT: device availability cannot host any "
+               "allocation for this search space",
+        suggestions=["add devices", "widen tp_choices"],
+    )
+
+
+def _solve_power_min(spec, templates, inv, graph
+                     ) -> tuple[list[Allocation], InfeasibleReport | None]:
+    """Power-min mode: min total power s.t. throughput proxy >= demand, plus a
+    headroom sweep (demand * (1 + k*delta), k = 0..steps-1) for Top-K
+    alternatives with spare capacity. Candidates keep sweep order (increasing
+    headroom); the final ranking is Stage-2's job."""
+    demand_units = _demand_proxy_units(spec)
+    top_k = max(1, spec.solver.top_k)
+    steps = max(1, spec.solver.pareto_epsilon_steps)
+    host_w = {nd.id: _node_host_base_w(spec, nd.id) for nd in spec.topology.nodes}
+
+    seen: set[str] = set()
+    allocations: list[Allocation] = []
+    for k in range(steps):
+        headroom = k * _HEADROOM_DELTA
+        floor_scaled = int(math.ceil(demand_units * (1 + headroom) * _THR_SCALE))
+        res = _solve_power_min_level(spec, templates, inv, graph, floor_scaled, host_w)
+        if res is None:
+            if k == 0:
+                report = _diagnose_infeasible(spec, templates, inv, graph, demand_units)
+                log.warning("Stage-1 power-min infeasible: %s — %s",
+                            report.bottleneck, report.detail)
+                return [], report
+            break  # headroom levels beyond capacity: stop the sweep
+        counts, thr_val, pwr_val, host_val = res
+        alloc = _allocation_from_counts(counts, templates, spec, thr_val / _THR_SCALE)
+        alloc.meta.update({
+            "mode": "power_min",
+            "headroom_frac": round(headroom, 4),
+            "power_proxy_w": pwr_val + host_val,
+            "device_power_w": pwr_val,
+            "host_power_w": host_val,
+            "thr_proxy_units": thr_val / _THR_SCALE,
+            "demand_units": demand_units,
+        })
+        sig = alloc.signature()
+        if sig not in seen:
+            seen.add(sig)
+            allocations.append(alloc)
+        if len(allocations) >= top_k:
+            break
+
+    log.info("Stage-1 power-min produced %d candidate(s) over %d headroom level(s) "
+             "(demand %.2f proxy units)", len(allocations), steps, demand_units)
+    return allocations, None
+
+
 def solve(spec: PlannerSpec, graph=None) -> list[Allocation]:
-    """Return up to ``spec.solver.top_k`` candidate allocations spread across the
-    proxy throughput/power Pareto front via an epsilon-constraint sweep.
+    """Return up to ``spec.solver.top_k`` candidate allocations (see
+    :func:`solve_with_report`; this wrapper drops the infeasibility report)."""
+    return solve_with_report(spec, graph=graph)[0]
+
+
+def solve_with_report(spec: PlannerSpec, graph=None
+                      ) -> tuple[list[Allocation], InfeasibleReport | None]:
+    """Stage-1 entry point.
+
+    * default (max-throughput) mode: epsilon-constraint sweep over the proxy
+      throughput/power front (unchanged pre-M2 behaviour);
+    * power-min mode (objective ``power_w``): min power s.t. demand, with a
+      headroom sweep — and a structured :class:`InfeasibleReport` on UNSAT.
 
     ``graph`` is accepted for API symmetry; if None it is built from the spec.
     """
@@ -289,7 +488,13 @@ def solve(spec: PlannerSpec, graph=None) -> list[Allocation]:
     templates = _enumerate_templates(spec, inv)
     if not templates:
         log.warning("no feasible instance templates (memory/tp constraints too tight)")
-        return []
+        if _is_power_min(spec):
+            return [], _diagnose_infeasible(spec, templates, inv, graph,
+                                            _demand_proxy_units(spec))
+        return [], None
+
+    if _is_power_min(spec):
+        return _solve_power_min(spec, templates, inv, graph)
 
     top_k = max(1, spec.solver.top_k)
     steps = max(1, spec.solver.pareto_epsilon_steps)
@@ -298,7 +503,7 @@ def solve(spec: PlannerSpec, graph=None) -> list[Allocation]:
     hi = _solve_once(spec, templates, inv, graph, "thr", "max")
     if hi is None:
         log.warning("Stage-1 infeasible (no allocation satisfies structural constraints)")
-        return []
+        return [], None
     lo = _solve_once(spec, templates, inv, graph, "pwr", "min")
     p_hi = hi[2]                       # power at max throughput
     p_lo = lo[2] if lo else hi[2]      # min feasible power
@@ -338,4 +543,4 @@ def solve(spec: PlannerSpec, graph=None) -> list[Allocation]:
 
     log.info("Stage-1 produced %d candidate allocation(s) via epsilon-sweep "
              "(power range [%d, %d], %d steps)", len(allocations), p_lo, p_hi, steps)
-    return allocations
+    return allocations, None

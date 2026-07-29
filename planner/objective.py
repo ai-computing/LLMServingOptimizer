@@ -29,6 +29,7 @@ def _metric_value(metrics: Metrics, name: str) -> Optional[float]:
         "itl_p99_ms": metrics.itl_p99_ms,
         "throughput": metrics.throughput_toks_s,
         "toks_per_wh": metrics.toks_per_wh,
+        "power_w": metrics.power_w,
     }.get(name)
 
 

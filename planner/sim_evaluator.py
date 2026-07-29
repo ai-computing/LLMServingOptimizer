@@ -205,6 +205,10 @@ def evaluate(
         metrics.energy_j = energy
         total_out = metrics.raw.get("total_output_tokens", 0.0)
         metrics.toks_per_wh = total_out / (energy / J_PER_WH) if energy else None
+        span_ns = metrics.raw.get("span_ns", 0.0)
+        if span_ns > 0:
+            metrics.power_w = energy / (span_ns / NS_PER_S)
+            metrics.raw["power_source"] = "sim_energy"
 
     cache_file.write_text(json.dumps(metrics.as_row()))
     return metrics
