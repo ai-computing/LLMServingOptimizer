@@ -122,6 +122,10 @@ def run_spec(
     out_dir = Path(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
 
+    # resolve req/s-style demand into toks/s before Stage-1 (M4 wiring)
+    if spec.requirements.demand is not None:
+        spec.requirements.demand.resolve_toks_per_s()
+
     graph = build_graph(spec)
     allocations, infeasible_report = milp_solver.solve_with_report(spec, graph=graph)
     if not allocations:

@@ -65,8 +65,16 @@ def main(argv: list[str] | None = None) -> int:
         print(f"  {k}: {v}")
     if result.best is not None:
         print(f"  best run: {result.best.run_id}")
+        if result.best.metrics and result.best.metrics.power_w is not None:
+            print(f"  best power: {result.best.metrics.power_w:.1f} W "
+                  f"({result.best.metrics.raw.get('power_source', 'unknown')})")
     elif not result.dry_run:
         print("  (no candidate satisfied the SLO constraints)")
+    if result.infeasible_report is not None:
+        r = result.infeasible_report
+        print(f"  INFEASIBLE — bottleneck: {r.bottleneck}: {r.detail}")
+        for s in r.suggestions:
+            print(f"    -> {s}")
     return 0
 
 
