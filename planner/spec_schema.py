@@ -15,7 +15,7 @@ from pydantic import BaseModel, Field, model_validator
 
 from .utils import load_model_config, scan_profile_catalog
 
-VALID_OBJECTIVE_METRICS = {"throughput", "toks_per_wh"}
+VALID_OBJECTIVE_METRICS = {"throughput", "toks_per_wh", "power_w"}
 VALID_CONSTRAINT_METRICS = {"ttft_ms", "tpot_ms", "itl_p99_ms"}
 
 
@@ -38,6 +38,10 @@ class DeviceSpec(BaseModel):
 class NodeSpec(BaseModel):
     id: str
     devices: list[DeviceSpec]
+    # host-level base power (W) counted once when any device on this node is
+    # used (power-min mode). None -> fall back to the power profiles'
+    # host_overhead.base_w (max across this node's hardware types).
+    host_base_w: Optional[float] = Field(default=None, ge=0)
 
 
 class LinkSpec(BaseModel):
@@ -75,6 +79,35 @@ class Objective(BaseModel):
             raise ValueError(
                 f"objective metric '{self.metric}' not in {sorted(VALID_OBJECTIVE_METRICS)}"
             )
+        if self.metric == "power_w" and self.direction != "min":
+            raise ValueError("objective 'power_w' only supports direction: min")
+        return self
+
+
+class DemandSpec(BaseModel):
+    """Service-scale hard constraint (design doc §4.1).
+
+    Either a direct token-rate demand (``toks_per_s``) or a request rate plus a
+    length distribution (``req_per_s`` + ``preset``/``len_dist``, converted to
+    toks_per_s by the workload synthesizer before solving).
+    """
+    toks_per_s: Optional[float] = Field(default=None, gt=0)
+    req_per_s: Optional[float] = Field(default=None, gt=0)
+    preset: Optional[str] = None          # chat | summarize | agentic (service.presets)
+    len_dist: Optional[dict] = None       # {input_mean, output_mean, ...} explicit
+    # calibration: tokens/s produced by 1.0 unit of the Stage-1 throughput proxy
+    # (A6000 tp1 == 1.0 unit). None -> milp_solver._PROXY_TOKS_PER_UNIT.
+    proxy_toks_per_unit: Optional[float] = Field(default=None, gt=0)
+
+    @model_validator(mode="after")
+    def _check(self):
+        if self.toks_per_s is None and self.req_per_s is None:
+            raise ValueError("demand needs toks_per_s or req_per_s")
+        if self.toks_per_s is None and self.preset is None and self.len_dist is None:
+            raise ValueError(
+                "demand.req_per_s needs a length distribution (preset or len_dist) "
+                "to be convertible to toks_per_s"
+            )
         return self
 
 
@@ -83,7 +116,17 @@ class Requirements(BaseModel):
     ttft_ms: Optional[Constraint] = None
     tpot_ms: Optional[Constraint] = None
     itl_p99_ms: Optional[Constraint] = None
+    demand: Optional[DemandSpec] = None
     objectives: list[Objective] = Field(default_factory=list)
+
+    @model_validator(mode="after")
+    def _check_power_min(self):
+        if any(o.metric == "power_w" for o in self.objectives) and self.demand is None:
+            raise ValueError(
+                "objective power_w(min) requires requirements.demand — without a "
+                "demand floor the minimum-power solution is degenerate"
+            )
+        return self
 
 
 class SearchSpace(BaseModel):

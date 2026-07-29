@@ -11,11 +11,11 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Callable, Optional, Union
 
-from . import config_renderer, milp_solver, objective
+from . import config_renderer, milp_solver, objective, power_profiles
 from .graph_model import build_graph
 from .sim_evaluator import evaluate
 from .spec_schema import PlannerSpec, load_spec
-from .types import Allocation, Infeasible, Metrics
+from .types import Allocation, Infeasible, InfeasibleReport, Metrics
 from .utils import get_logger, hash_obj
 
 log = get_logger("planner.orchestrator")
@@ -42,6 +42,8 @@ class PlannerResult:
     pareto: list[str] = field(default_factory=list)  # run_ids on the Pareto front
     best: Optional[CandidateResult] = None
     dry_run: bool = False
+    # structured Stage-1 infeasibility diagnosis (power-min mode, UNSAT)
+    infeasible_report: Optional[InfeasibleReport] = None
 
 
 def _expand(spec: PlannerSpec, allocations: list[Allocation], out_dir: Path):
@@ -121,13 +123,15 @@ def run_spec(
     out_dir.mkdir(parents=True, exist_ok=True)
 
     graph = build_graph(spec)
-    allocations = milp_solver.solve(spec, graph=graph)
+    allocations, infeasible_report = milp_solver.solve_with_report(spec, graph=graph)
     if not allocations:
         log.warning("Stage-1 found no feasible allocations")
-        _emit({"type": "stage1", "candidates": []})
+        _emit({"type": "stage1", "candidates": [],
+               "infeasible_report": infeasible_report.as_dict() if infeasible_report else None})
         _emit({"type": "finished", "best_run_id": None, "pareto": [],
                "num_passed": 0, "num_candidates": 0})
-        return PlannerResult(spec=spec, dry_run=dry_run)
+        return PlannerResult(spec=spec, dry_run=dry_run,
+                             infeasible_report=infeasible_report)
 
     candidates = _expand(spec, allocations, out_dir)
     result = PlannerResult(spec=spec, candidates=candidates, dry_run=dry_run)
@@ -153,6 +157,12 @@ def run_spec(
                    "passed": False, "reason": res.reason})
             return c
         c.metrics = res
+        if res.power_w is None:
+            # simulator reported no energy: estimate from power profiles so
+            # power-min ranking always has a value (tagged as an estimate)
+            est, src = power_profiles.allocation_power_w(c.allocation, spec.model.name)
+            res.power_w = est
+            res.raw["power_source"] = src
         c.passed, c.violations = objective.check_constraints(res, spec.requirements)
         c.score = objective.score(res, spec.requirements)
         _emit({"type": "candidate", "run_id": c.run_id, "state": "done",

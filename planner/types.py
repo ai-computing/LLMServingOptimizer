@@ -75,6 +75,9 @@ class Metrics:
     throughput_toks_s: float
     energy_j: Optional[float] = None
     toks_per_wh: Optional[float] = None
+    # average cluster power (W): sim energy/wall-clock when the backend reports
+    # energy, else a power-profile estimate (raw["power_source"] says which)
+    power_w: Optional[float] = None
     num_requests: int = 0
     raw: dict = field(default_factory=dict)
 
@@ -89,6 +92,24 @@ class Infeasible:
     """Marker returned when a candidate cannot be evaluated (crash/OOM/timeout)."""
 
     reason: str
+
+
+@dataclass
+class InfeasibleReport:
+    """First-class Stage-1 infeasibility diagnosis (design doc §6).
+
+    ``bottleneck`` names the constraint family whose relaxation makes the model
+    SAT: memory | demand | availability | links | structure.
+    """
+
+    bottleneck: str
+    detail: str
+    # max achievable demand (toks/s) when bottleneck == "demand"/"availability"
+    max_achievable_toks_s: Optional[float] = None
+    suggestions: list[str] = field(default_factory=list)
+
+    def as_dict(self) -> dict:
+        return asdict(self)
 
 
 def is_finite_positive(x: Optional[float]) -> bool:

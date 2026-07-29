@@ -159,3 +159,27 @@ def effective_power_w(
         return float(prof.device.active_w) * ntp, "active_w"
     per_dev, source = device_active_w(hw, root)  # legacy_const | default (warns)
     return per_dev * ntp, source
+
+
+def allocation_power_w(allocation, model_name: Optional[str] = None,
+                       load: float = 1.0, root: str | Path | None = None
+                       ) -> tuple[float, str]:
+    """Coarse whole-allocation power estimate (W): per-instance effective power
+    summed over replicas, plus host base overhead once per distinct node (max
+    base_w across that node's hardware types).
+
+    Used as the Stage-2 fallback when the simulator reports no energy; the tag
+    is always ``profile_estimate`` so consumers can tell it from sim energy.
+    ``allocation`` is duck-typed (needs ``.instances`` with node_id/hardware/
+    tp/npu_num) to keep this module import-light.
+    """
+    total = 0.0
+    node_hw: dict[str, set] = {}
+    for inst in allocation.instances:
+        replicas = max(1, inst.npu_num // inst.tp)
+        w, _src = effective_power_w(inst.hardware, model_name, inst.tp, load, root=root)
+        total += w * replicas
+        node_hw.setdefault(inst.node_id, set()).add(inst.hardware)
+    for hws in node_hw.values():
+        total += max((host_overhead_w(hw, root).base_w for hw in hws), default=0.0)
+    return total, "profile_estimate"
