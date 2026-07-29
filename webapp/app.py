@@ -103,6 +103,26 @@ app.include_router(dse_router, prefix="/api/dse")
 from .planner_server import planner_router  # noqa: E402
 app.include_router(planner_router, prefix="/api/planner")
 
+# Power-optimal serving-recommendation service (service/ package). Mounted
+# only when a cluster registry exists; endpoints live under /api/... (see
+# service/api/routes.py: /api/cluster, /api/models, /api/serve-requests).
+import os  # noqa: E402
+
+_REGISTRY_PATH = Path(os.environ.get(
+    "LLMSS_CLUSTER_REGISTRY", str(WEBAPP_DIR.parent / "cluster_registry.yaml")))
+SERVICE_ENABLED = _REGISTRY_PATH.is_file()
+if SERVICE_ENABLED:
+    from service.api.routes import ServiceState, create_service_router  # noqa: E402
+    from service.inventory.ledger import Ledger  # noqa: E402
+    from service.inventory.registry import load_registry  # noqa: E402
+
+    _svc_registry = load_registry(_REGISTRY_PATH)
+    _svc_ledger_path = WEBAPP_DIR.parent / "output" / "service_ledger.sqlite"
+    _svc_ledger_path.parent.mkdir(parents=True, exist_ok=True)
+    service_state = ServiceState(registry=_svc_registry,
+                                 ledger=Ledger(_svc_ledger_path, _svc_registry))
+    app.include_router(create_service_router(service_state))
+
 
 # ---------------------------------------------------------------------------
 # DSE — HTML pages (server-rendered Jinja templates)
@@ -140,6 +160,13 @@ async def planner_progress_page(job_id: str, request: Request) -> HTMLResponse:
 @app.get("/planner/jobs/{job_id}/results", response_class=HTMLResponse)
 async def planner_results_page(job_id: str, request: Request) -> HTMLResponse:
     return render("planner_results.html", title=f"Planner Results — {job_id}", job_id=job_id)
+
+
+@app.get("/service", response_class=HTMLResponse)
+async def service_page(request: Request) -> HTMLResponse:
+    return render("service.html", title="Serving Service",
+                  service_enabled=SERVICE_ENABLED,
+                  registry_path=str(_REGISTRY_PATH))
 
 
 @app.get("/favicon.ico", include_in_schema=False)
