@@ -4,3 +4,5 @@ fastapi
 uvicorn
 pydantic>=2
 pyyaml
+docker      # deployment layer (execution plan D2)
+networkx    # topology graph (also in requirements-planner.txt)

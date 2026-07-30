@@ -60,6 +60,9 @@ class ServiceState:
     planner_fn: Optional[PlannerFn] = None
     jobs: dict[str, Job] = field(default_factory=dict)
     run_async: bool = True
+    # deployment layer (D2); None -> recommendation/reservation only
+    deploy_manager: Optional[object] = None
+    deploy_store: Optional[object] = None
 
     def planner(self) -> PlannerFn:
         return self.planner_fn or _default_planner
@@ -243,6 +246,7 @@ def _run_job(state: ServiceState, job: Job) -> None:
             need = {tuple(k.split("|")): v
                     for k, v in (result.pop("_need", {}) or {}).items()}
             groups = [tuple(g) for g in (result.pop("_groups", None) or [])]
+            result["tp_groups"] = [list(g) for g in groups]  # kept for deploy
             if result.get("best") and (need or groups):
                 _, free_now = state.ledger.snapshot()
                 if groups:
@@ -376,8 +380,16 @@ def create_service_router(state: ServiceState) -> APIRouter:
                                      "confirm again")
         job.state = "confirmed"
         job.emit({"type": "state", "state": "confirmed"})
+        dep_id = None
+        if job.request.auto_deploy and getattr(state, "deploy_manager", None):
+            from .deployment_routes import deploy_from_job
+            try:
+                dep_id = deploy_from_job(state, job)
+            except Exception as e:  # deployment failure must not undo confirm
+                job.emit({"type": "deploy_error",
+                          "detail": f"{type(e).__name__}: {e}"})
         return ConfirmOut(state="confirmed", reservation_id=res.id,
-                          device_ids=res.device_ids)
+                          device_ids=res.device_ids, deployment_id=dep_id)
 
     @router.post("/serve-requests/{job_id}/release", response_model=ConfirmOut)
     def release(job_id: str):
