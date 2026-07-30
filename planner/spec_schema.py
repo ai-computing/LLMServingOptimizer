@@ -152,6 +152,12 @@ class Requirements(BaseModel):
 class SearchSpace(BaseModel):
     pd_disaggregation: bool = False
     tp_choices: list[int] = Field(default_factory=lambda: [1])
+    # optional per-hardware TP restriction: {hardware: [tp, ...]}. A hardware
+    # listed here only gets templates for those TPs (intersected with
+    # tp_choices); unlisted hardware uses tp_choices as before. Lets the
+    # service exclude (hw, tp) combos its evaluation backend cannot evaluate
+    # (e.g. no measured oracle for A40 tp2).
+    hw_tp_choices: Optional[dict[str, list[int]]] = None
     pp_choices: list[int] = Field(default_factory=lambda: [1])  # PP not a config knob
     xpyd_prefill_range: list[int] = Field(default_factory=lambda: [1, 1])
     xpyd_decode_range: list[int] = Field(default_factory=lambda: [1, 1])
@@ -161,6 +167,10 @@ class SearchSpace(BaseModel):
     def _check(self):
         if any(t < 1 for t in self.tp_choices):
             raise ValueError("tp_choices must be >= 1")
+        if self.hw_tp_choices is not None:
+            for hw, tps in self.hw_tp_choices.items():
+                if not tps or any(t < 1 for t in tps):
+                    raise ValueError(f"hw_tp_choices[{hw!r}] must be non-empty, all >= 1")
         if self.pp_choices != [1]:
             # PP is not exposed as a cluster_config knob (npu_group <= npu_num only).
             raise ValueError(

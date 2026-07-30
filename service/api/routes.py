@@ -160,8 +160,12 @@ def _default_planner(req: ServeRequestIn, topology: dict, snapshot_ver: int,
                      "num_req": req.num_req_eval},
         "topology": topology,
         "requirements": requirements,
+        # per-hardware TP restriction: Stage-1 must not propose (hw, tp)
+        # combos the routed backend cannot evaluate (e.g. A40 tp2 with only a
+        # tp1 oracle)
         "search_space": {"tp_choices": sorted({tp for tps in hw_tps.values()
-                                               for tp in tps})},
+                                               for tp in tps}),
+                         "hw_tp_choices": hw_tps},
         "solver": {"top_k": 4, "time_limit_sec": 30, "pareto_epsilon_steps": 3},
         "backend": decision.backend,
     })

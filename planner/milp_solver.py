@@ -103,9 +103,12 @@ def _enumerate_templates(spec: PlannerSpec, inv: list[Device]) -> list[_Template
     kv_per_tok = estimate_kv_bytes_per_token(cfg, spec.model.fp)
 
     roles: list[str | None] = ["prefill", "decode"] if spec.search_space.pd_disaggregation else [None]
+    hw_tp = spec.search_space.hw_tp_choices
     templates: list[_Template] = []
     for dev in inv:
         for tp in spec.search_space.tp_choices:
+            if hw_tp is not None and dev.hardware in hw_tp and tp not in hw_tp[dev.hardware]:
+                continue  # this hardware cannot run (or be evaluated at) this TP
             if tp > dev.count:
                 continue
             if not _memory_feasible(weight_bytes, kv_per_tok, tp, dev.mem_gb):
@@ -458,8 +461,39 @@ def _solve_power_min(spec, templates, inv, graph
         if len(allocations) >= top_k:
             break
 
-    log.info("Stage-1 power-min produced %d candidate(s) over %d headroom level(s) "
-             "(demand %.2f proxy units)", len(allocations), steps, demand_units)
+    # Diversity candidates: the global sweep is SLO-blind, so a config that is
+    # the ONLY one meeting a tight latency SLO (e.g. the tp2 variant of a slow
+    # GPU) may never be power-minimal at any headroom level. Add the min-power
+    # solution restricted to each single (hardware, tp) combo so Stage-2 — the
+    # final judge — always gets to see them. These are appended beyond top_k
+    # (there are at most a handful of combos).
+    combos = sorted({(t.hardware, t.tp) for t in templates})
+    if len(combos) > 1:
+        floor0 = int(math.ceil(demand_units * _THR_SCALE))
+        for hw, tp in combos:
+            sub = [t for t in templates if t.hardware == hw and t.tp == tp]
+            res = _solve_power_min_level(spec, sub, inv, graph, floor0, host_w)
+            if res is None:
+                continue  # this combo alone cannot meet the demand
+            counts, thr_val, pwr_val, host_val = res
+            alloc = _allocation_from_counts(counts, sub, spec, thr_val / _THR_SCALE)
+            alloc.meta.update({
+                "mode": "power_min",
+                "diversity_combo": f"{hw}-tp{tp}",
+                "power_proxy_w": pwr_val + host_val,
+                "device_power_w": pwr_val,
+                "host_power_w": host_val,
+                "thr_proxy_units": thr_val / _THR_SCALE,
+                "demand_units": demand_units,
+            })
+            sig = alloc.signature()
+            if sig not in seen:
+                seen.add(sig)
+                allocations.append(alloc)
+
+    log.info("Stage-1 power-min produced %d candidate(s): %d headroom level(s) "
+             "+ per-combo diversity (demand %.2f proxy units)",
+             len(allocations), steps, demand_units)
     return allocations, None
 
 

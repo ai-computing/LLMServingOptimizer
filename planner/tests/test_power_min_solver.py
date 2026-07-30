@@ -132,6 +132,41 @@ def test_power_w_objective_rejects_max_direction():
         })
 
 
+def test_hw_tp_choices_restricts_templates():
+    """A40 restricted to tp1 while A5000 may use tp1/tp2: no candidate may
+    contain an A40 tp2 instance (found live: Stage-1 proposed A40 tp2 with
+    only a tp1 measured oracle -> unevaluable candidate)."""
+    nodes = [{"id": "node0", "devices": [
+        {"name": "A40", "count": 4, "mem_gb": 48},
+        {"name": "A5000", "count": 4, "mem_gb": 24},
+    ]}]
+    s = _spec(nodes, demand_toks_s=2.0, steps=3, tp=(1, 2))
+    s.search_space.hw_tp_choices = {"A40": [1], "A5000": [1, 2]}
+    allocations, report = solve_with_report(s)
+    assert report is None and allocations
+    for a in allocations:
+        for inst in a.instances:
+            if inst.hardware == "A40":
+                assert inst.tp == 1, a.signature()
+
+
+def test_diversity_candidates_cover_each_combo():
+    """The SLO-blind sweep would only ever propose the cheap hardware; the
+    per-combo diversity pass must still surface an H100-only candidate so
+    Stage-2 can pick it when it is the only SLO-passing option."""
+    nodes = [{"id": "node0", "devices": [
+        {"name": "H100", "count": 2, "mem_gb": 80},
+        {"name": "A5000", "count": 8, "mem_gb": 24},
+    ]}]
+    allocations, report = solve_with_report(_spec(nodes, demand_toks_s=1.6, top_k=2))
+    assert report is None
+    hw_sets = [{i.hardware for i in a.instances} for a in allocations]
+    assert {"A5000"} in hw_sets     # global min-power pick
+    assert {"H100"} in hw_sets      # diversity pick despite higher power
+    div = [a for a in allocations if a.meta.get("diversity_combo")]
+    assert all(a.meta["thr_proxy_units"] >= 1.6 for a in div)
+
+
 def test_unresolved_req_per_s_demand_raises():
     s = _spec([{"id": "n0", "devices": [{"name": "A5000", "count": 1, "mem_gb": 24}]}],
               demand_toks_s=1.0)
