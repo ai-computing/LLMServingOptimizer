@@ -80,12 +80,56 @@ async function loadModels() {
 async function loadCluster() {
   const r = await fetch('/api/cluster');
   const d = await r.json();
-  const total = d.topology.nodes.reduce((s, n) =>
-      s + n.devices.reduce((x, v) => x + v.count, 0), 0);
-  let html = `<p>free <strong>${d.free_devices.length}</strong> / ${total} devices ` +
+
+  // free counts per "node|hw" (device ids look like <node>/<hw>/<idx>)
+  const freeByNodeHw = {};
+  d.free_devices.forEach(id => {
+    const parts = id.split('/');
+    parts.pop();                       // index
+    const key = parts.slice(0, -1).join('/') + '|' + parts[parts.length - 1];
+    freeByNodeHw[key] = (freeByNodeHw[key] || 0) + 1;
+  });
+
+  // per-node rows + per-hardware aggregates from the registry topology
+  const hwAgg = {};                    // hw -> {free, total, nodes, mem_gb}
+  const nodeRows = [];
+  let totalAll = 0;
+  d.topology.nodes.forEach(n => {
+    n.devices.forEach(dev => {
+      const free = freeByNodeHw[`${n.id}|${dev.name}`] || 0;
+      totalAll += dev.count;
+      const a = hwAgg[dev.name] ||
+          (hwAgg[dev.name] = {free: 0, total: 0, nodes: 0, mem_gb: dev.mem_gb});
+      a.free += free; a.total += dev.count; a.nodes += 1;
+      nodeRows.push(
+        `<tr><td>${n.id}</td><td>${dev.name}</td>` +
+        `<td>${dev.mem_gb} GB</td>` +
+        `<td>${free} / ${dev.count}</td>` +
+        `<td>${dev.count - free ? `<strong>${dev.count - free}</strong>` : 0}</td>` +
+        `<td>${n.host_base_w != null ? n.host_base_w + ' W' : '—'}</td></tr>`);
+    });
+  });
+
+  let html = `<p>free <strong>${d.free_devices.length}</strong> / ${totalAll} devices ` +
              `(snapshot v${d.snapshot_ver})</p>`;
+
+  html += '<h3>By hardware type</h3>' +
+    '<table><tr><th>hardware</th><th>mem/device</th><th>nodes</th>' +
+    '<th>free / total</th><th>reserved</th></tr>' +
+    Object.entries(hwAgg).map(([hw, a]) =>
+      `<tr><td><strong>${hw}</strong></td><td>${a.mem_gb} GB</td>` +
+      `<td>${a.nodes}</td><td>${a.free} / ${a.total}</td>` +
+      `<td>${a.total - a.free ? `<strong>${a.total - a.free}</strong>` : 0}</td></tr>`
+    ).join('') + '</table>';
+
+  html += `<details><summary>Per-node detail (${d.topology.nodes.length} nodes)</summary>` +
+    '<table><tr><th>node</th><th>hardware</th><th>mem/device</th>' +
+    '<th>free / total</th><th>reserved</th><th>host base</th></tr>' +
+    nodeRows.join('') + '</table></details>';
+
   if (d.reservations.length) {
-    html += '<table><tr><th>tenant</th><th>request</th><th>devices</th></tr>' +
+    html += '<h3>Reservations</h3>' +
+      '<table><tr><th>tenant</th><th>request</th><th>devices</th></tr>' +
       d.reservations.map(x =>
         `<tr><td>${x.tenant}</td><td>${x.request_id}</td>` +
         `<td>${x.device_ids.join(', ')}</td></tr>`).join('') + '</table>';

@@ -167,7 +167,11 @@ def evaluate(
             return Infeasible(d["reason"])
         return Metrics(**{k: v for k, v in d.items() if k != "infeasible"})
 
-    run_args = _rebase_path_args(full_args, b.root, absolute=(backend != "legacy"))
+    # legacy AND upstream both need paths relative to their backend root:
+    # upstream's build_cluster_config unconditionally prepends "../" after its
+    # astra-sim chdir (same quirk as legacy — see UpstreamBackend._path_for_cli).
+    # Only the measured backend (root = repo root) takes absolute paths.
+    run_args = _rebase_path_args(full_args, b.root, absolute=(backend == "measured"))
     entry = {"legacy": ["main.py"], "upstream": ["-m", "serving"],
              "measured": ["-m", "sim_backends.measured"]}[backend]
     cmd = [python_exe or b.python_exe(), *entry, *run_args]
