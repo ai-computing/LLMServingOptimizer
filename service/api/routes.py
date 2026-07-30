@@ -22,7 +22,8 @@ from fastapi.responses import StreamingResponse
 from ..fidelity_router import RoutingError, route
 from ..inventory.ledger import ConflictError, Ledger
 from ..inventory.registry import ClusterRegistry
-from ..inventory.views import available_topology, pick_devices
+from ..inventory.views import pick_devices
+from ..topology.views import available_topology as _topo_view
 from .models import (
     ConfirmOut,
     JobStatusOut,
@@ -62,6 +63,18 @@ class ServiceState:
 
     def planner(self) -> PlannerFn:
         return self.planner_fn or _default_planner
+
+    def topology_graph(self):
+        """Cached TopologyGraph over the (v1-promoted) registry."""
+        if not hasattr(self, "_topo_graph"):
+            from ..topology.graph import TopologyGraph
+            from ..topology.schema import promote_v1
+            self._topo_graph = TopologyGraph(promote_v1(self.registry.model_dump()))
+        return self._topo_graph
+
+    def available_topology(self, free_device_ids: list[str]) -> dict:
+        # topology.views output is golden-equal to the old inventory.views
+        return _topo_view(self.topology_graph().registry, free_device_ids)
 
 
 # ---------------------------------------------------------------------------
@@ -209,7 +222,7 @@ def _run_job(state: ServiceState, job: Job) -> None:
     job.emit({"type": "state", "state": "running"})
     try:
         ver, free = state.ledger.snapshot()
-        topology = available_topology(state.registry, free)
+        topology = state.available_topology(free)
         if not topology["nodes"]:
             job.result = {"best": None, "alternatives": [], "backend": "n/a",
                           "confidence": "n/a", "reason": "no free devices",
@@ -249,6 +262,17 @@ def create_service_router(state: ServiceState) -> APIRouter:
                 "topology": state.registry.model_dump(),
                 "free_devices": free,
                 "reservations": reservations}
+
+    @router.get("/cluster/graph")
+    def get_cluster_graph():
+        """Topology graph for the cluster-view UI (vertices/edges + device
+        states from the ledger). Works for v1 registries via auto-promotion."""
+        graph = state.topology_graph()
+        _, free = state.ledger.snapshot()
+        free_set = set(free)
+        device_states = {d: ("free" if d in free_set else "reserved")
+                         for d in graph.registry.device_ids()}
+        return graph.to_ui(device_states)
 
     @router.get("/models")
     def get_models():
