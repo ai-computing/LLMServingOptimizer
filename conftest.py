@@ -11,5 +11,5 @@ import pytest
 
 def pytest_collection_modifyitems(config, items):
     for item in items:
-        if item.get_closest_marker("sim") is None and item.get_closest_marker("hw") is None:
+        if all(item.get_closest_marker(m) is None for m in ("sim", "hw", "docker")):
             item.add_marker(pytest.mark.unit)

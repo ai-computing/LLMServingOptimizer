@@ -121,7 +121,23 @@ if SERVICE_ENABLED:
     _svc_ledger_path.parent.mkdir(parents=True, exist_ok=True)
     service_state = ServiceState(registry=_svc_registry,
                                  ledger=Ledger(_svc_ledger_path, _svc_registry))
+    # deployment layer (execution plan D2): same DB as the ledger; local/remote
+    # dockerd per registry (v1 registries default to the local socket)
+    from service.api.deployment_routes import create_deployment_router  # noqa: E402
+    from service.deploy.docker_driver import DockerSdkDriver  # noqa: E402
+    from service.deploy.manager import DeploymentManager  # noqa: E402
+    from service.deploy.store import DeployStore  # noqa: E402
+
+    service_state.deploy_store = DeployStore(_svc_ledger_path)
+    service_state.deploy_manager = DeploymentManager(
+        service_state.deploy_store, DockerSdkDriver(), service_state.ledger,
+        node_host=lambda node_id: "localhost")
     app.include_router(create_service_router(service_state))
+    app.include_router(create_deployment_router(service_state))
+    try:  # restart recovery (plan §4.4)
+        service_state.deploy_manager.recover()
+    except Exception:
+        pass
 
 
 # ---------------------------------------------------------------------------

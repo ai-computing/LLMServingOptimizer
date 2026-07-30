@@ -29,6 +29,7 @@ class ServeRequestIn(BaseModel):
     exclude_hw: list[str] = Field(default_factory=list)
     force_backend: Optional[Literal["measured", "upstream", "legacy"]] = None
     num_req_eval: int = Field(default=50, ge=1)     # Stage-2 evaluation depth
+    auto_deploy: bool = True                        # confirm -> deployment chain (D2)
 
 
 class CandidateOut(BaseModel):
@@ -65,6 +66,7 @@ class JobStatusOut(BaseModel):
 class ConfirmOut(BaseModel):
     state: str
     reservation_id: Optional[int] = None
+    deployment_id: Optional[str] = None             # set when auto_deploy fired
     device_ids: list[str] = Field(default_factory=list)
     # set when a confirm conflict triggered an automatic re-plan
     replanned: bool = False
