@@ -207,10 +207,14 @@ def _default_planner(req: ServeRequestIn, topology: dict, snapshot_ver: int,
         out["alternatives"] = [_candidate_out(c) for c in result.candidates
                                if c is not result.best]
         need: dict[tuple[str, str], int] = {}
+        groups: list[list] = []   # one (node, hw, tp) per instance replica
         for inst in result.best.allocation.instances:
             key = (inst.node_id, inst.hardware)
             need[key] = need.get(key, 0) + inst.npu_num
+            groups.extend([[inst.node_id, inst.hardware, inst.tp]]
+                          * (inst.npu_num // inst.tp))
         out["_need"] = {f"{k[0]}|{k[1]}": v for k, v in need.items()}
+        out["_groups"] = groups
     return out
 
 
@@ -234,12 +238,19 @@ def _run_job(state: ServiceState, job: Job) -> None:
             job.state = "infeasible"
         else:
             result = state.planner()(job.request, topology, ver, job)
-            # resolve concrete device ids for the winning allocation
+            # resolve concrete device ids for the winning allocation —
+            # affinity-refined per TP group when group info is available (D1)
             need = {tuple(k.split("|")): v
                     for k, v in (result.pop("_need", {}) or {}).items()}
-            if result.get("best") and need:
+            groups = [tuple(g) for g in (result.pop("_groups", None) or [])]
+            if result.get("best") and (need or groups):
                 _, free_now = state.ledger.snapshot()
-                result["device_ids"] = pick_devices(free_now, need)
+                if groups:
+                    from ..topology.placement import pick_devices_affinity
+                    result["device_ids"] = pick_devices_affinity(
+                        state.topology_graph(), free_now, groups)
+                else:
+                    result["device_ids"] = pick_devices(free_now, need)
             job.result = result
             job.state = "done" if result.get("best") else "infeasible"
     except Exception as e:  # noqa: BLE001 — job must never crash the server
