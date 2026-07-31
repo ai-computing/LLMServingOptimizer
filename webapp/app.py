@@ -168,6 +168,21 @@ if SERVICE_ENABLED:
     except Exception:
         pass
 
+    def _reconcile_loop():  # plan §4.4 periodic ledger<->dockerd cross-check
+        import time as _time
+        node_ids = [n.id for n in _svc_registry.nodes]
+        while True:
+            _time.sleep(60)
+            try:
+                out = service_state.deploy_manager.reconcile(node_ids)
+                if out["orphans_removed"] or out["missing_marked_failed"]:
+                    print(f"[service] reconcile: {out}")
+            except Exception:
+                pass
+
+    import threading as _threading
+    _threading.Thread(target=_reconcile_loop, daemon=True).start()
+
 
 # ---------------------------------------------------------------------------
 # DSE — HTML pages (server-rendered Jinja templates)

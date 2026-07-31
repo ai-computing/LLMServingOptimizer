@@ -42,7 +42,15 @@ class DockerSdkDriver:
     def pull(self, node_id: str, image: str) -> None:
         self._client(node_id).images.pull(image)
 
-    def run(self, node_id: str, spec: ContainerSpec) -> str:
+    @staticmethod
+    def build_run_kwargs(spec: ContainerSpec) -> dict:
+        """containers.run kwargs (pure; unit-testable). GPU injection mode via
+        LLMSS_GPU_MODE: 'legacy' (nvidia runtime DeviceRequest, default) or
+        'cdi' (CDI-only docker setups reject the legacy path with a bad-driver
+        combination inside the container — Error 803)."""
+        import os
+
+        from docker.types import DeviceRequest
         kwargs: dict = dict(
             image=spec.image, name=spec.name, detach=True,
             environment=spec.env, shm_size=spec.shm_size,
@@ -50,11 +58,15 @@ class DockerSdkDriver:
             labels={"llmsvc": "1"},
         )
         if spec.gpu_indices:
-            from docker.types import DeviceRequest
-            kwargs["device_requests"] = [DeviceRequest(
-                driver="nvidia",
-                device_ids=[str(i) for i in spec.gpu_indices],
-                capabilities=[["gpu"]])]
+            if os.environ.get("LLMSS_GPU_MODE", "legacy") == "cdi":
+                kwargs["device_requests"] = [DeviceRequest(
+                    driver="cdi",
+                    device_ids=[f"nvidia.com/gpu={i}" for i in spec.gpu_indices])]
+            else:
+                kwargs["device_requests"] = [DeviceRequest(
+                    driver="nvidia",
+                    device_ids=[str(i) for i in spec.gpu_indices],
+                    capabilities=[["gpu"]])]
         if spec.device_paths:   # NPU character devices (least privilege — no
             kwargs["devices"] = [f"{p}:{p}" for p in spec.device_paths]  # privileged mode)
         if spec.volumes:
@@ -62,6 +74,10 @@ class DockerSdkDriver:
                                  for host, cont in spec.volumes.items()}
         if spec.command:
             kwargs["command"] = spec.command
+        return kwargs
+
+    def run(self, node_id: str, spec: ContainerSpec) -> str:
+        kwargs = self.build_run_kwargs(spec)
         try:
             container = self._client(node_id).containers.run(**kwargs)
         except Exception as e:

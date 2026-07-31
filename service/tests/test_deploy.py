@@ -231,3 +231,22 @@ def test_reconcile_orphans_and_missing(env):
     assert out["orphans_removed"] == ["llmsvc-dep-ghost-0"]
     assert out["missing_marked_failed"] == [dep_id]
     assert store.get(dep_id).state == S.FAILED
+
+
+def test_run_kwargs_gpu_modes(monkeypatch):
+    """CDI-only docker hosts need driver='cdi' device requests (Error 803
+    with the legacy nvidia path — found on the real A5000 host)."""
+    from service.deploy.docker_driver import DockerSdkDriver
+    from service.deploy.spec import ContainerSpec
+
+    spec = ContainerSpec(node_id="n0", image="img", device_ids=["n0/A5000/0"],
+                         gpu_indices=[0], name="llmsvc-x-0",
+                         volumes={"/h": "/c"})
+    monkeypatch.delenv("LLMSS_GPU_MODE", raising=False)
+    legacy = DockerSdkDriver.build_run_kwargs(spec)["device_requests"][0]
+    assert legacy["Driver"] == "nvidia" and legacy["DeviceIDs"] == ["0"]
+    monkeypatch.setenv("LLMSS_GPU_MODE", "cdi")
+    cdi = DockerSdkDriver.build_run_kwargs(spec)["device_requests"][0]
+    assert cdi["Driver"] == "cdi" and cdi["DeviceIDs"] == ["nvidia.com/gpu=0"]
+    assert DockerSdkDriver.build_run_kwargs(spec)["volumes"] == {
+        "/h": {"bind": "/c", "mode": "rw"}}
