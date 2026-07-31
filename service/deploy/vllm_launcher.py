@@ -79,6 +79,17 @@ def build_spec(dep_id: str, model: str, device_ids: list[str], tp: int,
     for k, v in engine_args.items():
         command += [f"--{k}", str(v)]
 
+    # LLMSS_STRIP_CUDA_COMPAT=1: the image's bundled cuda-compat libcuda can be
+    # OLDER than the host kernel driver (here: compat 575 vs driver 595 ->
+    # CUDA Error 803). On such hosts strip it before exec'ing the server.
+    entrypoint = None
+    if os.environ.get("LLMSS_STRIP_CUDA_COMPAT") == "1":
+        entrypoint = ["bash", "-c"]
+        command = ["rm -f /usr/local/cuda/compat/libcuda.* 2>/dev/null; "
+                   "ldconfig 2>/dev/null; "
+                   "exec python3 -m vllm.entrypoints.openai.api_server " +
+                   " ".join(command)]
+
     hw = device_ids[0].rsplit("/", 2)[1]
     is_npu = hw in NPU_HARDWARE or (
         graph is not None and device_ids[0] in graph.g
@@ -107,6 +118,7 @@ def build_spec(dep_id: str, model: str, device_ids: list[str], tp: int,
             env={**nccl_env_for(graph, device_ids), **_hf_env()},
             ports={"api": port, "metrics": port},
             command=command,
+            entrypoint=entrypoint,
             name=f"llmsvc-{dep_id}-0",   # NAME_PREFIX convention (reconcile key)
             volumes={HF_CACHE: "/root/.cache/huggingface"},
         )

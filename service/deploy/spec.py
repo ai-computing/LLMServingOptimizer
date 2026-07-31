@@ -15,6 +15,7 @@ class ContainerSpec(BaseModel):
     env: dict[str, str] = Field(default_factory=dict)
     ports: dict[str, int] = Field(default_factory=dict)   # {api: 8001, metrics: 8001}
     command: list[str] = Field(default_factory=list)
+    entrypoint: Optional[list[str]] = None    # override image entrypoint
     shm_size: str = "16g"
     name: str = ""
     device_paths: list[str] = Field(default_factory=list)  # NPU: /dev/rngd0 ...

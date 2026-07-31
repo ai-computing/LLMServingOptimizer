@@ -74,6 +74,8 @@ class DockerSdkDriver:
                                  for host, cont in spec.volumes.items()}
         if spec.command:
             kwargs["command"] = spec.command
+        if spec.entrypoint is not None:
+            kwargs["entrypoint"] = spec.entrypoint
         return kwargs
 
     def run(self, node_id: str, spec: ContainerSpec) -> str:
