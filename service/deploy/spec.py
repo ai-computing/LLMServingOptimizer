@@ -17,6 +17,7 @@ class ContainerSpec(BaseModel):
     command: list[str] = Field(default_factory=list)
     shm_size: str = "16g"
     name: str = ""
+    device_paths: list[str] = Field(default_factory=list)  # NPU: /dev/rngd0 ...
 
 
 class HealthPolicy(BaseModel):
@@ -31,6 +32,9 @@ class DeploymentSpec(BaseModel):
     engine_args: dict = Field(default_factory=dict)
     containers: list[ContainerSpec]
     health: HealthPolicy = Field(default_factory=HealthPolicy)
+    # recommendation-time power prediction (W) — compared against measured Wh
+    # at termination for the D5 calibration loop
+    predicted_power_w: Optional[float] = None
 
 
 class Endpoints(BaseModel):

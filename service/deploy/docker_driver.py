@@ -55,6 +55,8 @@ class DockerSdkDriver:
                 driver="nvidia",
                 device_ids=[str(i) for i in spec.gpu_indices],
                 capabilities=[["gpu"]])]
+        if spec.device_paths:   # NPU character devices (least privilege — no
+            kwargs["devices"] = [f"{p}:{p}" for p in spec.device_paths]  # privileged mode)
         if spec.command:
             kwargs["command"] = spec.command
         try:

@@ -154,7 +154,11 @@ if SERVICE_ENABLED:
         service_state.deploy_store, _svc_driver, service_state.ledger,
         node_host=lambda node_id: "localhost",
         on_ready=service_state.monitor_runtime.attach,
-        on_stopped=service_state.monitor_runtime.detach, **_mgr_kw)
+        on_stopped=__import__("service.api.deployment_routes",
+                              fromlist=["make_on_stopped"]).make_on_stopped(
+            service_state,
+            WEBAPP_DIR.parent / "output" / "power_calibration_history.jsonl"),
+        **_mgr_kw)
     app.include_router(create_service_router(service_state))
     app.include_router(create_deployment_router(service_state))
     try:  # restart recovery (plan §4.4): mid-flight rollback + READY re-attach

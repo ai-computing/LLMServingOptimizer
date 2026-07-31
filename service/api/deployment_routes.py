@@ -153,6 +153,34 @@ def create_deployment_router(state) -> APIRouter:
     return router
 
 
+def make_on_stopped(state, history_path) -> callable:
+    """on_stopped hook: detach monitoring and append a calibration record
+    (predicted vs measured power) to the history JSONL (plan D5)."""
+    from pathlib import Path
+
+    def _on_stopped(dep_id: str) -> None:
+        summary = state.monitor_runtime.detach(dep_id)
+        try:
+            row = state.deploy_store.get(dep_id)
+            c = (row.spec.get("containers") or [{}])[0]
+            hw = (c.get("device_ids") or ["?/?/0"])[0].rsplit("/", 2)[1]
+            rec = {"dep_id": dep_id, "model": row.model, "hw": hw,
+                   "tp": row.spec.get("engine_args", {}).get(
+                       "tensor-parallel-size", 1),
+                   "predicted_power_w": row.spec.get("predicted_power_w"),
+                   "measured_avg_w": summary.get("avg_power_w"),
+                   "energy_wh": summary.get("energy_wh"),
+                   "span_s": summary.get("span_s")}
+            p = Path(history_path)
+            p.parent.mkdir(parents=True, exist_ok=True)
+            with open(p, "a", encoding="utf-8") as f:
+                f.write(json.dumps(rec) + "\n")
+        except Exception:
+            pass  # calibration logging must never break termination
+
+    return _on_stopped
+
+
 def deploy_from_job(state, job) -> Optional[str]:
     """confirm hook: build + launch a deployment from a recommended job.
 
@@ -176,6 +204,8 @@ def deploy_from_job(state, job) -> Optional[str]:
     _node, _hw, tp = groups[0]
     spec = build_spec(job.id, job.request.model, devices, tp=int(tp),
                       port=pick_port(used), graph=state.topology_graph())
+    best = result.get("best") or {}
+    spec.predicted_power_w = best.get("power_w")   # D5 calibration anchor
     slo = job.request.slo.model_dump(exclude_none=True)
     res = state.ledger.get(job.id)
     dep_id = state.deploy_manager.create(res.id, job.tenant, spec, slo=slo)
