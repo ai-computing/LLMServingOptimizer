@@ -250,3 +250,24 @@ def test_run_kwargs_gpu_modes(monkeypatch):
     assert cdi["Driver"] == "cdi" and cdi["DeviceIDs"] == ["nvidia.com/gpu=0"]
     assert DockerSdkDriver.build_run_kwargs(spec)["volumes"] == {
         "/h": {"bind": "/c", "mode": "rw"}}
+
+
+def test_reconcile_keeps_midflight_containers(env):
+    """Regression (found live): a HEALTH_CHECK deployment's container must NOT
+    be treated as an orphan — the first reconcile version removed it and
+    livelocked the bring-up."""
+    ledger, store, driver = env
+    res = _reserve(ledger)
+    spec = build_spec("dep-mid", MODEL, res.device_ids, tp=2, port=8001)
+    dep = store.create(res.id, "t", MODEL, spec.model_dump())
+    store.transition(dep.id, S.PULLING)
+    store.transition(dep.id, S.STARTING)
+    driver.run("n0", spec.containers[0])          # container exists mid-flight
+    store.transition(dep.id, S.HEALTH_CHECK)
+
+    mgr = _mgr(ledger, store, driver)
+    out = mgr.reconcile(["n0"])
+    assert out == {"orphans_removed": [], "missing_marked_failed": []}
+    assert "llmsvc-dep-mid-0" in driver.containers   # survived
+    # and a mid-flight dep with no container yet is NOT marked failed
+    assert store.get(dep.id).state == S.HEALTH_CHECK

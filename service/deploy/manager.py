@@ -179,26 +179,35 @@ class DeploymentManager:
         return out
 
     def reconcile(self, node_ids: list[str]) -> dict[str, list[str]]:
-        """Two-way ledger↔dockerd check: orphan containers (llmsvc-* with no
-        live deployment) are removed; live deployments with missing containers
-        are marked FAILED."""
-        live = {d.id: d for d in self.store.list(
-            states=[S.READY, S.DEGRADED, S.DRAINING])}
-        expected: dict[str, str] = {}
-        for dep in live.values():
+        """Two-way ledger↔dockerd check.
+
+        * orphan removal: llmsvc-* containers not belonging to ANY
+          non-terminal deployment (mid-flight PENDING..HEALTH_CHECK containers
+          are expected too — removing them livelocked a real bring-up when
+          the first version only tracked READY+)
+        * missing check: only steady states (READY/DEGRADED) — a container
+          legitimately doesn't exist yet mid-flight and is being removed
+          during DRAINING."""
+        non_terminal = [S.PENDING, S.PULLING, S.STARTING, S.HEALTH_CHECK,
+                        S.READY, S.DEGRADED, S.DRAINING]
+        tracked: dict[str, str] = {}
+        steady: dict[str, str] = {}
+        for dep in self.store.list(states=non_terminal):
             for c in DeploymentSpec.model_validate(dep.spec).containers:
-                expected[c.name] = dep.id
+                tracked[c.name] = dep.id
+                if dep.state in (S.READY, S.DEGRADED):
+                    steady[c.name] = dep.id
         out = {"orphans_removed": [], "missing_marked_failed": []}
         actual: set[str] = set()
         for node in node_ids:
             for name in self.driver.list_names(node, NAME_PREFIX):
                 actual.add(name)
-                if name not in expected:
+                if name not in tracked:
                     self.driver.stop(node, name, timeout_s=10)
                     self.driver.rm(node, name)
                     out["orphans_removed"].append(name)
-        for name, dep_id in expected.items():
-            if name not in actual and live[dep_id].state != S.DRAINING:
+        for name, dep_id in steady.items():
+            if name not in actual and dep_id not in out["missing_marked_failed"]:
                 self.store.transition(dep_id, S.FAILED,
                                       error=f"container {name} disappeared")
                 out["missing_marked_failed"].append(dep_id)
