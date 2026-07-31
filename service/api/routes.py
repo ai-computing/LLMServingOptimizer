@@ -120,6 +120,65 @@ def _candidate_out(c) -> dict:
     }
 
 
+#: evaluation sources in fidelity-ladder order (§5.4)
+_SOURCE_ORDER = ("measured", "upstream", "legacy")
+
+
+def model_tp_catalog(model: str) -> dict[str, dict[str, list[int]]]:
+    """{backend: {hardware: [tp, ...]}} — every source that can evaluate
+    ``model``, from measured oracles and both simulator profile trees."""
+    from sim_backends import get_backend
+
+    out: dict[str, dict[str, list[int]]] = {}
+    for name in _SOURCE_ORDER:
+        try:
+            cat = get_backend(name).list_hardware()
+        except Exception:      # a backend that is not set up must not break planning
+            continue
+        out[name] = {hw: sorted(models[model]) for hw, models in cat.items()
+                     if model in models}
+    return out
+
+
+def preferred_tp_options(catalog: dict, hardwares) -> tuple[dict[str, list[int]], list[str]]:
+    """Per-hardware TP options from the highest-fidelity source that has any,
+    plus the hardware with no profile/oracle at all for this model."""
+    hw_tps: dict[str, list[int]] = {}
+    unsupported: list[str] = []
+    for hw in sorted(hardwares):
+        for name in _SOURCE_ORDER:
+            tps = catalog.get(name, {}).get(hw)
+            if tps:
+                hw_tps[hw] = list(tps)
+                break
+        else:
+            unsupported.append(hw)
+    return hw_tps, unsupported
+
+
+def _drop_hardware(topology: dict, hardware: list[str]) -> dict:
+    topo = json.loads(json.dumps(topology))
+    for node in topo["nodes"]:
+        node["devices"] = [d for d in node["devices"] if d["name"] not in hardware]
+    topo["nodes"] = [n for n in topo["nodes"] if n["devices"]]
+    return topo
+
+
+def proxy_toks_per_unit(model: str) -> Optional[float]:
+    """Stage-1's throughput proxy constant is calibrated for an 8B model; token
+    rate scales roughly inversely with parameter count, so a 70B demand would
+    otherwise be ~9x over-optimistic. Returns None when the model config is
+    unavailable (planner then uses its own default)."""
+    try:
+        from planner.utils import estimate_weight_bytes, load_model_config
+        params_b = estimate_weight_bytes(load_model_config(model), 16) / 2 / 1e9
+        if params_b <= 0:
+            return None
+        return max(50.0, 1000.0 * 8.0 / params_b)
+    except Exception:
+        return None
+
+
 def _default_planner(req: ServeRequestIn, topology: dict, snapshot_ver: int,
                      job: Job) -> dict:
     from planner.search_orchestrator import run_spec
@@ -152,16 +211,33 @@ def _default_planner(req: ServeRequestIn, topology: dict, snapshot_ver: int,
                                    "detail": "exclude_hw removed every device",
                                    "suggestions": ["relax exclude_hw"]}}
 
-    # 3) fidelity routing over the topology's hardware set; per-hardware TP
-    #    candidates come from the measured-oracle catalog when available so a
-    #    fully-covered cluster routes to the measured backend
-    from sim_backends import get_backend
-    oracle_cat = get_backend("measured").list_hardware()
-    hw_tps = {}
-    for node in topology["nodes"]:
-        for dev in node["devices"]:
-            hw_tps[dev["name"]] = (oracle_cat.get(dev["name"], {})
-                                   .get(req.model) or [1, 2])
+    # 3) per-hardware TP options for THIS model, taken from the fidelity ladder
+    #    (measured oracle > upstream profile > legacy profile). A hardcoded
+    #    [1, 2] fallback used to make 70B look memory-infeasible: 141 GB of
+    #    weights never fit at tp<=2, while A40 tp4/tp8 profiles exist. Hardware
+    #    with no profile at all for the model is dropped from the topology.
+    catalog = model_tp_catalog(req.model)
+    hardwares = {d["name"] for n in topology["nodes"] for d in n["devices"]}
+    hw_tps, unsupported = preferred_tp_options(catalog, hardwares)
+    if unsupported:
+        topology = _drop_hardware(topology, unsupported)
+        job.emit({"type": "hw_excluded", "hardware": unsupported,
+                  "detail": f"no profile/oracle for {req.model}"})
+    if not hw_tps or not topology["nodes"]:
+        return {"best": None, "alternatives": [], "backend": "n/a",
+                "confidence": "n/a",
+                "reason": f"no evaluation profile for '{req.model}' on any "
+                          f"available hardware ({', '.join(sorted(hardwares))})",
+                "snapshot_ver": snapshot_ver, "device_ids": [],
+                "infeasible": {
+                    "bottleneck": "profiles",
+                    "detail": f"none of {sorted(hardwares)} has a measured "
+                              f"oracle or simulator profile for {req.model}",
+                    "suggestions": [
+                        "profile the model on this hardware "
+                        "(python -m profiler / scripts/run_capacity_campaign.py)",
+                        "pick a model from GET /api/models",
+                        "add hardware that has a profile for this model"]}}
     try:
         decision = route(hw_tps, req.model, force_backend=req.force_backend)
     except RoutingError as e:
@@ -175,9 +251,37 @@ def _default_planner(req: ServeRequestIn, topology: dict, snapshot_ver: int,
     job.emit({"type": "routing", "backend": decision.backend,
               "confidence": decision.confidence})
 
+    # the ROUTED backend defines the evaluable search space: keep only the
+    # hardware/TPs it can actually run (the preferred source above may have
+    # been a different rung of the ladder for some hardware)
+    routed_cat = catalog.get(decision.backend, {})
+    if routed_cat:
+        hw_tps = {hw: tps for hw, tps in routed_cat.items() if hw in hw_tps}
+        dropped = [hw for hw in hardwares if hw not in hw_tps]
+        if dropped:
+            topology = _drop_hardware(topology, dropped)
+            job.emit({"type": "hw_excluded", "hardware": dropped,
+                      "detail": f"{decision.backend} backend cannot evaluate them"})
+    if not hw_tps or not topology["nodes"]:
+        return {"best": None, "alternatives": [], "backend": decision.backend,
+                "confidence": decision.confidence,
+                "reason": f"{decision.backend} backend has no profile for "
+                          f"'{req.model}' on the available hardware",
+                "snapshot_ver": snapshot_ver, "device_ids": [],
+                "infeasible": {"bottleneck": "profiles",
+                               "detail": f"forced/routed backend "
+                                         f"'{decision.backend}' cannot evaluate "
+                                         f"{req.model} here",
+                               "suggestions": ["drop force_backend",
+                                               "profile the model for this backend"]}}
+
     # 4) build the power-min spec and run the two-stage planner
+    demand: dict = {"toks_per_s": synth.demand_toks_per_s}
+    scale = proxy_toks_per_unit(req.model)
+    if scale is not None:
+        demand["proxy_toks_per_unit"] = scale
     requirements: dict = {
-        "demand": {"toks_per_s": synth.demand_toks_per_s},
+        "demand": demand,
         "objectives": [{"metric": "power_w", "direction": "min", "weight": 1.0}],
     }
     for k in ("ttft_ms", "tpot_ms", "itl_p99_ms"):
@@ -305,24 +409,26 @@ def create_service_router(state: ServiceState) -> APIRouter:
 
     @router.get("/models")
     def get_models():
-        """Serviceable models: measured-oracle catalog + legacy profile catalog,
-        filtered to hardware present in the registry."""
-        from planner.utils import scan_profile_catalog
+        """Serviceable models per hardware present in the registry, with the TP
+        options and source planning would actually use (measured oracle >
+        upstream profile > legacy profile — the fidelity ladder)."""
         from sim_backends import get_backend
         # hardware present in the cluster (via the v2 graph: works for both
         # v1-promoted and native v2 registries)
         cluster_hw = {d.hw for n in state.topology_graph().registry.nodes
                       for d in n.devices}
         catalog: dict[str, dict] = {}
-        for hw, models in get_backend("measured").list_hardware().items():
-            if hw in cluster_hw:
+        for source in _SOURCE_ORDER:      # first source wins per (model, hw)
+            try:
+                per_hw = get_backend(source).list_hardware()
+            except Exception:
+                continue
+            for hw, models in per_hw.items():
+                if hw not in cluster_hw:
+                    continue
                 for model, tps in models.items():
-                    catalog.setdefault(model, {})[hw] = {
-                        "tps": tps, "source": "measured"}
-        for (hw, model), tps in scan_profile_catalog().items():
-            if hw in cluster_hw:
-                catalog.setdefault(model, {}).setdefault(
-                    hw, {"tps": sorted(tps), "source": "legacy"})
+                    catalog.setdefault(model, {}).setdefault(
+                        hw, {"tps": sorted(tps), "source": source})
         return {"models": catalog}
 
     @router.post("/serve-requests", response_model=JobStatusOut)
