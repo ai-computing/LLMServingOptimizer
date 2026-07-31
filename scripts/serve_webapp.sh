@@ -13,4 +13,7 @@ PORT="${LLMSS_PORT:-8000}"
 HOST="${LLMSS_HOST:-0.0.0.0}"
 
 echo "Starting LLMServingSim Web UI on http://${HOST}:${PORT}"
-exec python3 -m uvicorn webapp.app:app --host "$HOST" --port "$PORT" --reload
+# --timeout-graceful-shutdown: open SSE streams (deployment dashboards) would
+# otherwise stall --reload forever at "Waiting for connections to close"
+exec python3 -m uvicorn webapp.app:app --host "$HOST" --port "$PORT" --reload \
+    --timeout-graceful-shutdown 5

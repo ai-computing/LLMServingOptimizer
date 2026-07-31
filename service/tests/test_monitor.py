@@ -129,3 +129,12 @@ def test_collector_polls_fixture_vllm_server():
         assert m.running == 3 and m.tpot_p95_ms == pytest.approx(87.5)
     finally:
         srv.shutdown()
+
+
+def test_tpot_alias_drift_request_time_variant():
+    """vLLM (this host's image) renamed the TPOT histogram to
+    request_time_per_output_token_seconds — the alias table must catch it."""
+    text = FIXTURE.replace("vllm:time_per_output_token_seconds",
+                           "vllm:request_time_per_output_token_seconds")
+    m = Collector(dep_id="d").sample(text, ts=1.0)
+    assert m.tpot_p95_ms == pytest.approx(87.5)
