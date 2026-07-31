@@ -79,7 +79,11 @@ def test_launcher_golden_spec(nvlink_graph):
     assert c.node_id == "n0"
     assert c.gpu_indices == [0, 1]
     assert c.device_ids == ["n0/A40/0", "n0/A40/1"]
-    assert c.env == {"NCCL_P2P_LEVEL": "NVL"}          # NVLink pair
+    assert c.env["NCCL_P2P_LEVEL"] == "NVL"            # NVLink pair
+    # HF policy: token passthrough when set, offline against the cache otherwise
+    assert ("HUGGING_FACE_HUB_TOKEN" in c.env) != ("HF_HUB_OFFLINE" in c.env)
+    assert c.volumes and "/root/.cache/huggingface" in c.volumes.values()
+    assert spec.engine_args["max-model-len"] == 8192   # small-GPU-safe default
     assert c.ports == {"api": 8001, "metrics": 8001}
     assert c.command[:4] == ["--model", MODEL, "--served-model-name",
                              "Llama-3.1-8B"]

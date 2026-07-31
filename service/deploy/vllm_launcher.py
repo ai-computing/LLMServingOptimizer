@@ -10,10 +10,22 @@ from typing import Optional
 
 from .spec import ContainerSpec, DeploymentSpec, HealthPolicy
 
-DEFAULT_IMAGE = "vllm/vllm-openai:v0.19.0"   # pinned tag (risk memo)
+import os
+
+# pinned tag (risk memo); LLMSS_VLLM_IMAGE overrides for site-local images
+DEFAULT_IMAGE = os.environ.get("LLMSS_VLLM_IMAGE", "vllm/vllm-openai:v0.19.0")
 NPU_IMAGE = "furiosaai/furiosa-llm-serving:2024.2"   # pinned; OpenAI-compatible
 NPU_HARDWARE = {"RNGD"}
 PORT_POOL = range(8001, 8100)
+#: host HF cache mounted into GPU containers so cached (incl. gated) weights
+#: are reused instead of re-downloaded
+HF_CACHE = os.path.expanduser("~/.cache/huggingface")
+
+
+def _hf_env() -> dict[str, str]:
+    tok = os.environ.get("HUGGING_FACE_HUB_TOKEN") or os.environ.get("HF_TOKEN")
+    # with a token: allow online fallback; without: offline against the cache
+    return ({"HUGGING_FACE_HUB_TOKEN": tok} if tok else {"HF_HUB_OFFLINE": "1"})
 
 
 def _gpu_index(device_id: str) -> int:
@@ -57,7 +69,10 @@ def build_spec(dep_id: str, model: str, device_ids: list[str], tp: int,
     served = served_name or model.split("/")[-1]
 
     engine_args = {"tensor-parallel-size": tp, "dtype": "bfloat16",
-                   "gpu-memory-utilization": 0.90, "port": port}
+                   "gpu-memory-utilization": 0.90, "port": port,
+                   # conservative default so KV cache fits small-memory GPUs;
+                   # override per request via engine_overrides
+                   "max-model-len": 8192}
     engine_args.update(engine_overrides or {})
 
     command = ["--model", model, "--served-model-name", served]
@@ -89,10 +104,11 @@ def build_spec(dep_id: str, model: str, device_ids: list[str], tp: int,
             image=image,
             device_ids=sorted(device_ids),
             gpu_indices=sorted(_gpu_index(d) for d in device_ids),
-            env=nccl_env_for(graph, device_ids),
+            env={**nccl_env_for(graph, device_ids), **_hf_env()},
             ports={"api": port, "metrics": port},
             command=command,
             name=f"llmsvc-{dep_id}-0",   # NAME_PREFIX convention (reconcile key)
+            volumes={HF_CACHE: "/root/.cache/huggingface"},
         )
     return DeploymentSpec(model=model, served_name=served,
                           engine_args=engine_args, containers=[container],

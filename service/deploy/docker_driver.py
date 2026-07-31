@@ -57,6 +57,9 @@ class DockerSdkDriver:
                 capabilities=[["gpu"]])]
         if spec.device_paths:   # NPU character devices (least privilege — no
             kwargs["devices"] = [f"{p}:{p}" for p in spec.device_paths]  # privileged mode)
+        if spec.volumes:
+            kwargs["volumes"] = {host: {"bind": cont, "mode": "rw"}
+                                 for host, cont in spec.volumes.items()}
         if spec.command:
             kwargs["command"] = spec.command
         try:

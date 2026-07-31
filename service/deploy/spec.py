@@ -18,6 +18,7 @@ class ContainerSpec(BaseModel):
     shm_size: str = "16g"
     name: str = ""
     device_paths: list[str] = Field(default_factory=list)  # NPU: /dev/rngd0 ...
+    volumes: dict[str, str] = Field(default_factory=dict)  # host path -> container path
 
 
 class HealthPolicy(BaseModel):
