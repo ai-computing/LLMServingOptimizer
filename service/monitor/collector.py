@@ -36,23 +36,36 @@ def parse_prometheus(text: str) -> dict[tuple[str, tuple], float]:
     return out
 
 
-def histogram_quantile(samples: dict, base_name: str, q: float) -> float:
-    """Prometheus-style quantile from cumulative ``<base>_bucket{le=...}``
-    counts (linear interpolation within the winning bucket)."""
-    buckets: list[tuple[float, float]] = []
+def extract_buckets(samples: dict, base_name: str) -> dict[float, float]:
+    """{le: cumulative count} for ``<base>_bucket`` rows."""
+    out: dict[float, float] = {}
     for (name, labels), val in samples.items():
         if name != f"{base_name}_bucket":
             continue
         le = dict(labels).get("le")
-        if le is None:
-            continue
-        buckets.append((float("inf") if le == "+Inf" else float(le), val))
+        if le is not None:
+            out[float("inf") if le == "+Inf" else float(le)] = val
+    return out
+
+
+def histogram_quantile(samples: dict, base_name: str, q: float,
+                       prev_buckets: Optional[dict[float, float]] = None) -> float:
+    """Prometheus-style quantile from ``<base>_bucket{le=...}`` counts (linear
+    interpolation within the winning bucket).
+
+    vLLM histograms are CUMULATIVE since server start; pass ``prev_buckets``
+    (the previous scrape) to compute the quantile over the inter-scrape DELTA —
+    otherwise a past load spike pins the p95 forever and a DEGRADED deployment
+    can never recover. Returns NaN when the delta window saw no events."""
+    cur = extract_buckets(samples, base_name)
+    buckets = [(le, val - (prev_buckets or {}).get(le, 0.0))
+               for le, val in cur.items()]
     if not buckets:
         return float("nan")
     buckets.sort()
     total = buckets[-1][1]
     if total <= 0:
-        return 0.0
+        return float("nan")   # no events in this window
     target = q * total
     prev_le, prev_cum = 0.0, 0.0
     for le, cum in buckets:
@@ -109,10 +122,11 @@ def _gauge(samples: dict, names: list[str]) -> Optional[float]:
 
 @dataclass
 class Collector:
-    """Derives MetricSample from successive /metrics scrapes (rates need the
-    previous counter values)."""
+    """Derives MetricSample from successive /metrics scrapes (rates and
+    windowed histogram quantiles need the previous scrape's counters)."""
     dep_id: str
     _prev: Optional[tuple[float, float, float]] = None  # ts, gen, prompt
+    _prev_buckets: dict = field(default_factory=dict)   # base name -> {le: count}
 
     def sample(self, text: str, ts: Optional[float] = None) -> MetricSample:
         ts = ts if ts is not None else time.time()
@@ -133,10 +147,15 @@ class Collector:
         self._prev = (ts, gen, prompt)
         for fld, base_key in (("ttft", "ttft_hist"), ("tpot", "tpot_hist")):
             for base in _ALIASES[base_key]:
-                p50 = histogram_quantile(s, base, 0.50) * 1000.0
-                p95 = histogram_quantile(s, base, 0.95) * 1000.0
-                if p50 == p50:  # not NaN
+                cur = extract_buckets(s, base)
+                if not cur:
+                    continue
+                prev = self._prev_buckets.get(base)
+                p50 = histogram_quantile(s, base, 0.50, prev_buckets=prev) * 1000.0
+                p95 = histogram_quantile(s, base, 0.95, prev_buckets=prev) * 1000.0
+                self._prev_buckets[base] = cur
+                if p50 == p50:  # NaN = quiet window -> leave the 0.0 defaults
                     setattr(m, f"{fld}_p50_ms", p50)
                     setattr(m, f"{fld}_p95_ms", p95)
-                    break
+                break
         return m

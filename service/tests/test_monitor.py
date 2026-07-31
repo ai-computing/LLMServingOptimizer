@@ -138,3 +138,39 @@ def test_tpot_alias_drift_request_time_variant():
                            "vllm:request_time_per_output_token_seconds")
     m = Collector(dep_id="d").sample(text, ts=1.0)
     assert m.tpot_p95_ms == pytest.approx(87.5)
+
+
+def test_windowed_quantile_uses_bucket_deltas():
+    """Second scrape quantiles must reflect only the inter-scrape delta —
+    cumulative histograms otherwise pin p95 at a past spike forever and a
+    DEGRADED deployment could never recover."""
+    c = Collector(dep_id="d")
+    m1 = c.sample(FIXTURE, ts=0.0)
+    assert m1.tpot_p95_ms == pytest.approx(87.5)      # first scrape = cumulative
+    # quiet window: identical counters -> no events -> fields stay 0 (not 87.5)
+    m2 = c.sample(FIXTURE, ts=5.0)
+    assert m2.tpot_p95_ms == 0.0 and m2.ttft_p95_ms == 0.0
+    # new slow tokens land entirely in the 0.1s tpot bucket -> delta p95 ~ 95ms
+    text3 = FIXTURE \
+        .replace('time_per_output_token_seconds_bucket{le="0.1",model_name="m"} 100.0',
+                 'time_per_output_token_seconds_bucket{le="0.1",model_name="m"} 200.0') \
+        .replace('time_per_output_token_seconds_bucket{le="+Inf",model_name="m"} 100.0',
+                 'time_per_output_token_seconds_bucket{le="+Inf",model_name="m"} 200.0')
+    m3 = c.sample(text3, ts=10.0)
+    assert 50.0 <= m3.tpot_p95_ms <= 100.0            # inside (0.05, 0.1] bucket
+    assert m3.tpot_p95_ms == pytest.approx((0.05 + 0.95 * 0.05) * 1000, rel=1e-6)
+
+
+def test_slo_recovers_after_load_stops_with_delta_windows():
+    """DEGRADED -> READY round trip: violation while slow deltas arrive, quiet
+    windows afterwards clear the sliding window and recovery fires."""
+    events = []
+    chk = SLOChecker(dep_id="d", targets={"tpot_ms": 60}, window_s=30,
+                     on_degraded=lambda d: events.append("deg"),
+                     on_recovered=lambda d: events.append("rec"))
+    for ts in (1, 2, 3):
+        chk.push(_sample(ts, 90))                    # 3 slow windows -> degraded
+    assert events == ["deg"]
+    # load stops: quiet windows report 0 (filtered) and slide the bad samples out
+    assert chk.push(_sample(40, 0)).verdict == "ok"
+    assert events == ["deg", "rec"]

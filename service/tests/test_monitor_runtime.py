@@ -47,11 +47,25 @@ def env(tmp_path):
     return store, driver, dep_id, mgr
 
 
+def _scaled(text: str, k: int) -> str:
+    """Multiply every trailing numeric value by k — simulates SUSTAINED load
+    for delta-window quantiles (identical counters would mean a quiet window)."""
+    import re
+    return re.sub(r" ([\d.]+)$",
+                  lambda m: f" {float(m.group(1)) * k}", text, flags=re.M)
+
+
 def _run_loop(store, driver, dep_id, ticks, metrics_text=FIXTURE):
     """Run the monitor loop synchronously for `ticks` iterations."""
+    scrapes = {"n": 0}
+
+    def _http_get(url):
+        scrapes["n"] += 1
+        return _scaled(metrics_text, scrapes["n"])
+
     rt = MonitorRuntime(
         store, driver=driver, interval_s=0,
-        http_get=lambda url: metrics_text,
+        http_get=_http_get,
         power_fn=lambda gpu_map: [PowerSample(ts=float(_run_loop.t), device_id=d,
                                               power_w=150.0)
                                   for d in gpu_map.values()],
