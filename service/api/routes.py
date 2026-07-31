@@ -68,12 +68,26 @@ class ServiceState:
         return self.planner_fn or _default_planner
 
     def topology_graph(self):
-        """Cached TopologyGraph over the (v1-promoted) registry."""
+        """Cached TopologyGraph. ``registry`` may be a v2 RegistryV2 (used as
+        is) or a v1 ClusterRegistry (auto-promoted), so callers and tests can
+        pass either."""
         if not hasattr(self, "_topo_graph"):
             from ..topology.graph import TopologyGraph
-            from ..topology.schema import promote_v1
-            self._topo_graph = TopologyGraph(promote_v1(self.registry.model_dump()))
+            from ..topology.schema import RegistryV2, promote_v1
+            reg = (self.registry if isinstance(self.registry, RegistryV2)
+                   else promote_v1(self.registry.model_dump()))
+            self._topo_graph = TopologyGraph(reg)
         return self._topo_graph
+
+    def docker_endpoints(self) -> dict[str, dict]:
+        """{node_id: {endpoint, tls}} for the docker driver — so a deployment
+        targeting a remote node never silently lands on the local daemon."""
+        out: dict[str, dict] = {}
+        for node in self.topology_graph().registry.nodes:
+            if node.docker is not None:
+                out[node.id] = {"endpoint": node.docker.endpoint,
+                                "tls": node.docker.tls}
+        return out
 
     def available_topology(self, free_device_ids: list[str]) -> dict:
         # topology.views output is golden-equal to the old inventory.views
@@ -295,7 +309,10 @@ def create_service_router(state: ServiceState) -> APIRouter:
         filtered to hardware present in the registry."""
         from planner.utils import scan_profile_catalog
         from sim_backends import get_backend
-        cluster_hw = {d.name for n in state.registry.nodes for d in n.devices}
+        # hardware present in the cluster (via the v2 graph: works for both
+        # v1-promoted and native v2 registries)
+        cluster_hw = {d.hw for n in state.topology_graph().registry.nodes
+                      for d in n.devices}
         catalog: dict[str, dict] = {}
         for hw, models in get_backend("measured").list_hardware().items():
             if hw in cluster_hw:

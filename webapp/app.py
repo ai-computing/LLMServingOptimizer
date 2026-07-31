@@ -114,9 +114,11 @@ SERVICE_ENABLED = _REGISTRY_PATH.is_file()
 if SERVICE_ENABLED:
     from service.api.routes import ServiceState, create_service_router  # noqa: E402
     from service.inventory.ledger import Ledger  # noqa: E402
-    from service.inventory.registry import load_registry  # noqa: E402
+    from service.topology.schema import load_registry_any  # noqa: E402
 
-    _svc_registry = load_registry(_REGISTRY_PATH)
+    # registry v2 (v1 files are auto-promoted), so hierarchical intra-node
+    # fabrics and per-node dockerd endpoints are honored
+    _svc_registry = load_registry_any(_REGISTRY_PATH)
     _svc_ledger_path = Path(os.environ.get(
         "LLMSS_SERVICE_DB",
         str(WEBAPP_DIR.parent / "output" / "service_ledger.sqlite")))
@@ -129,7 +131,6 @@ if SERVICE_ENABLED:
     from service.deploy.docker_driver import DockerSdkDriver  # noqa: E402
     from service.deploy.manager import DeploymentManager  # noqa: E402
     from service.deploy.store import DeployStore  # noqa: E402
-
     from service.monitor.runtime import MonitorRuntime  # noqa: E402
 
     service_state.deploy_store = DeployStore(_svc_ledger_path)
@@ -138,7 +139,9 @@ if SERVICE_ENABLED:
         from service.deploy.docker_driver import FakeDriver  # noqa: E402
         _svc_driver = FakeDriver()
     else:
-        _svc_driver = DockerSdkDriver()
+        # per-node dockerd endpoints from the registry: a deployment on a
+        # remote node must never silently run on the local daemon
+        _svc_driver = DockerSdkDriver(service_state.docker_endpoints())
     service_state.monitor_runtime = MonitorRuntime(
         service_state.deploy_store, driver=_svc_driver)
     _mgr_kw = {}

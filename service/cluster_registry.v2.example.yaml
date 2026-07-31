@@ -1,0 +1,443 @@
+version: 2
+
+# 서비스 클러스터 레지스트리 (registry v2 — 계층형 인터커넥트 표현용).
+#
+#   node0        : 이 호스트의 실물 RTX A5000 x2  → 실제 배포 가능
+#   a40-0..a40-7 : A40 x8 서버 8대 (64 GPU)      → 플래닝/DSE 전용
+#                  (이 호스트에 물리적으로 없음 — 배포 시 docker endpoint
+#                   연결 실패로 FAILED. 데모는 exclude_hw: [A40] 로 회피)
+#   서버 간      : 200G InfiniBand (non-blocking 스위치 패브릭을 노드 쌍
+#                  full-mesh 링크로 모델링 — 플래너 Max-Flow가 쌍별 대역폭을 봄)
+#
+# A40 서버 노드 내 토폴로지는 docs/A40_VALIDATION_REPORT.md 의 실측 분류를 따름:
+#   GPU (0,1) (2,3) (4,5) (6,7) = NV4 NVLink 페어
+#   같은 소켓 내 페어 간 (0-3, 4-7 그룹) = NODE (CPU 호스트 브리지 경유 PCIe)
+#   소켓 간 = SYS
+# bandwidth 는 discovery.py 의 클래스별 nominal 값(112/12/8 GBps)이며,
+# 시뮬레이터용 실측 유효 대역폭(티어별 52.8 / 24.5 / 21.0 GB/s)은 위 리포트 참조.
+# 링크 순서: NVLink 페어 → 소켓 내 → 소켓 간
+
+nodes:
+  # ── 실물 노드: RTX A5000 x2 (idle_w 60 = 캠페인 실측 loaded-idle) ──
+  - id: node0
+    hostname: localhost
+    host_base_w: 200
+    docker: {endpoint: "unix://var/run/docker.sock", tls: false}
+    devices:
+      - {id: node0/A5000/0, kind: gpu, hw: A5000, mem_gb: 24, idle_w: 60, active_w: 230, pcie: gen4x16, numa: 0}
+      - {id: node0/A5000/1, kind: gpu, hw: A5000, mem_gb: 24, idle_w: 60, active_w: 230, pcie: gen4x16, numa: 0}
+    switches:
+      - {id: node0/nic0, kind: nic, bandwidth: 200Gbps}
+    intra_links:
+      - {a: node0/A5000/0, b: node0/A5000/1, kind: pcie, bandwidth: 12GBps}   # discovery: NODE
+
+  # ── A40 x8 서버 #0 (플래닝 전용) ──
+  - id: a40-0
+    hostname: gpu-a40-0.cluster
+    host_base_w: 250
+    docker: {endpoint: "tcp://gpu-a40-0.cluster:2376", tls: true}
+    devices:
+      - {id: a40-0/A40/0, kind: gpu, hw: A40, mem_gb: 48, idle_w: 25, active_w: 300, pcie: gen4x16, numa: 0}
+      - {id: a40-0/A40/1, kind: gpu, hw: A40, mem_gb: 48, idle_w: 25, active_w: 300, pcie: gen4x16, numa: 0}
+      - {id: a40-0/A40/2, kind: gpu, hw: A40, mem_gb: 48, idle_w: 25, active_w: 300, pcie: gen4x16, numa: 0}
+      - {id: a40-0/A40/3, kind: gpu, hw: A40, mem_gb: 48, idle_w: 25, active_w: 300, pcie: gen4x16, numa: 0}
+      - {id: a40-0/A40/4, kind: gpu, hw: A40, mem_gb: 48, idle_w: 25, active_w: 300, pcie: gen4x16, numa: 1}
+      - {id: a40-0/A40/5, kind: gpu, hw: A40, mem_gb: 48, idle_w: 25, active_w: 300, pcie: gen4x16, numa: 1}
+      - {id: a40-0/A40/6, kind: gpu, hw: A40, mem_gb: 48, idle_w: 25, active_w: 300, pcie: gen4x16, numa: 1}
+      - {id: a40-0/A40/7, kind: gpu, hw: A40, mem_gb: 48, idle_w: 25, active_w: 300, pcie: gen4x16, numa: 1}
+    switches:
+      - {id: a40-0/nic0, kind: nic, bandwidth: 200Gbps}
+    intra_links:
+      - {a: a40-0/A40/0, b: a40-0/A40/1, kind: nvlink, bandwidth: 112GBps}
+      - {a: a40-0/A40/2, b: a40-0/A40/3, kind: nvlink, bandwidth: 112GBps}
+      - {a: a40-0/A40/4, b: a40-0/A40/5, kind: nvlink, bandwidth: 112GBps}
+      - {a: a40-0/A40/6, b: a40-0/A40/7, kind: nvlink, bandwidth: 112GBps}
+      - {a: a40-0/A40/0, b: a40-0/A40/2, kind: pcie, bandwidth: 12GBps}
+      - {a: a40-0/A40/0, b: a40-0/A40/3, kind: pcie, bandwidth: 12GBps}
+      - {a: a40-0/A40/1, b: a40-0/A40/2, kind: pcie, bandwidth: 12GBps}
+      - {a: a40-0/A40/1, b: a40-0/A40/3, kind: pcie, bandwidth: 12GBps}
+      - {a: a40-0/A40/4, b: a40-0/A40/6, kind: pcie, bandwidth: 12GBps}
+      - {a: a40-0/A40/4, b: a40-0/A40/7, kind: pcie, bandwidth: 12GBps}
+      - {a: a40-0/A40/5, b: a40-0/A40/6, kind: pcie, bandwidth: 12GBps}
+      - {a: a40-0/A40/5, b: a40-0/A40/7, kind: pcie, bandwidth: 12GBps}
+      - {a: a40-0/A40/0, b: a40-0/A40/4, kind: pcie, bandwidth: 8GBps}
+      - {a: a40-0/A40/0, b: a40-0/A40/5, kind: pcie, bandwidth: 8GBps}
+      - {a: a40-0/A40/0, b: a40-0/A40/6, kind: pcie, bandwidth: 8GBps}
+      - {a: a40-0/A40/0, b: a40-0/A40/7, kind: pcie, bandwidth: 8GBps}
+      - {a: a40-0/A40/1, b: a40-0/A40/4, kind: pcie, bandwidth: 8GBps}
+      - {a: a40-0/A40/1, b: a40-0/A40/5, kind: pcie, bandwidth: 8GBps}
+      - {a: a40-0/A40/1, b: a40-0/A40/6, kind: pcie, bandwidth: 8GBps}
+      - {a: a40-0/A40/1, b: a40-0/A40/7, kind: pcie, bandwidth: 8GBps}
+      - {a: a40-0/A40/2, b: a40-0/A40/4, kind: pcie, bandwidth: 8GBps}
+      - {a: a40-0/A40/2, b: a40-0/A40/5, kind: pcie, bandwidth: 8GBps}
+      - {a: a40-0/A40/2, b: a40-0/A40/6, kind: pcie, bandwidth: 8GBps}
+      - {a: a40-0/A40/2, b: a40-0/A40/7, kind: pcie, bandwidth: 8GBps}
+      - {a: a40-0/A40/3, b: a40-0/A40/4, kind: pcie, bandwidth: 8GBps}
+      - {a: a40-0/A40/3, b: a40-0/A40/5, kind: pcie, bandwidth: 8GBps}
+      - {a: a40-0/A40/3, b: a40-0/A40/6, kind: pcie, bandwidth: 8GBps}
+      - {a: a40-0/A40/3, b: a40-0/A40/7, kind: pcie, bandwidth: 8GBps}
+
+  # ── A40 x8 서버 #1 (플래닝 전용) ──
+  - id: a40-1
+    hostname: gpu-a40-1.cluster
+    host_base_w: 250
+    docker: {endpoint: "tcp://gpu-a40-1.cluster:2376", tls: true}
+    devices:
+      - {id: a40-1/A40/0, kind: gpu, hw: A40, mem_gb: 48, idle_w: 25, active_w: 300, pcie: gen4x16, numa: 0}
+      - {id: a40-1/A40/1, kind: gpu, hw: A40, mem_gb: 48, idle_w: 25, active_w: 300, pcie: gen4x16, numa: 0}
+      - {id: a40-1/A40/2, kind: gpu, hw: A40, mem_gb: 48, idle_w: 25, active_w: 300, pcie: gen4x16, numa: 0}
+      - {id: a40-1/A40/3, kind: gpu, hw: A40, mem_gb: 48, idle_w: 25, active_w: 300, pcie: gen4x16, numa: 0}
+      - {id: a40-1/A40/4, kind: gpu, hw: A40, mem_gb: 48, idle_w: 25, active_w: 300, pcie: gen4x16, numa: 1}
+      - {id: a40-1/A40/5, kind: gpu, hw: A40, mem_gb: 48, idle_w: 25, active_w: 300, pcie: gen4x16, numa: 1}
+      - {id: a40-1/A40/6, kind: gpu, hw: A40, mem_gb: 48, idle_w: 25, active_w: 300, pcie: gen4x16, numa: 1}
+      - {id: a40-1/A40/7, kind: gpu, hw: A40, mem_gb: 48, idle_w: 25, active_w: 300, pcie: gen4x16, numa: 1}
+    switches:
+      - {id: a40-1/nic0, kind: nic, bandwidth: 200Gbps}
+    intra_links:
+      - {a: a40-1/A40/0, b: a40-1/A40/1, kind: nvlink, bandwidth: 112GBps}
+      - {a: a40-1/A40/2, b: a40-1/A40/3, kind: nvlink, bandwidth: 112GBps}
+      - {a: a40-1/A40/4, b: a40-1/A40/5, kind: nvlink, bandwidth: 112GBps}
+      - {a: a40-1/A40/6, b: a40-1/A40/7, kind: nvlink, bandwidth: 112GBps}
+      - {a: a40-1/A40/0, b: a40-1/A40/2, kind: pcie, bandwidth: 12GBps}
+      - {a: a40-1/A40/0, b: a40-1/A40/3, kind: pcie, bandwidth: 12GBps}
+      - {a: a40-1/A40/1, b: a40-1/A40/2, kind: pcie, bandwidth: 12GBps}
+      - {a: a40-1/A40/1, b: a40-1/A40/3, kind: pcie, bandwidth: 12GBps}
+      - {a: a40-1/A40/4, b: a40-1/A40/6, kind: pcie, bandwidth: 12GBps}
+      - {a: a40-1/A40/4, b: a40-1/A40/7, kind: pcie, bandwidth: 12GBps}
+      - {a: a40-1/A40/5, b: a40-1/A40/6, kind: pcie, bandwidth: 12GBps}
+      - {a: a40-1/A40/5, b: a40-1/A40/7, kind: pcie, bandwidth: 12GBps}
+      - {a: a40-1/A40/0, b: a40-1/A40/4, kind: pcie, bandwidth: 8GBps}
+      - {a: a40-1/A40/0, b: a40-1/A40/5, kind: pcie, bandwidth: 8GBps}
+      - {a: a40-1/A40/0, b: a40-1/A40/6, kind: pcie, bandwidth: 8GBps}
+      - {a: a40-1/A40/0, b: a40-1/A40/7, kind: pcie, bandwidth: 8GBps}
+      - {a: a40-1/A40/1, b: a40-1/A40/4, kind: pcie, bandwidth: 8GBps}
+      - {a: a40-1/A40/1, b: a40-1/A40/5, kind: pcie, bandwidth: 8GBps}
+      - {a: a40-1/A40/1, b: a40-1/A40/6, kind: pcie, bandwidth: 8GBps}
+      - {a: a40-1/A40/1, b: a40-1/A40/7, kind: pcie, bandwidth: 8GBps}
+      - {a: a40-1/A40/2, b: a40-1/A40/4, kind: pcie, bandwidth: 8GBps}
+      - {a: a40-1/A40/2, b: a40-1/A40/5, kind: pcie, bandwidth: 8GBps}
+      - {a: a40-1/A40/2, b: a40-1/A40/6, kind: pcie, bandwidth: 8GBps}
+      - {a: a40-1/A40/2, b: a40-1/A40/7, kind: pcie, bandwidth: 8GBps}
+      - {a: a40-1/A40/3, b: a40-1/A40/4, kind: pcie, bandwidth: 8GBps}
+      - {a: a40-1/A40/3, b: a40-1/A40/5, kind: pcie, bandwidth: 8GBps}
+      - {a: a40-1/A40/3, b: a40-1/A40/6, kind: pcie, bandwidth: 8GBps}
+      - {a: a40-1/A40/3, b: a40-1/A40/7, kind: pcie, bandwidth: 8GBps}
+
+  # ── A40 x8 서버 #2 (플래닝 전용) ──
+  - id: a40-2
+    hostname: gpu-a40-2.cluster
+    host_base_w: 250
+    docker: {endpoint: "tcp://gpu-a40-2.cluster:2376", tls: true}
+    devices:
+      - {id: a40-2/A40/0, kind: gpu, hw: A40, mem_gb: 48, idle_w: 25, active_w: 300, pcie: gen4x16, numa: 0}
+      - {id: a40-2/A40/1, kind: gpu, hw: A40, mem_gb: 48, idle_w: 25, active_w: 300, pcie: gen4x16, numa: 0}
+      - {id: a40-2/A40/2, kind: gpu, hw: A40, mem_gb: 48, idle_w: 25, active_w: 300, pcie: gen4x16, numa: 0}
+      - {id: a40-2/A40/3, kind: gpu, hw: A40, mem_gb: 48, idle_w: 25, active_w: 300, pcie: gen4x16, numa: 0}
+      - {id: a40-2/A40/4, kind: gpu, hw: A40, mem_gb: 48, idle_w: 25, active_w: 300, pcie: gen4x16, numa: 1}
+      - {id: a40-2/A40/5, kind: gpu, hw: A40, mem_gb: 48, idle_w: 25, active_w: 300, pcie: gen4x16, numa: 1}
+      - {id: a40-2/A40/6, kind: gpu, hw: A40, mem_gb: 48, idle_w: 25, active_w: 300, pcie: gen4x16, numa: 1}
+      - {id: a40-2/A40/7, kind: gpu, hw: A40, mem_gb: 48, idle_w: 25, active_w: 300, pcie: gen4x16, numa: 1}
+    switches:
+      - {id: a40-2/nic0, kind: nic, bandwidth: 200Gbps}
+    intra_links:
+      - {a: a40-2/A40/0, b: a40-2/A40/1, kind: nvlink, bandwidth: 112GBps}
+      - {a: a40-2/A40/2, b: a40-2/A40/3, kind: nvlink, bandwidth: 112GBps}
+      - {a: a40-2/A40/4, b: a40-2/A40/5, kind: nvlink, bandwidth: 112GBps}
+      - {a: a40-2/A40/6, b: a40-2/A40/7, kind: nvlink, bandwidth: 112GBps}
+      - {a: a40-2/A40/0, b: a40-2/A40/2, kind: pcie, bandwidth: 12GBps}
+      - {a: a40-2/A40/0, b: a40-2/A40/3, kind: pcie, bandwidth: 12GBps}
+      - {a: a40-2/A40/1, b: a40-2/A40/2, kind: pcie, bandwidth: 12GBps}
+      - {a: a40-2/A40/1, b: a40-2/A40/3, kind: pcie, bandwidth: 12GBps}
+      - {a: a40-2/A40/4, b: a40-2/A40/6, kind: pcie, bandwidth: 12GBps}
+      - {a: a40-2/A40/4, b: a40-2/A40/7, kind: pcie, bandwidth: 12GBps}
+      - {a: a40-2/A40/5, b: a40-2/A40/6, kind: pcie, bandwidth: 12GBps}
+      - {a: a40-2/A40/5, b: a40-2/A40/7, kind: pcie, bandwidth: 12GBps}
+      - {a: a40-2/A40/0, b: a40-2/A40/4, kind: pcie, bandwidth: 8GBps}
+      - {a: a40-2/A40/0, b: a40-2/A40/5, kind: pcie, bandwidth: 8GBps}
+      - {a: a40-2/A40/0, b: a40-2/A40/6, kind: pcie, bandwidth: 8GBps}
+      - {a: a40-2/A40/0, b: a40-2/A40/7, kind: pcie, bandwidth: 8GBps}
+      - {a: a40-2/A40/1, b: a40-2/A40/4, kind: pcie, bandwidth: 8GBps}
+      - {a: a40-2/A40/1, b: a40-2/A40/5, kind: pcie, bandwidth: 8GBps}
+      - {a: a40-2/A40/1, b: a40-2/A40/6, kind: pcie, bandwidth: 8GBps}
+      - {a: a40-2/A40/1, b: a40-2/A40/7, kind: pcie, bandwidth: 8GBps}
+      - {a: a40-2/A40/2, b: a40-2/A40/4, kind: pcie, bandwidth: 8GBps}
+      - {a: a40-2/A40/2, b: a40-2/A40/5, kind: pcie, bandwidth: 8GBps}
+      - {a: a40-2/A40/2, b: a40-2/A40/6, kind: pcie, bandwidth: 8GBps}
+      - {a: a40-2/A40/2, b: a40-2/A40/7, kind: pcie, bandwidth: 8GBps}
+      - {a: a40-2/A40/3, b: a40-2/A40/4, kind: pcie, bandwidth: 8GBps}
+      - {a: a40-2/A40/3, b: a40-2/A40/5, kind: pcie, bandwidth: 8GBps}
+      - {a: a40-2/A40/3, b: a40-2/A40/6, kind: pcie, bandwidth: 8GBps}
+      - {a: a40-2/A40/3, b: a40-2/A40/7, kind: pcie, bandwidth: 8GBps}
+
+  # ── A40 x8 서버 #3 (플래닝 전용) ──
+  - id: a40-3
+    hostname: gpu-a40-3.cluster
+    host_base_w: 250
+    docker: {endpoint: "tcp://gpu-a40-3.cluster:2376", tls: true}
+    devices:
+      - {id: a40-3/A40/0, kind: gpu, hw: A40, mem_gb: 48, idle_w: 25, active_w: 300, pcie: gen4x16, numa: 0}
+      - {id: a40-3/A40/1, kind: gpu, hw: A40, mem_gb: 48, idle_w: 25, active_w: 300, pcie: gen4x16, numa: 0}
+      - {id: a40-3/A40/2, kind: gpu, hw: A40, mem_gb: 48, idle_w: 25, active_w: 300, pcie: gen4x16, numa: 0}
+      - {id: a40-3/A40/3, kind: gpu, hw: A40, mem_gb: 48, idle_w: 25, active_w: 300, pcie: gen4x16, numa: 0}
+      - {id: a40-3/A40/4, kind: gpu, hw: A40, mem_gb: 48, idle_w: 25, active_w: 300, pcie: gen4x16, numa: 1}
+      - {id: a40-3/A40/5, kind: gpu, hw: A40, mem_gb: 48, idle_w: 25, active_w: 300, pcie: gen4x16, numa: 1}
+      - {id: a40-3/A40/6, kind: gpu, hw: A40, mem_gb: 48, idle_w: 25, active_w: 300, pcie: gen4x16, numa: 1}
+      - {id: a40-3/A40/7, kind: gpu, hw: A40, mem_gb: 48, idle_w: 25, active_w: 300, pcie: gen4x16, numa: 1}
+    switches:
+      - {id: a40-3/nic0, kind: nic, bandwidth: 200Gbps}
+    intra_links:
+      - {a: a40-3/A40/0, b: a40-3/A40/1, kind: nvlink, bandwidth: 112GBps}
+      - {a: a40-3/A40/2, b: a40-3/A40/3, kind: nvlink, bandwidth: 112GBps}
+      - {a: a40-3/A40/4, b: a40-3/A40/5, kind: nvlink, bandwidth: 112GBps}
+      - {a: a40-3/A40/6, b: a40-3/A40/7, kind: nvlink, bandwidth: 112GBps}
+      - {a: a40-3/A40/0, b: a40-3/A40/2, kind: pcie, bandwidth: 12GBps}
+      - {a: a40-3/A40/0, b: a40-3/A40/3, kind: pcie, bandwidth: 12GBps}
+      - {a: a40-3/A40/1, b: a40-3/A40/2, kind: pcie, bandwidth: 12GBps}
+      - {a: a40-3/A40/1, b: a40-3/A40/3, kind: pcie, bandwidth: 12GBps}
+      - {a: a40-3/A40/4, b: a40-3/A40/6, kind: pcie, bandwidth: 12GBps}
+      - {a: a40-3/A40/4, b: a40-3/A40/7, kind: pcie, bandwidth: 12GBps}
+      - {a: a40-3/A40/5, b: a40-3/A40/6, kind: pcie, bandwidth: 12GBps}
+      - {a: a40-3/A40/5, b: a40-3/A40/7, kind: pcie, bandwidth: 12GBps}
+      - {a: a40-3/A40/0, b: a40-3/A40/4, kind: pcie, bandwidth: 8GBps}
+      - {a: a40-3/A40/0, b: a40-3/A40/5, kind: pcie, bandwidth: 8GBps}
+      - {a: a40-3/A40/0, b: a40-3/A40/6, kind: pcie, bandwidth: 8GBps}
+      - {a: a40-3/A40/0, b: a40-3/A40/7, kind: pcie, bandwidth: 8GBps}
+      - {a: a40-3/A40/1, b: a40-3/A40/4, kind: pcie, bandwidth: 8GBps}
+      - {a: a40-3/A40/1, b: a40-3/A40/5, kind: pcie, bandwidth: 8GBps}
+      - {a: a40-3/A40/1, b: a40-3/A40/6, kind: pcie, bandwidth: 8GBps}
+      - {a: a40-3/A40/1, b: a40-3/A40/7, kind: pcie, bandwidth: 8GBps}
+      - {a: a40-3/A40/2, b: a40-3/A40/4, kind: pcie, bandwidth: 8GBps}
+      - {a: a40-3/A40/2, b: a40-3/A40/5, kind: pcie, bandwidth: 8GBps}
+      - {a: a40-3/A40/2, b: a40-3/A40/6, kind: pcie, bandwidth: 8GBps}
+      - {a: a40-3/A40/2, b: a40-3/A40/7, kind: pcie, bandwidth: 8GBps}
+      - {a: a40-3/A40/3, b: a40-3/A40/4, kind: pcie, bandwidth: 8GBps}
+      - {a: a40-3/A40/3, b: a40-3/A40/5, kind: pcie, bandwidth: 8GBps}
+      - {a: a40-3/A40/3, b: a40-3/A40/6, kind: pcie, bandwidth: 8GBps}
+      - {a: a40-3/A40/3, b: a40-3/A40/7, kind: pcie, bandwidth: 8GBps}
+
+  # ── A40 x8 서버 #4 (플래닝 전용) ──
+  - id: a40-4
+    hostname: gpu-a40-4.cluster
+    host_base_w: 250
+    docker: {endpoint: "tcp://gpu-a40-4.cluster:2376", tls: true}
+    devices:
+      - {id: a40-4/A40/0, kind: gpu, hw: A40, mem_gb: 48, idle_w: 25, active_w: 300, pcie: gen4x16, numa: 0}
+      - {id: a40-4/A40/1, kind: gpu, hw: A40, mem_gb: 48, idle_w: 25, active_w: 300, pcie: gen4x16, numa: 0}
+      - {id: a40-4/A40/2, kind: gpu, hw: A40, mem_gb: 48, idle_w: 25, active_w: 300, pcie: gen4x16, numa: 0}
+      - {id: a40-4/A40/3, kind: gpu, hw: A40, mem_gb: 48, idle_w: 25, active_w: 300, pcie: gen4x16, numa: 0}
+      - {id: a40-4/A40/4, kind: gpu, hw: A40, mem_gb: 48, idle_w: 25, active_w: 300, pcie: gen4x16, numa: 1}
+      - {id: a40-4/A40/5, kind: gpu, hw: A40, mem_gb: 48, idle_w: 25, active_w: 300, pcie: gen4x16, numa: 1}
+      - {id: a40-4/A40/6, kind: gpu, hw: A40, mem_gb: 48, idle_w: 25, active_w: 300, pcie: gen4x16, numa: 1}
+      - {id: a40-4/A40/7, kind: gpu, hw: A40, mem_gb: 48, idle_w: 25, active_w: 300, pcie: gen4x16, numa: 1}
+    switches:
+      - {id: a40-4/nic0, kind: nic, bandwidth: 200Gbps}
+    intra_links:
+      - {a: a40-4/A40/0, b: a40-4/A40/1, kind: nvlink, bandwidth: 112GBps}
+      - {a: a40-4/A40/2, b: a40-4/A40/3, kind: nvlink, bandwidth: 112GBps}
+      - {a: a40-4/A40/4, b: a40-4/A40/5, kind: nvlink, bandwidth: 112GBps}
+      - {a: a40-4/A40/6, b: a40-4/A40/7, kind: nvlink, bandwidth: 112GBps}
+      - {a: a40-4/A40/0, b: a40-4/A40/2, kind: pcie, bandwidth: 12GBps}
+      - {a: a40-4/A40/0, b: a40-4/A40/3, kind: pcie, bandwidth: 12GBps}
+      - {a: a40-4/A40/1, b: a40-4/A40/2, kind: pcie, bandwidth: 12GBps}
+      - {a: a40-4/A40/1, b: a40-4/A40/3, kind: pcie, bandwidth: 12GBps}
+      - {a: a40-4/A40/4, b: a40-4/A40/6, kind: pcie, bandwidth: 12GBps}
+      - {a: a40-4/A40/4, b: a40-4/A40/7, kind: pcie, bandwidth: 12GBps}
+      - {a: a40-4/A40/5, b: a40-4/A40/6, kind: pcie, bandwidth: 12GBps}
+      - {a: a40-4/A40/5, b: a40-4/A40/7, kind: pcie, bandwidth: 12GBps}
+      - {a: a40-4/A40/0, b: a40-4/A40/4, kind: pcie, bandwidth: 8GBps}
+      - {a: a40-4/A40/0, b: a40-4/A40/5, kind: pcie, bandwidth: 8GBps}
+      - {a: a40-4/A40/0, b: a40-4/A40/6, kind: pcie, bandwidth: 8GBps}
+      - {a: a40-4/A40/0, b: a40-4/A40/7, kind: pcie, bandwidth: 8GBps}
+      - {a: a40-4/A40/1, b: a40-4/A40/4, kind: pcie, bandwidth: 8GBps}
+      - {a: a40-4/A40/1, b: a40-4/A40/5, kind: pcie, bandwidth: 8GBps}
+      - {a: a40-4/A40/1, b: a40-4/A40/6, kind: pcie, bandwidth: 8GBps}
+      - {a: a40-4/A40/1, b: a40-4/A40/7, kind: pcie, bandwidth: 8GBps}
+      - {a: a40-4/A40/2, b: a40-4/A40/4, kind: pcie, bandwidth: 8GBps}
+      - {a: a40-4/A40/2, b: a40-4/A40/5, kind: pcie, bandwidth: 8GBps}
+      - {a: a40-4/A40/2, b: a40-4/A40/6, kind: pcie, bandwidth: 8GBps}
+      - {a: a40-4/A40/2, b: a40-4/A40/7, kind: pcie, bandwidth: 8GBps}
+      - {a: a40-4/A40/3, b: a40-4/A40/4, kind: pcie, bandwidth: 8GBps}
+      - {a: a40-4/A40/3, b: a40-4/A40/5, kind: pcie, bandwidth: 8GBps}
+      - {a: a40-4/A40/3, b: a40-4/A40/6, kind: pcie, bandwidth: 8GBps}
+      - {a: a40-4/A40/3, b: a40-4/A40/7, kind: pcie, bandwidth: 8GBps}
+
+  # ── A40 x8 서버 #5 (플래닝 전용) ──
+  - id: a40-5
+    hostname: gpu-a40-5.cluster
+    host_base_w: 250
+    docker: {endpoint: "tcp://gpu-a40-5.cluster:2376", tls: true}
+    devices:
+      - {id: a40-5/A40/0, kind: gpu, hw: A40, mem_gb: 48, idle_w: 25, active_w: 300, pcie: gen4x16, numa: 0}
+      - {id: a40-5/A40/1, kind: gpu, hw: A40, mem_gb: 48, idle_w: 25, active_w: 300, pcie: gen4x16, numa: 0}
+      - {id: a40-5/A40/2, kind: gpu, hw: A40, mem_gb: 48, idle_w: 25, active_w: 300, pcie: gen4x16, numa: 0}
+      - {id: a40-5/A40/3, kind: gpu, hw: A40, mem_gb: 48, idle_w: 25, active_w: 300, pcie: gen4x16, numa: 0}
+      - {id: a40-5/A40/4, kind: gpu, hw: A40, mem_gb: 48, idle_w: 25, active_w: 300, pcie: gen4x16, numa: 1}
+      - {id: a40-5/A40/5, kind: gpu, hw: A40, mem_gb: 48, idle_w: 25, active_w: 300, pcie: gen4x16, numa: 1}
+      - {id: a40-5/A40/6, kind: gpu, hw: A40, mem_gb: 48, idle_w: 25, active_w: 300, pcie: gen4x16, numa: 1}
+      - {id: a40-5/A40/7, kind: gpu, hw: A40, mem_gb: 48, idle_w: 25, active_w: 300, pcie: gen4x16, numa: 1}
+    switches:
+      - {id: a40-5/nic0, kind: nic, bandwidth: 200Gbps}
+    intra_links:
+      - {a: a40-5/A40/0, b: a40-5/A40/1, kind: nvlink, bandwidth: 112GBps}
+      - {a: a40-5/A40/2, b: a40-5/A40/3, kind: nvlink, bandwidth: 112GBps}
+      - {a: a40-5/A40/4, b: a40-5/A40/5, kind: nvlink, bandwidth: 112GBps}
+      - {a: a40-5/A40/6, b: a40-5/A40/7, kind: nvlink, bandwidth: 112GBps}
+      - {a: a40-5/A40/0, b: a40-5/A40/2, kind: pcie, bandwidth: 12GBps}
+      - {a: a40-5/A40/0, b: a40-5/A40/3, kind: pcie, bandwidth: 12GBps}
+      - {a: a40-5/A40/1, b: a40-5/A40/2, kind: pcie, bandwidth: 12GBps}
+      - {a: a40-5/A40/1, b: a40-5/A40/3, kind: pcie, bandwidth: 12GBps}
+      - {a: a40-5/A40/4, b: a40-5/A40/6, kind: pcie, bandwidth: 12GBps}
+      - {a: a40-5/A40/4, b: a40-5/A40/7, kind: pcie, bandwidth: 12GBps}
+      - {a: a40-5/A40/5, b: a40-5/A40/6, kind: pcie, bandwidth: 12GBps}
+      - {a: a40-5/A40/5, b: a40-5/A40/7, kind: pcie, bandwidth: 12GBps}
+      - {a: a40-5/A40/0, b: a40-5/A40/4, kind: pcie, bandwidth: 8GBps}
+      - {a: a40-5/A40/0, b: a40-5/A40/5, kind: pcie, bandwidth: 8GBps}
+      - {a: a40-5/A40/0, b: a40-5/A40/6, kind: pcie, bandwidth: 8GBps}
+      - {a: a40-5/A40/0, b: a40-5/A40/7, kind: pcie, bandwidth: 8GBps}
+      - {a: a40-5/A40/1, b: a40-5/A40/4, kind: pcie, bandwidth: 8GBps}
+      - {a: a40-5/A40/1, b: a40-5/A40/5, kind: pcie, bandwidth: 8GBps}
+      - {a: a40-5/A40/1, b: a40-5/A40/6, kind: pcie, bandwidth: 8GBps}
+      - {a: a40-5/A40/1, b: a40-5/A40/7, kind: pcie, bandwidth: 8GBps}
+      - {a: a40-5/A40/2, b: a40-5/A40/4, kind: pcie, bandwidth: 8GBps}
+      - {a: a40-5/A40/2, b: a40-5/A40/5, kind: pcie, bandwidth: 8GBps}
+      - {a: a40-5/A40/2, b: a40-5/A40/6, kind: pcie, bandwidth: 8GBps}
+      - {a: a40-5/A40/2, b: a40-5/A40/7, kind: pcie, bandwidth: 8GBps}
+      - {a: a40-5/A40/3, b: a40-5/A40/4, kind: pcie, bandwidth: 8GBps}
+      - {a: a40-5/A40/3, b: a40-5/A40/5, kind: pcie, bandwidth: 8GBps}
+      - {a: a40-5/A40/3, b: a40-5/A40/6, kind: pcie, bandwidth: 8GBps}
+      - {a: a40-5/A40/3, b: a40-5/A40/7, kind: pcie, bandwidth: 8GBps}
+
+  # ── A40 x8 서버 #6 (플래닝 전용) ──
+  - id: a40-6
+    hostname: gpu-a40-6.cluster
+    host_base_w: 250
+    docker: {endpoint: "tcp://gpu-a40-6.cluster:2376", tls: true}
+    devices:
+      - {id: a40-6/A40/0, kind: gpu, hw: A40, mem_gb: 48, idle_w: 25, active_w: 300, pcie: gen4x16, numa: 0}
+      - {id: a40-6/A40/1, kind: gpu, hw: A40, mem_gb: 48, idle_w: 25, active_w: 300, pcie: gen4x16, numa: 0}
+      - {id: a40-6/A40/2, kind: gpu, hw: A40, mem_gb: 48, idle_w: 25, active_w: 300, pcie: gen4x16, numa: 0}
+      - {id: a40-6/A40/3, kind: gpu, hw: A40, mem_gb: 48, idle_w: 25, active_w: 300, pcie: gen4x16, numa: 0}
+      - {id: a40-6/A40/4, kind: gpu, hw: A40, mem_gb: 48, idle_w: 25, active_w: 300, pcie: gen4x16, numa: 1}
+      - {id: a40-6/A40/5, kind: gpu, hw: A40, mem_gb: 48, idle_w: 25, active_w: 300, pcie: gen4x16, numa: 1}
+      - {id: a40-6/A40/6, kind: gpu, hw: A40, mem_gb: 48, idle_w: 25, active_w: 300, pcie: gen4x16, numa: 1}
+      - {id: a40-6/A40/7, kind: gpu, hw: A40, mem_gb: 48, idle_w: 25, active_w: 300, pcie: gen4x16, numa: 1}
+    switches:
+      - {id: a40-6/nic0, kind: nic, bandwidth: 200Gbps}
+    intra_links:
+      - {a: a40-6/A40/0, b: a40-6/A40/1, kind: nvlink, bandwidth: 112GBps}
+      - {a: a40-6/A40/2, b: a40-6/A40/3, kind: nvlink, bandwidth: 112GBps}
+      - {a: a40-6/A40/4, b: a40-6/A40/5, kind: nvlink, bandwidth: 112GBps}
+      - {a: a40-6/A40/6, b: a40-6/A40/7, kind: nvlink, bandwidth: 112GBps}
+      - {a: a40-6/A40/0, b: a40-6/A40/2, kind: pcie, bandwidth: 12GBps}
+      - {a: a40-6/A40/0, b: a40-6/A40/3, kind: pcie, bandwidth: 12GBps}
+      - {a: a40-6/A40/1, b: a40-6/A40/2, kind: pcie, bandwidth: 12GBps}
+      - {a: a40-6/A40/1, b: a40-6/A40/3, kind: pcie, bandwidth: 12GBps}
+      - {a: a40-6/A40/4, b: a40-6/A40/6, kind: pcie, bandwidth: 12GBps}
+      - {a: a40-6/A40/4, b: a40-6/A40/7, kind: pcie, bandwidth: 12GBps}
+      - {a: a40-6/A40/5, b: a40-6/A40/6, kind: pcie, bandwidth: 12GBps}
+      - {a: a40-6/A40/5, b: a40-6/A40/7, kind: pcie, bandwidth: 12GBps}
+      - {a: a40-6/A40/0, b: a40-6/A40/4, kind: pcie, bandwidth: 8GBps}
+      - {a: a40-6/A40/0, b: a40-6/A40/5, kind: pcie, bandwidth: 8GBps}
+      - {a: a40-6/A40/0, b: a40-6/A40/6, kind: pcie, bandwidth: 8GBps}
+      - {a: a40-6/A40/0, b: a40-6/A40/7, kind: pcie, bandwidth: 8GBps}
+      - {a: a40-6/A40/1, b: a40-6/A40/4, kind: pcie, bandwidth: 8GBps}
+      - {a: a40-6/A40/1, b: a40-6/A40/5, kind: pcie, bandwidth: 8GBps}
+      - {a: a40-6/A40/1, b: a40-6/A40/6, kind: pcie, bandwidth: 8GBps}
+      - {a: a40-6/A40/1, b: a40-6/A40/7, kind: pcie, bandwidth: 8GBps}
+      - {a: a40-6/A40/2, b: a40-6/A40/4, kind: pcie, bandwidth: 8GBps}
+      - {a: a40-6/A40/2, b: a40-6/A40/5, kind: pcie, bandwidth: 8GBps}
+      - {a: a40-6/A40/2, b: a40-6/A40/6, kind: pcie, bandwidth: 8GBps}
+      - {a: a40-6/A40/2, b: a40-6/A40/7, kind: pcie, bandwidth: 8GBps}
+      - {a: a40-6/A40/3, b: a40-6/A40/4, kind: pcie, bandwidth: 8GBps}
+      - {a: a40-6/A40/3, b: a40-6/A40/5, kind: pcie, bandwidth: 8GBps}
+      - {a: a40-6/A40/3, b: a40-6/A40/6, kind: pcie, bandwidth: 8GBps}
+      - {a: a40-6/A40/3, b: a40-6/A40/7, kind: pcie, bandwidth: 8GBps}
+
+  # ── A40 x8 서버 #7 (플래닝 전용) ──
+  - id: a40-7
+    hostname: gpu-a40-7.cluster
+    host_base_w: 250
+    docker: {endpoint: "tcp://gpu-a40-7.cluster:2376", tls: true}
+    devices:
+      - {id: a40-7/A40/0, kind: gpu, hw: A40, mem_gb: 48, idle_w: 25, active_w: 300, pcie: gen4x16, numa: 0}
+      - {id: a40-7/A40/1, kind: gpu, hw: A40, mem_gb: 48, idle_w: 25, active_w: 300, pcie: gen4x16, numa: 0}
+      - {id: a40-7/A40/2, kind: gpu, hw: A40, mem_gb: 48, idle_w: 25, active_w: 300, pcie: gen4x16, numa: 0}
+      - {id: a40-7/A40/3, kind: gpu, hw: A40, mem_gb: 48, idle_w: 25, active_w: 300, pcie: gen4x16, numa: 0}
+      - {id: a40-7/A40/4, kind: gpu, hw: A40, mem_gb: 48, idle_w: 25, active_w: 300, pcie: gen4x16, numa: 1}
+      - {id: a40-7/A40/5, kind: gpu, hw: A40, mem_gb: 48, idle_w: 25, active_w: 300, pcie: gen4x16, numa: 1}
+      - {id: a40-7/A40/6, kind: gpu, hw: A40, mem_gb: 48, idle_w: 25, active_w: 300, pcie: gen4x16, numa: 1}
+      - {id: a40-7/A40/7, kind: gpu, hw: A40, mem_gb: 48, idle_w: 25, active_w: 300, pcie: gen4x16, numa: 1}
+    switches:
+      - {id: a40-7/nic0, kind: nic, bandwidth: 200Gbps}
+    intra_links:
+      - {a: a40-7/A40/0, b: a40-7/A40/1, kind: nvlink, bandwidth: 112GBps}
+      - {a: a40-7/A40/2, b: a40-7/A40/3, kind: nvlink, bandwidth: 112GBps}
+      - {a: a40-7/A40/4, b: a40-7/A40/5, kind: nvlink, bandwidth: 112GBps}
+      - {a: a40-7/A40/6, b: a40-7/A40/7, kind: nvlink, bandwidth: 112GBps}
+      - {a: a40-7/A40/0, b: a40-7/A40/2, kind: pcie, bandwidth: 12GBps}
+      - {a: a40-7/A40/0, b: a40-7/A40/3, kind: pcie, bandwidth: 12GBps}
+      - {a: a40-7/A40/1, b: a40-7/A40/2, kind: pcie, bandwidth: 12GBps}
+      - {a: a40-7/A40/1, b: a40-7/A40/3, kind: pcie, bandwidth: 12GBps}
+      - {a: a40-7/A40/4, b: a40-7/A40/6, kind: pcie, bandwidth: 12GBps}
+      - {a: a40-7/A40/4, b: a40-7/A40/7, kind: pcie, bandwidth: 12GBps}
+      - {a: a40-7/A40/5, b: a40-7/A40/6, kind: pcie, bandwidth: 12GBps}
+      - {a: a40-7/A40/5, b: a40-7/A40/7, kind: pcie, bandwidth: 12GBps}
+      - {a: a40-7/A40/0, b: a40-7/A40/4, kind: pcie, bandwidth: 8GBps}
+      - {a: a40-7/A40/0, b: a40-7/A40/5, kind: pcie, bandwidth: 8GBps}
+      - {a: a40-7/A40/0, b: a40-7/A40/6, kind: pcie, bandwidth: 8GBps}
+      - {a: a40-7/A40/0, b: a40-7/A40/7, kind: pcie, bandwidth: 8GBps}
+      - {a: a40-7/A40/1, b: a40-7/A40/4, kind: pcie, bandwidth: 8GBps}
+      - {a: a40-7/A40/1, b: a40-7/A40/5, kind: pcie, bandwidth: 8GBps}
+      - {a: a40-7/A40/1, b: a40-7/A40/6, kind: pcie, bandwidth: 8GBps}
+      - {a: a40-7/A40/1, b: a40-7/A40/7, kind: pcie, bandwidth: 8GBps}
+      - {a: a40-7/A40/2, b: a40-7/A40/4, kind: pcie, bandwidth: 8GBps}
+      - {a: a40-7/A40/2, b: a40-7/A40/5, kind: pcie, bandwidth: 8GBps}
+      - {a: a40-7/A40/2, b: a40-7/A40/6, kind: pcie, bandwidth: 8GBps}
+      - {a: a40-7/A40/2, b: a40-7/A40/7, kind: pcie, bandwidth: 8GBps}
+      - {a: a40-7/A40/3, b: a40-7/A40/4, kind: pcie, bandwidth: 8GBps}
+      - {a: a40-7/A40/3, b: a40-7/A40/5, kind: pcie, bandwidth: 8GBps}
+      - {a: a40-7/A40/3, b: a40-7/A40/6, kind: pcie, bandwidth: 8GBps}
+      - {a: a40-7/A40/3, b: a40-7/A40/7, kind: pcie, bandwidth: 8GBps}
+
+# 200G IB full-mesh (non-blocking 패브릭 등가). 36 links = C(9,2)
+inter_links:
+  - {a: node0/nic0, b: a40-0/nic0, kind: infiniband, bandwidth: 200Gbps, latency: 0.0015ms, rdma: true}
+  - {a: node0/nic0, b: a40-1/nic0, kind: infiniband, bandwidth: 200Gbps, latency: 0.0015ms, rdma: true}
+  - {a: node0/nic0, b: a40-2/nic0, kind: infiniband, bandwidth: 200Gbps, latency: 0.0015ms, rdma: true}
+  - {a: node0/nic0, b: a40-3/nic0, kind: infiniband, bandwidth: 200Gbps, latency: 0.0015ms, rdma: true}
+  - {a: node0/nic0, b: a40-4/nic0, kind: infiniband, bandwidth: 200Gbps, latency: 0.0015ms, rdma: true}
+  - {a: node0/nic0, b: a40-5/nic0, kind: infiniband, bandwidth: 200Gbps, latency: 0.0015ms, rdma: true}
+  - {a: node0/nic0, b: a40-6/nic0, kind: infiniband, bandwidth: 200Gbps, latency: 0.0015ms, rdma: true}
+  - {a: node0/nic0, b: a40-7/nic0, kind: infiniband, bandwidth: 200Gbps, latency: 0.0015ms, rdma: true}
+  - {a: a40-0/nic0, b: a40-1/nic0, kind: infiniband, bandwidth: 200Gbps, latency: 0.0015ms, rdma: true}
+  - {a: a40-0/nic0, b: a40-2/nic0, kind: infiniband, bandwidth: 200Gbps, latency: 0.0015ms, rdma: true}
+  - {a: a40-0/nic0, b: a40-3/nic0, kind: infiniband, bandwidth: 200Gbps, latency: 0.0015ms, rdma: true}
+  - {a: a40-0/nic0, b: a40-4/nic0, kind: infiniband, bandwidth: 200Gbps, latency: 0.0015ms, rdma: true}
+  - {a: a40-0/nic0, b: a40-5/nic0, kind: infiniband, bandwidth: 200Gbps, latency: 0.0015ms, rdma: true}
+  - {a: a40-0/nic0, b: a40-6/nic0, kind: infiniband, bandwidth: 200Gbps, latency: 0.0015ms, rdma: true}
+  - {a: a40-0/nic0, b: a40-7/nic0, kind: infiniband, bandwidth: 200Gbps, latency: 0.0015ms, rdma: true}
+  - {a: a40-1/nic0, b: a40-2/nic0, kind: infiniband, bandwidth: 200Gbps, latency: 0.0015ms, rdma: true}
+  - {a: a40-1/nic0, b: a40-3/nic0, kind: infiniband, bandwidth: 200Gbps, latency: 0.0015ms, rdma: true}
+  - {a: a40-1/nic0, b: a40-4/nic0, kind: infiniband, bandwidth: 200Gbps, latency: 0.0015ms, rdma: true}
+  - {a: a40-1/nic0, b: a40-5/nic0, kind: infiniband, bandwidth: 200Gbps, latency: 0.0015ms, rdma: true}
+  - {a: a40-1/nic0, b: a40-6/nic0, kind: infiniband, bandwidth: 200Gbps, latency: 0.0015ms, rdma: true}
+  - {a: a40-1/nic0, b: a40-7/nic0, kind: infiniband, bandwidth: 200Gbps, latency: 0.0015ms, rdma: true}
+  - {a: a40-2/nic0, b: a40-3/nic0, kind: infiniband, bandwidth: 200Gbps, latency: 0.0015ms, rdma: true}
+  - {a: a40-2/nic0, b: a40-4/nic0, kind: infiniband, bandwidth: 200Gbps, latency: 0.0015ms, rdma: true}
+  - {a: a40-2/nic0, b: a40-5/nic0, kind: infiniband, bandwidth: 200Gbps, latency: 0.0015ms, rdma: true}
+  - {a: a40-2/nic0, b: a40-6/nic0, kind: infiniband, bandwidth: 200Gbps, latency: 0.0015ms, rdma: true}
+  - {a: a40-2/nic0, b: a40-7/nic0, kind: infiniband, bandwidth: 200Gbps, latency: 0.0015ms, rdma: true}
+  - {a: a40-3/nic0, b: a40-4/nic0, kind: infiniband, bandwidth: 200Gbps, latency: 0.0015ms, rdma: true}
+  - {a: a40-3/nic0, b: a40-5/nic0, kind: infiniband, bandwidth: 200Gbps, latency: 0.0015ms, rdma: true}
+  - {a: a40-3/nic0, b: a40-6/nic0, kind: infiniband, bandwidth: 200Gbps, latency: 0.0015ms, rdma: true}
+  - {a: a40-3/nic0, b: a40-7/nic0, kind: infiniband, bandwidth: 200Gbps, latency: 0.0015ms, rdma: true}
+  - {a: a40-4/nic0, b: a40-5/nic0, kind: infiniband, bandwidth: 200Gbps, latency: 0.0015ms, rdma: true}
+  - {a: a40-4/nic0, b: a40-6/nic0, kind: infiniband, bandwidth: 200Gbps, latency: 0.0015ms, rdma: true}
+  - {a: a40-4/nic0, b: a40-7/nic0, kind: infiniband, bandwidth: 200Gbps, latency: 0.0015ms, rdma: true}
+  - {a: a40-5/nic0, b: a40-6/nic0, kind: infiniband, bandwidth: 200Gbps, latency: 0.0015ms, rdma: true}
+  - {a: a40-5/nic0, b: a40-7/nic0, kind: infiniband, bandwidth: 200Gbps, latency: 0.0015ms, rdma: true}
+  - {a: a40-6/nic0, b: a40-7/nic0, kind: infiniband, bandwidth: 200Gbps, latency: 0.0015ms, rdma: true}
+
+# 스칼라 폴백 (단일 노드만 남을 때 planner cluster_config link_bw 용).
+# 노드별 실제 값은 위 intra_links 참조.
+intra_node_bandwidth: "12GBps"

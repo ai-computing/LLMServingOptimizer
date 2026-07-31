@@ -122,6 +122,14 @@ def render(
         }
         if include_power:
             node_obj["power"] = _build_power_block({i.hardware for i in insts})
+        if backend == "measured":
+            # the measured backend integrates host base power per active node,
+            # so Stage-2 sees the same host-consolidation cost Stage-1 minimizes
+            # (gated on the backend: the simulators' config schema is untouched)
+            node_obj["id"] = node_id
+            spec_node = next((n for n in spec.topology.nodes if n.id == node_id), None)
+            if spec_node is not None and spec_node.host_base_w is not None:
+                node_obj["host_base_w"] = spec_node.host_base_w
         nodes_json.append(node_obj)
 
     config = {

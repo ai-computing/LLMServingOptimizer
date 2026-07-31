@@ -271,3 +271,51 @@ def test_reconcile_keeps_midflight_containers(env):
     assert "llmsvc-dep-mid-0" in driver.containers   # survived
     # and a mid-flight dep with no container yet is NOT marked failed
     assert store.get(dep.id).state == S.HEALTH_CHECK
+
+
+def test_measured_config_carries_host_base_power(tmp_path):
+    """Stage-2 (measured) must integrate host base power per active node, so
+    the host-consolidation cost Stage-1 minimizes is visible in the final
+    judgment. Simulator backends' config schema stays untouched."""
+    import json as _json
+
+    from planner.config_renderer import render
+    from planner.spec_schema import PlannerSpec
+    from planner.types import Allocation, Instance
+    from planner.utils import REPO_ROOT
+    from sim_backends.measured.backend import cluster_model_from_config
+
+    spec = PlannerSpec.model_validate({
+        "model": {"name": MODEL, "fp": 16},
+        "workload": {"dataset": "d.jsonl", "num_req": 10},
+        "topology": {"nodes": [
+            {"id": "n0", "host_base_w": 250,
+             "devices": [{"name": "A40", "count": 2, "mem_gb": 48}]},
+            {"id": "n1", "host_base_w": 200,
+             "devices": [{"name": "A40", "count": 2, "mem_gb": 48}]}]},
+    })
+    alloc = Allocation(instances=[
+        Instance(node_id="n0", hardware="A40", model_name=MODEL, tp=1,
+                 npu_num=1, npu_mem_gb=48),
+        Instance(node_id="n1", hardware="A40", model_name=MODEL, tp=1,
+                 npu_num=1, npu_mem_gb=48)])
+
+    rel, _cli = render(alloc, spec, tmp_path, "hostpw", backend="measured")
+    cfg = _json.loads((REPO_ROOT / rel).read_text())
+    assert [n["host_base_w"] for n in cfg["nodes"]] == [250, 200]
+    assert [n["id"] for n in cfg["nodes"]] == ["n0", "n1"]
+
+    # the measured backend turns those into HostCfg entries (500 W of hosts)
+    import os
+    os.environ.setdefault("LLMSS_MEASURED_ORACLES", str(tmp_path / "none"))
+    try:
+        model = cluster_model_from_config(cfg)
+    except FileNotFoundError:
+        model = None            # no oracle fixture here; config shape is the point
+    if model is not None:
+        assert sum(h.base_w for h in model.hosts) == 450
+
+    # simulator backends must NOT get the extra keys
+    rel_up, _ = render(alloc, spec, tmp_path, "hostpw_up", backend="upstream")
+    cfg_up = _json.loads((REPO_ROOT / rel_up).read_text())
+    assert all("host_base_w" not in n and "id" not in n for n in cfg_up["nodes"])

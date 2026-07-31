@@ -171,3 +171,78 @@ def test_cluster_graph_endpoint(tmp_path):
     assert states["node0/A40/0"] == "reserved"
     assert states["node0/A40/1"] == "free"
     assert any(e["inter"] for e in d["edges"])
+
+
+# ---- native v2 registry through the service layer ------------------------------
+
+_V2_DOC = {
+    "version": 2,
+    "nodes": [
+        {"id": "node0", "host_base_w": 200,
+         "docker": {"endpoint": "unix://var/run/docker.sock", "tls": False},
+         "devices": [{"id": f"node0/A5000/{i}", "hw": "A5000", "mem_gb": 24,
+                      "idle_w": 60, "active_w": 230} for i in range(2)],
+         "switches": [{"id": "node0/nic0", "kind": "nic"}],
+         "intra_links": [{"a": "node0/A5000/0", "b": "node0/A5000/1",
+                          "kind": "pcie", "bandwidth": "12GBps"}]},
+        {"id": "a40-0", "host_base_w": 250,
+         "docker": {"endpoint": "tcp://gpu-a40-0:2376", "tls": True},
+         "devices": [{"id": f"a40-0/A40/{i}", "hw": "A40", "mem_gb": 48,
+                      "idle_w": 25, "active_w": 300, "numa": 0 if i < 4 else 1}
+                     for i in range(8)],
+         "switches": [{"id": "a40-0/nic0", "kind": "nic"}],
+         "intra_links": [{"a": "a40-0/A40/0", "b": "a40-0/A40/1",
+                          "kind": "nvlink", "bandwidth": "112GBps"},
+                         {"a": "a40-0/A40/0", "b": "a40-0/A40/2",
+                          "kind": "pcie", "bandwidth": "12GBps"}]},
+    ],
+    "inter_links": [{"a": "node0/nic0", "b": "a40-0/nic0", "kind": "infiniband",
+                     "bandwidth": "200Gbps", "latency": "0.0015ms",
+                     "rdma": True}],
+}
+
+
+def test_service_state_accepts_native_v2_registry(tmp_path):
+    """ServiceState must take a RegistryV2 as-is (no v1 promotion) and expose
+    per-node dockerd endpoints so remote deployments never hit the local
+    daemon."""
+    pytest.importorskip("fastapi")
+    from fastapi import FastAPI
+    from fastapi.testclient import TestClient
+
+    from service.api.routes import ServiceState, create_service_router
+    from service.inventory.ledger import Ledger
+
+    reg = RegistryV2.model_validate(_V2_DOC)
+    ledger = Ledger(tmp_path / "l.sqlite", reg)          # v2 device_ids()
+    state = ServiceState(registry=reg, ledger=ledger)
+    assert state.topology_graph().registry is reg        # used as-is
+    assert state.docker_endpoints() == {
+        "node0": {"endpoint": "unix://var/run/docker.sock", "tls": False},
+        "a40-0": {"endpoint": "tcp://gpu-a40-0:2376", "tls": True}}
+
+    app = FastAPI()
+    app.include_router(create_service_router(state))
+    client = TestClient(app)
+    assert len(client.get("/api/cluster").json()["free_devices"]) == 10
+    graph = client.get("/api/cluster/graph").json()
+    assert {h["id"] for h in graph["hosts"]} == {"node0", "a40-0"}
+    assert any(e["kind"] == "infiniband" for e in graph["edges"])
+    # /api/models must not choke on the v2 device shape (hw, not name)
+    models = client.get("/api/models").json()["models"]
+    assert any("A40" in per_hw or "A5000" in per_hw for per_hw in models.values())
+
+
+def test_v2_planner_topology_counts_and_ib_links(tmp_path):
+    """Planner view of a v2 registry: per-(node, hw) free counts + inter-node
+    IB links preserved with their bandwidth/latency strings."""
+    reg = RegistryV2.model_validate(_V2_DOC)
+    topo = topo_topology(reg, reg.device_ids())
+    by_node = {n["id"]: n for n in topo["nodes"]}
+    assert by_node["node0"]["devices"] == [
+        {"name": "A5000", "count": 2, "mem_gb": 24}]
+    assert by_node["a40-0"]["devices"] == [
+        {"name": "A40", "count": 8, "mem_gb": 48}]
+    assert by_node["a40-0"]["host_base_w"] == 250
+    assert topo["links"] == [{"src": "node0", "dst": "a40-0",
+                              "bandwidth": "200Gbps", "latency": "0.0015ms"}]
