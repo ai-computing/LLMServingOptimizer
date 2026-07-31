@@ -1,0 +1,53 @@
+{% extends "service/layout.html" %}
+{% set subtab = 'request' %}
+{% block service_content %}
+<div class="svc-grid-rev">
+  <div class="svc-card">
+    <h3>요구사항</h3>
+    <form id="rq-form">
+      <p><label>모델<br><select id="rq-model" required style="width:100%"></select></label></p>
+      <p><label>정밀도
+        <select id="rq-fp"><option value="16">fp16/bf16</option></select></label></p>
+      <fieldset><legend>SLO (미입력 = 제약 없음)</legend>
+        <p><label>TTFT ≤ (ms) <input id="rq-ttft" type="number" min="1" placeholder="예: 2000"></label></p>
+        <p><label>TPOT ≤ (ms) <input id="rq-tpot" type="number" min="1" placeholder="예: 100"></label></p>
+        <p><label>ITL p99 ≤ (ms) <input id="rq-itl" type="number" min="1" placeholder="예: 150"></label></p>
+      </fieldset>
+      <fieldset><legend>규모</legend>
+        <p><label>요청률 (req/s) <input id="rq-rate" type="number" step="0.1" min="0.1" value="2" required></label></p>
+        <p><label>프리셋
+          <select id="rq-preset"><option>chat</option><option>summarize</option><option>agentic</option></select>
+        </label>
+        <label>duration (s) <input id="rq-dur" type="number" min="5" value="30" style="width:70px"></label></p>
+      </fieldset>
+      <details><summary>고급</summary>
+        <p><label>전력 상한 (W) <input id="rq-cap" type="number" min="1"></label></p>
+        <p><label>제외 하드웨어 <select id="rq-exclude" multiple size="3"></select></label></p>
+        <p><label>백엔드 강제
+          <select id="rq-force"><option value="">(자동)</option>
+            <option>measured</option><option>upstream</option><option>legacy</option></select></label></p>
+        <p><label>평가 요청 수 <input id="rq-neval" type="number" min="1" value="50"></label></p>
+        <p><label><input type="checkbox" id="rq-autodeploy" checked> 확정 시 자동 배포</label></p>
+      </details>
+      <p><label>테넌트 <input id="rq-tenant" value="default"></label></p>
+      <button class="btn primary" type="submit" id="rq-submit">추천 요청</button>
+    </form>
+  </div>
+  <div>
+    <div class="svc-card" id="rq-progress-card" style="display:none">
+      <div class="stepper">
+        <span class="step" data-s="1">① 스냅샷</span><span class="step" data-s="2">② 워크로드 합성</span>
+        <span class="step" data-s="3">③ Stage-1</span><span class="step" data-s="4">④ Stage-2</span>
+        <span class="step" data-s="5">⑤ 완료</span>
+      </div>
+      <p class="muted" id="rq-progress-note"></p>
+    </div>
+    <div class="svc-card" id="rq-result" style="display:none"></div>
+    <div class="svc-card" id="rq-idle">
+      <p>모델·SLO·규모를 입력하고 추천을 요청하세요.</p>
+      <div id="rq-history"></div>
+    </div>
+  </div>
+</div>
+<script src="{{ static('service/request_form.js') }}"></script>
+{% endblock %}

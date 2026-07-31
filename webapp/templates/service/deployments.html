@@ -1,0 +1,62 @@
+{% extends "service/layout.html" %}
+{% set subtab = 'deployments' %}
+{% block service_content %}
+<div class="svc-card" id="dp-list-card">
+  <div style="display:flex;gap:12px;align-items:center">
+    <h3 style="margin:0">배포 목록</h3>
+    <label><input type="checkbox" id="dp-incl-term"> 종료 포함</label>
+    <span class="muted" id="dp-updated"></span>
+  </div>
+  <table class="svc-table" id="dp-table">
+    <tr><th>상태</th><th>ID / 모델</th><th>테넌트</th><th>디바이스</th>
+        <th>전력</th><th>가동</th><th></th></tr>
+  </table>
+</div>
+<div id="dp-detail" style="display:none">
+  <div class="svc-card" style="display:flex;justify-content:space-between;align-items:center">
+    <div>
+      <strong id="dd-id"></strong> · <span id="dd-model"></span>
+      <span id="dd-state" class="badge"></span>
+      <code id="dd-endpoint"></code>
+      <button class="btn" id="dd-copy">복사</button>
+    </div>
+    <div>
+      <button class="btn" id="dd-back">← 목록</button>
+      <button class="btn" id="dd-terminate" style="background:var(--state-faulted);color:#fff">종료 ⏻</button>
+    </div>
+  </div>
+  <div class="kpi-strip">
+    <div class="kpi"><div class="sub">처리량</div><div class="val" id="k-thr">—</div><div class="sub" id="k-thr-sub"></div></div>
+    <div class="kpi"><div class="sub">TTFT p95</div><div class="val" id="k-ttft">—</div><div class="sub" id="k-ttft-sub"></div></div>
+    <div class="kpi"><div class="sub">TPOT p95</div><div class="val" id="k-tpot">—</div><div class="sub" id="k-tpot-sub"></div></div>
+    <div class="kpi" id="k-power-card"><div class="sub">전력</div><div class="val" id="k-power">—</div><div class="sub" id="k-power-sub"></div></div>
+  </div>
+  <div class="svc-grid" style="margin-top:14px">
+    <div class="svc-card"><canvas id="dd-chart-thr" height="110"></canvas>
+      <canvas id="dd-chart-lat" height="110" style="margin-top:10px"></canvas></div>
+    <div class="svc-card">
+      <p>KV 캐시 <progress id="dd-kv" max="1" value="0" style="width:100%"></progress>
+         <span id="dd-kv-t"></span></p>
+      <p>대기열 <strong id="dd-wait">0</strong> · 실행 중 <strong id="dd-run">0</strong></p>
+      <p>SLO: <span id="dd-slo" class="badge">—</span> <span id="dd-slo-detail" class="muted"></span></p>
+      <p>누적 에너지 <strong id="dd-energy">—</strong></p>
+    </div>
+  </div>
+  <div class="svc-card">
+    <nav class="svc-subtabs" style="margin-bottom:8px">
+      <a href="#" data-tab="logs" class="dd-tab active">로그</a>
+      <a href="#" data-tab="events" class="dd-tab">이벤트</a>
+      <a href="#" data-tab="config" class="dd-tab">구성</a>
+    </nav>
+    <div id="dd-pane-logs">
+      <label><input type="checkbox" id="dd-follow" checked> follow</label>
+      <input id="dd-log-filter" placeholder="검색…">
+      <div class="log-view" id="dd-logs"></div>
+    </div>
+    <div id="dd-pane-events" style="display:none"><table class="svc-table" id="dd-events"></table></div>
+    <div id="dd-pane-config" style="display:none"><pre id="dd-config" style="overflow:auto"></pre></div>
+  </div>
+</div>
+<script src="{{ static('vendor/chart.umd.min.js') }}"></script>
+<script src="{{ static('service/deploy_dashboard.js') }}"></script>
+{% endblock %}
