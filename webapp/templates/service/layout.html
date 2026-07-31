@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% set active_nav = 'service' %}
+{% block content %}
+<link rel="stylesheet" href="{{ static('service/service.css') }}">
+<div style="display:flex;justify-content:space-between;align-items:center">
+  <h1 style="margin:0">Serving Service</h1>
+  <span id="sse-status"></span>
+</div>
+<nav class="svc-subtabs">
+  <a href="/service/cluster" class="{% if subtab == 'cluster' %}active{% endif %}">클러스터</a>
+  <a href="/service/request" class="{% if subtab == 'request' %}active{% endif %}">서빙 요청</a>
+  <a href="/service/deployments" class="{% if subtab == 'deployments' %}active{% endif %}">배포</a>
+</nav>
+{% if not service_enabled %}
+<div class="svc-card">
+  <p><strong>Service disabled.</strong> No cluster registry at
+  <code>{{ registry_path }}</code>. Copy
+  <code>service/cluster_registry.example.yaml</code> there (or set
+  <code>LLMSS_CLUSTER_REGISTRY</code>) and restart.</p>
+</div>
+{% else %}
+<script src="{{ static('service/common.js') }}"></script>
+{% block service_content %}{% endblock %}
+{% endif %}
+{% endblock %}

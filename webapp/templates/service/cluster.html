@@ -1,0 +1,29 @@
+{% extends "service/layout.html" %}
+{% set subtab = 'cluster' %}
+{% block service_content %}
+<div class="svc-card" style="display:flex;gap:14px;align-items:center">
+  <label>상태 필터
+    <select id="cv-state-filter">
+      <option value="">전체</option><option value="free">free</option>
+      <option value="reserved">reserved</option><option value="running">running</option>
+      <option value="faulted">faulted</option>
+    </select>
+  </label>
+  <label><input type="checkbox" id="cv-power-overlay"> 전력 오버레이</label>
+  <span class="muted" id="cv-updated"></span>
+</div>
+<div class="svc-grid">
+  <div><svg id="svc-graph"></svg></div>
+  <div class="svc-card">
+    <h3>요약</h3>
+    <div id="cv-summary"></div>
+  </div>
+</div>
+<div id="svc-detail-bar"></div>
+<div id="cv-fallback" class="svc-card" style="display:none">
+  <h3>토폴로지 테이블 (그래프 로드 실패 폴백)</h3>
+  <div id="cv-table"></div>
+</div>
+<script src="{{ static('vendor/d3.v7.min.js') }}"></script>
+<script src="{{ static('service/cluster_view.js') }}"></script>
+{% endblock %}

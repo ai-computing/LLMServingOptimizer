@@ -117,7 +117,9 @@ if SERVICE_ENABLED:
     from service.inventory.registry import load_registry  # noqa: E402
 
     _svc_registry = load_registry(_REGISTRY_PATH)
-    _svc_ledger_path = WEBAPP_DIR.parent / "output" / "service_ledger.sqlite"
+    _svc_ledger_path = Path(os.environ.get(
+        "LLMSS_SERVICE_DB",
+        str(WEBAPP_DIR.parent / "output" / "service_ledger.sqlite")))
     _svc_ledger_path.parent.mkdir(parents=True, exist_ok=True)
     service_state = ServiceState(registry=_svc_registry,
                                  ledger=Ledger(_svc_ledger_path, _svc_registry))
@@ -131,14 +133,28 @@ if SERVICE_ENABLED:
     from service.monitor.runtime import MonitorRuntime  # noqa: E402
 
     service_state.deploy_store = DeployStore(_svc_ledger_path)
-    _svc_driver = DockerSdkDriver()
+    if os.environ.get("LLMSS_FAKE_DOCKER") == "1":
+        # UI/E2E test mode: in-memory driver, instant health (plan D4)
+        from service.deploy.docker_driver import FakeDriver  # noqa: E402
+        _svc_driver = FakeDriver()
+    else:
+        _svc_driver = DockerSdkDriver()
     service_state.monitor_runtime = MonitorRuntime(
         service_state.deploy_store, driver=_svc_driver)
+    _mgr_kw = {}
+    if os.environ.get("LLMSS_FAKE_DOCKER") == "1":
+        _mgr_kw = dict(health_fn=lambda url: True, sleep=lambda s: None)
+        service_state.monitor_runtime.http_get = lambda url: (
+            "vllm:num_requests_running 1\nvllm:num_requests_waiting 0\n"
+            "vllm:gpu_cache_usage_perc 0.2\n"
+            "vllm:generation_tokens_total 1000\nvllm:prompt_tokens_total 500\n")
+        service_state.monitor_runtime.power_fn = lambda gpu_map: []
+        service_state.monitor_runtime.interval_s = 1.0
     service_state.deploy_manager = DeploymentManager(
         service_state.deploy_store, _svc_driver, service_state.ledger,
         node_host=lambda node_id: "localhost",
         on_ready=service_state.monitor_runtime.attach,
-        on_stopped=service_state.monitor_runtime.detach)
+        on_stopped=service_state.monitor_runtime.detach, **_mgr_kw)
     app.include_router(create_service_router(service_state))
     app.include_router(create_deployment_router(service_state))
     try:  # restart recovery (plan §4.4): mid-flight rollback + READY re-attach
@@ -189,9 +205,30 @@ async def planner_results_page(job_id: str, request: Request) -> HTMLResponse:
 
 @app.get("/service", response_class=HTMLResponse)
 async def service_page(request: Request) -> HTMLResponse:
-    return render("service.html", title="Serving Service",
+    from fastapi.responses import RedirectResponse
+    return RedirectResponse("/service/cluster")
+
+
+def _service_render(tpl: str, subtab: str, title: str) -> HTMLResponse:
+    return render(tpl, title=title, subtab=subtab,
                   service_enabled=SERVICE_ENABLED,
                   registry_path=str(_REGISTRY_PATH))
+
+
+@app.get("/service/cluster", response_class=HTMLResponse)
+async def service_cluster_page(request: Request) -> HTMLResponse:
+    return _service_render("service/cluster.html", "cluster", "Service — Cluster")
+
+
+@app.get("/service/request", response_class=HTMLResponse)
+async def service_request_page(request: Request) -> HTMLResponse:
+    return _service_render("service/request.html", "request", "Service — Request")
+
+
+@app.get("/service/deployments", response_class=HTMLResponse)
+async def service_deployments_page(request: Request) -> HTMLResponse:
+    return _service_render("service/deployments.html", "deployments",
+                           "Service — Deployments")
 
 
 @app.get("/favicon.ico", include_in_schema=False)
