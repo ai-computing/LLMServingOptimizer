@@ -117,3 +117,11 @@ def test_70b_with_only_small_gpus_reports_profiles_not_memory():
     cat = model_tp_catalog(M70)
     hw_tps, unsupported = preferred_tp_options(cat, {"A5000"})
     assert hw_tps == {} and unsupported == ["A5000"]
+
+
+def test_eval_jobs_shrinks_for_large_models():
+    """Stage-2 fan-out: 70B candidates need far more memory per simulation."""
+    from service.api.routes import eval_jobs
+    assert eval_jobs(M8) == 4
+    assert eval_jobs(M70) == 2
+    assert eval_jobs("no/such-model") == 4       # unknown -> default

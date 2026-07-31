@@ -179,6 +179,15 @@ def proxy_toks_per_unit(model: str) -> Optional[float]:
         return None
 
 
+def eval_jobs(model: str, default: int = 4) -> int:
+    """Parallel Stage-2 simulations. A large-model candidate needs several GB
+    (and has been seen to spike into tens of GB), so keep the fan-out modest
+    above ~20B parameters — the per-simulation memory guard bounds each one,
+    this bounds their sum."""
+    scale = proxy_toks_per_unit(model)          # ~1000 for 8B, ~113 for 70B
+    return 2 if (scale is not None and scale < 400) else default
+
+
 def _default_planner(req: ServeRequestIn, topology: dict, snapshot_ver: int,
                      job: Job) -> dict:
     from planner.search_orchestrator import run_spec
@@ -303,7 +312,7 @@ def _default_planner(req: ServeRequestIn, topology: dict, snapshot_ver: int,
         "solver": {"top_k": 4, "time_limit_sec": 30, "pareto_epsilon_steps": 3},
         "backend": decision.backend,
     })
-    result = run_spec(spec, out_dir=out_dir, jobs=4,
+    result = run_spec(spec, out_dir=out_dir, jobs=eval_jobs(req.model),
                       on_event=lambda ev: job.emit(ev))
 
     out: dict = {

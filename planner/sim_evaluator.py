@@ -119,6 +119,119 @@ def _parse_energy_from_stdout(stdout: str) -> Optional[float]:
 #: re-anchored to the selected backend's root before the subprocess call.
 _PATH_FLAGS = {"--cluster-config", "--dataset", "--output"}
 
+# --- memory guard ----------------------------------------------------------
+# A single Stage-2 candidate can blow up: an A40 70B (tp4 x2) upstream run was
+# observed growing ~13 GB/min past 73 GB RSS, which would OOM-kill the host
+# (the webapp, other candidates, anything). Each simulation therefore runs in
+# its own session with an RSS ceiling; exceeding it kills that process tree and
+# the candidate becomes Infeasible — the documented robustness contract —
+# instead of taking the machine down. Override with LLMSS_SIM_MEM_LIMIT_GB
+# (0 disables).
+_DEFAULT_SIM_MEM_LIMIT_GB = 16.0
+_MEM_POLL_SEC = 2.0
+
+
+def sim_mem_limit_bytes() -> int:
+    import os
+    try:
+        gb = float(os.environ.get("LLMSS_SIM_MEM_LIMIT_GB",
+                                  _DEFAULT_SIM_MEM_LIMIT_GB))
+    except ValueError:
+        gb = _DEFAULT_SIM_MEM_LIMIT_GB
+    return int(gb * (1024 ** 3)) if gb > 0 else 0
+
+
+def _tree_rss_bytes(pid: int) -> int:
+    """Summed RSS of a process and its descendants (Linux /proc)."""
+    import os
+
+    page = os.sysconf("SC_PAGE_SIZE")
+    total, stack, seen = 0, [pid], set()
+    while stack:
+        p = stack.pop()
+        if p in seen:
+            continue
+        seen.add(p)
+        try:
+            with open(f"/proc/{p}/statm") as f:
+                total += int(f.read().split()[1]) * page
+        except (OSError, IndexError, ValueError):
+            continue
+        try:                      # children of each thread (CONFIG_PROC_CHILDREN)
+            for tid in os.listdir(f"/proc/{p}/task"):
+                with open(f"/proc/{p}/task/{tid}/children") as f:
+                    stack.extend(int(c) for c in f.read().split())
+        except OSError:
+            pass
+    return total
+
+
+def _kill_tree(proc) -> None:
+    import os
+    import signal
+
+    for sig in (signal.SIGTERM, signal.SIGKILL):
+        try:
+            os.killpg(os.getpgid(proc.pid), sig)
+        except OSError:
+            try:
+                proc.kill()
+            except OSError:
+                pass
+        try:
+            proc.wait(timeout=5)
+            return
+        except Exception:
+            continue
+
+
+def run_guarded(cmd: list[str], cwd: str, env: dict, timeout_sec: int,
+                mem_limit_bytes: Optional[int] = None,
+                poll_sec: float = _MEM_POLL_SEC):
+    """subprocess.run() plus an RSS ceiling on the process tree.
+
+    Returns a CompletedProcess (returncode 137 + a ``stderr`` explanation when
+    the memory guard fired); raises TimeoutExpired like subprocess.run. Output
+    goes to a temp file, so a chatty simulator can never fill a pipe buffer
+    while we are polling.
+    """
+    import subprocess as sp
+    import tempfile
+    import time as _time
+
+    limit = sim_mem_limit_bytes() if mem_limit_bytes is None else mem_limit_bytes
+    with tempfile.TemporaryFile("w+", encoding="utf-8", errors="replace") as out:
+        proc = sp.Popen(cmd, cwd=cwd, env=env, stdout=out, stderr=sp.STDOUT,
+                        text=True, start_new_session=True)
+        deadline = _time.time() + timeout_sec
+        peak = 0
+        while True:
+            rc = proc.poll()
+            if rc is not None:
+                break
+            if limit:
+                rss = _tree_rss_bytes(proc.pid)
+                peak = max(peak, rss)
+                if rss > limit:
+                    _kill_tree(proc)
+                    out.seek(0)
+                    log.warning("memory guard killed %s (%.1f GiB > %.1f GiB)",
+                                cmd[-1], rss / 2 ** 30, limit / 2 ** 30)
+                    return sp.CompletedProcess(
+                        cmd, 137, out.read(),
+                        f"memory guard: RSS {rss / 2 ** 30:.1f} GiB exceeded the "
+                        f"{limit / 2 ** 30:.0f} GiB per-simulation limit "
+                        f"(LLMSS_SIM_MEM_LIMIT_GB)")
+            if _time.time() > deadline:
+                _kill_tree(proc)
+                raise sp.TimeoutExpired(cmd, timeout_sec)
+            _time.sleep(poll_sec)
+        out.seek(0)
+        text = out.read()
+    if peak:
+        log.info("simulation peak RSS %.1f GiB", peak / 2 ** 30)
+    return sp.CompletedProcess(cmd, rc, text, "")
+
 
 def _rebase_path_args(args: list[str], backend_root: Path, absolute: bool) -> list[str]:
     """Convert REPO_ROOT-relative path values to what the backend CLI accepts:
@@ -177,17 +290,16 @@ def evaluate(
     cmd = [python_exe or b.python_exe(), *entry, *run_args]
     log.info("running: %s", " ".join(cmd))
     try:
-        proc = subprocess.run(
-            cmd, cwd=str(b.root), capture_output=True, text=True,
-            timeout=timeout_sec, env=b.env(),
-        )
+        proc = run_guarded(cmd, cwd=str(b.root), env=b.env(),
+                           timeout_sec=timeout_sec)
     except subprocess.TimeoutExpired:
         result = Infeasible(f"timeout after {timeout_sec}s")
         cache_file.write_text(json.dumps({"infeasible": True, "reason": result.reason}))
         return result
 
     if proc.returncode != 0:
-        tail = (proc.stderr or "")[-500:]
+        # output is merged into stdout; stderr carries the guard explanation
+        tail = (proc.stderr or "") + (proc.stdout or "")[-500:]
         result = Infeasible(f"exit {proc.returncode}: {tail}")
         cache_file.write_text(json.dumps({"infeasible": True, "reason": result.reason}))
         return result
