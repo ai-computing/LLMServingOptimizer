@@ -86,10 +86,13 @@ _ALIASES: dict[str, list[str]] = {
     "gen_toks": ["vllm:generation_tokens_total"],
     "prompt_toks": ["vllm:prompt_tokens_total"],
     "ttft_hist": ["vllm:time_to_first_token_seconds"],
-    # tpot name drifted across vLLM versions (risk memo): try newest first
+    # tpot name drifted across vLLM versions (risk memo). Prefer PER-TOKEN
+    # histograms: request_time_per_output_token only updates on request
+    # COMPLETION, so during a long-generation burst the delta window stays
+    # empty and live SLO checking goes blind.
     "tpot_hist": ["vllm:time_per_output_token_seconds",
-                  "vllm:request_time_per_output_token_seconds",
-                  "vllm:inter_token_latency_seconds"],
+                  "vllm:inter_token_latency_seconds",
+                  "vllm:request_time_per_output_token_seconds"],
 }
 
 
