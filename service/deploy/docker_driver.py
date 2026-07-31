@@ -89,6 +89,11 @@ class DockerSdkDriver:
         except Exception as e:
             return f"<logs unavailable: {e}>"
 
+    def log_stream(self, node_id: str, name: str):
+        """docker logs --follow iterator (bytes per line)."""
+        return self._client(node_id).containers.get(name) \
+            .logs(stream=True, follow=True, tail=100)
+
 
 @dataclass
 class FakeDriver:
@@ -132,3 +137,6 @@ class FakeDriver:
 
     def logs(self, node_id, name, tail=200):
         return f"<fake logs {name}>"
+
+    def log_stream(self, node_id, name):
+        return iter([b"fake line 1\n", b"fake line 2\n"])
