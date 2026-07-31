@@ -128,14 +128,23 @@ if SERVICE_ENABLED:
     from service.deploy.manager import DeploymentManager  # noqa: E402
     from service.deploy.store import DeployStore  # noqa: E402
 
+    from service.monitor.runtime import MonitorRuntime  # noqa: E402
+
     service_state.deploy_store = DeployStore(_svc_ledger_path)
+    _svc_driver = DockerSdkDriver()
+    service_state.monitor_runtime = MonitorRuntime(
+        service_state.deploy_store, driver=_svc_driver)
     service_state.deploy_manager = DeploymentManager(
-        service_state.deploy_store, DockerSdkDriver(), service_state.ledger,
-        node_host=lambda node_id: "localhost")
+        service_state.deploy_store, _svc_driver, service_state.ledger,
+        node_host=lambda node_id: "localhost",
+        on_ready=service_state.monitor_runtime.attach,
+        on_stopped=service_state.monitor_runtime.detach)
     app.include_router(create_service_router(service_state))
     app.include_router(create_deployment_router(service_state))
-    try:  # restart recovery (plan §4.4)
-        service_state.deploy_manager.recover()
+    try:  # restart recovery (plan §4.4): mid-flight rollback + READY re-attach
+        _recovered = service_state.deploy_manager.recover()
+        for _dep_id in _recovered.get("reattached", []):
+            service_state.monitor_runtime.attach(_dep_id)
     except Exception:
         pass
 

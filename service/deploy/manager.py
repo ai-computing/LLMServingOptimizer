@@ -35,7 +35,9 @@ class DeploymentManager:
                  health_fn: Callable[[str], bool] = _default_health_fn,
                  queue_len_fn: Optional[Callable[[str], int]] = None,
                  node_host: Optional[Callable[[str], str]] = None,
-                 run_async: bool = True, sleep=time.sleep):
+                 run_async: bool = True, sleep=time.sleep,
+                 on_ready: Optional[Callable[[str], None]] = None,
+                 on_stopped: Optional[Callable[[str], None]] = None):
         self.store = store
         self.driver = driver
         self.ledger = ledger
@@ -46,6 +48,9 @@ class DeploymentManager:
         self.node_host = node_host or (lambda node_id: node_id)
         self.run_async = run_async
         self.sleep = sleep
+        # monitor attach/detach hooks (D3): READY -> attach, STOPPED -> detach
+        self.on_ready = on_ready or (lambda dep_id: None)
+        self.on_stopped = on_stopped or (lambda dep_id: None)
 
     # -- creation --------------------------------------------------------------
     def create(self, reservation_id: int, tenant: str, spec: DeploymentSpec,
@@ -86,6 +91,7 @@ class DeploymentManager:
                     if self.health_fn(eps["health_url"]):
                         self.store.set_endpoints(dep_id, eps)
                         self.store.transition(dep_id, S.READY, "healthy")
+                        self.on_ready(dep_id)
                         return
                     self.sleep(spec.health.interval_s)
                 raise TimeoutError(f"health check timed out after "
@@ -138,6 +144,7 @@ class DeploymentManager:
             self.driver.stop(c.node_id, c.name, timeout_s=30)
             self.driver.rm(c.node_id, c.name)
         self.store.transition(dep_id, S.STOPPED)
+        self.on_stopped(dep_id)
         self._release(dep_id)
 
     def _release(self, dep_id: str) -> None:

@@ -1,14 +1,19 @@
-"""Deployment REST API (plan §3.5, D2 subset — SSE metrics/logs land in D3)."""
+"""Deployment REST + SSE API (plan §3.5)."""
 from __future__ import annotations
 
+import json
 import threading
+import time
 from typing import Optional
 
 from fastapi import APIRouter, HTTPException
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
 from ..deploy.state import DeploymentState as S
 from ..deploy.store import DeploymentRow
+
+_TERMINAL = (S.STOPPED, S.RELEASED, S.FAILED)
 
 
 class TerminateIn(BaseModel):
@@ -61,6 +66,74 @@ def create_deployment_router(state) -> APIRouter:
         out["slo"] = d.slo
         out["events"] = d.events
         return out
+
+    def _runtime():
+        rt = getattr(state, "monitor_runtime", None)
+        if rt is None:
+            raise HTTPException(503, "monitoring not configured")
+        return rt
+
+    @router.get("/{dep_id}/metrics")
+    def metrics_sse(dep_id: str, interval_s: float = 5.0):
+        """SSE: latest MetricSample + total power + SLO verdict every tick;
+        closes when the deployment reaches a terminal state."""
+        store, rt = _store(), _runtime()
+        try:
+            store.get(dep_id)
+        except KeyError:
+            raise HTTPException(404, f"unknown deployment '{dep_id}'")
+        buf = rt.buf(dep_id)
+
+        def stream():
+            sent_ts = 0.0
+            while True:
+                row = store.get(dep_id)
+                m = buf.metrics[-1] if buf.metrics else None
+                p = buf.power[-1] if buf.power else None
+                slo = getattr(buf, "last_slo", None)
+                if m and m.ts > sent_ts:
+                    sent_ts = m.ts
+                    ev = {"type": "sample", "state": row.state.value,
+                          "metrics": m.as_dict(),
+                          "power_w": p[1] if p else None,
+                          "energy_wh": round(buf.energy_wh, 3),
+                          "slo": slo.as_dict() if slo else None}
+                    yield f"data: {json.dumps(ev)}\n\n"
+                if row.state in _TERMINAL:
+                    yield f"data: {json.dumps({'type': 'end', 'state': row.state.value, 'summary': buf.summary()})}\n\n"
+                    return
+                time.sleep(min(1.0, interval_s))
+
+        return StreamingResponse(stream(), media_type="text/event-stream")
+
+    @router.get("/{dep_id}/logs")
+    def logs_sse(dep_id: str, tail: int = 500, follow: bool = True):
+        """SSE: replay the ring-buffer tail, then follow new lines."""
+        store, rt = _store(), _runtime()
+        try:
+            store.get(dep_id)
+        except KeyError:
+            raise HTTPException(404, f"unknown deployment '{dep_id}'")
+        buf = rt.buf(dep_id)
+
+        def stream():
+            lines = list(buf.logs)[-tail:]
+            sent = len(buf.logs)
+            for ln in lines:
+                yield f"data: {json.dumps({'type': 'log', 'line': ln})}\n\n"
+            while follow:
+                row = store.get(dep_id)
+                cur = list(buf.logs)
+                for ln in cur[sent:]:
+                    yield f"data: {json.dumps({'type': 'log', 'line': ln})}\n\n"
+                sent = len(cur)
+                if row.state in _TERMINAL:
+                    yield f"data: {json.dumps({'type': 'end', 'state': row.state.value})}\n\n"
+                    return
+                time.sleep(0.5)
+            yield f"data: {json.dumps({'type': 'end'})}\n\n"
+
+        return StreamingResponse(stream(), media_type="text/event-stream")
 
     @router.post("/{dep_id}/terminate")
     def terminate(dep_id: str, body: TerminateIn = TerminateIn()):
