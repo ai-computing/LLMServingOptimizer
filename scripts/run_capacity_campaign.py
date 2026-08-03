@@ -19,6 +19,7 @@ from __future__ import annotations
 import argparse
 import datetime
 import json
+import re
 import signal
 import statistics
 import subprocess
@@ -124,11 +125,23 @@ def main() -> int:
     p.add_argument("--output-len", type=int, default=256)
     p.add_argument("--max-model-len", type=int, default=8192)
     p.add_argument("--out-root", default=str(REPO_ROOT / "profiles/measured"))
+    # 'auto' honours a quantized checkpoint's own config (fp8 / int8 / int4);
+    # forcing bfloat16 would fight it
+    p.add_argument("--dtype", default="auto")
+    p.add_argument("--kv-cache-dtype", default=None,
+                   help="e.g. fp8_e5m2 (storage only on Ampere)")
+    p.add_argument("--gpu-memory-utilization", type=float, default=0.90)
+    p.add_argument("--quality-samples", type=int, default=0,
+                   help="run the GSM8K check with N problems (0 = skip)")
+    p.add_argument("--label", default=None, help="tag for the results record")
+    p.add_argument("--results-json", default=None,
+                   help="write the full record (config + points + quality) here")
     args = p.parse_args()
 
     concurrencies = [int(c) for c in args.concurrencies.split(",")]
+    tag = args.label or args.model.split("/")[-1]
     workdir = REPO_ROOT / "output" / "campaign" / \
-        f"{args.hw}_tp{args.tp}_{datetime.date.today().isoformat()}"
+        f"{args.hw}_tp{args.tp}_{tag}_{datetime.date.today().isoformat()}"
     workdir.mkdir(parents=True, exist_ok=True)
 
     import os
@@ -139,16 +152,19 @@ def main() -> int:
     print(f"[campaign] starting vLLM server (tp{args.tp}, GPUs {args.gpus}) ...",
           flush=True)
     server_log = open(workdir / "server.log", "w")
-    server = subprocess.Popen(
-        [str(VLLM), "serve", args.model,
-         "--dtype", "bfloat16",
-         "--tensor-parallel-size", str(args.tp),
-         "--max-model-len", str(args.max_model_len),
-         "--max-num-seqs", "128",
-         "--max-num-batched-tokens", "2048",
-         "--block-size", "16",
-         "--port", str(args.port)],
-        stdout=server_log, stderr=subprocess.STDOUT, env=env)
+    serve_cmd = [str(VLLM), "serve", args.model,
+                 "--dtype", args.dtype,
+                 "--tensor-parallel-size", str(args.tp),
+                 "--max-model-len", str(args.max_model_len),
+                 "--max-num-seqs", "128",
+                 "--max-num-batched-tokens", "2048",
+                 "--block-size", "16",
+                 "--gpu-memory-utilization", str(args.gpu_memory_utilization),
+                 "--port", str(args.port)]
+    if args.kv_cache_dtype:
+        serve_cmd += ["--kv-cache-dtype", args.kv_cache_dtype]
+    server = subprocess.Popen(serve_cmd, stdout=server_log,
+                              stderr=subprocess.STDOUT, env=env)
     try:
         wait_health(args.port)
         print("[campaign] server healthy; sampling idle power (15s) ...", flush=True)
@@ -185,6 +201,37 @@ def main() -> int:
             out_root=args.out_root)
         path = run_campaign(cfg, measure_fn=measure)
         print(f"[campaign] wrote oracle: {path}", flush=True)
+
+        quality = None
+        if args.quality_samples > 0:
+            from eval_gsm8k import evaluate_gsm8k
+            print(f"[campaign] GSM8K check ({args.quality_samples} problems) ...",
+                  flush=True)
+            quality = evaluate_gsm8k(
+                base_url=f"http://localhost:{args.port}", model=args.model,
+                n=args.quality_samples, concurrency=16)
+            print(f"[campaign] quality: {quality}", flush=True)
+
+        if args.results_json:
+            import yaml as _yaml
+            oracle = _yaml.safe_load(Path(path).read_text())
+            record = {
+                "label": tag, "hw": args.hw, "model": args.model,
+                "tp": args.tp, "gpus": args.gpus, "dtype": args.dtype,
+                "kv_cache_dtype": args.kv_cache_dtype,
+                "max_model_len": args.max_model_len,
+                "gpu_memory_utilization": args.gpu_memory_utilization,
+                "stack": f"vllm-{_vllm_version()}",
+                "measured_at": datetime.datetime.now().isoformat(timespec="seconds"),
+                "idle_w": round(idle_w, 1),
+                "kv_cache_tokens": _kv_cache_tokens(workdir / "server.log"),
+                "points": oracle["points"],
+                "quality": quality,
+                "oracle_path": str(path),
+            }
+            Path(args.results_json).parent.mkdir(parents=True, exist_ok=True)
+            Path(args.results_json).write_text(json.dumps(record, indent=2))
+            print(f"[campaign] wrote record: {args.results_json}", flush=True)
         return 0
     finally:
         server.send_signal(signal.SIGINT)
@@ -194,6 +241,16 @@ def main() -> int:
             server.kill()
         server_log.close()
         print("[campaign] server stopped", flush=True)
+
+
+def _kv_cache_tokens(server_log: Path) -> int | None:
+    """vLLM logs the KV cache it could allocate — the headroom quantization buys."""
+    try:
+        m = re.findall(r"GPU KV cache size:\s*([\d,]+)\s*tokens",
+                       server_log.read_text(errors="replace"))
+        return int(m[-1].replace(",", "")) if m else None
+    except OSError:
+        return None
 
 
 def _vllm_version() -> str:
