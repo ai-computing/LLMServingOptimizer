@@ -1,0 +1,83 @@
+{
+  "label": "llama8b-fp16",
+  "hw": "A5000",
+  "model": "meta-llama/Llama-3.1-8B-Instruct",
+  "tp": 1,
+  "gpus": "0",
+  "dtype": "auto",
+  "kv_cache_dtype": null,
+  "max_model_len": 4096,
+  "gpu_memory_utilization": 0.9,
+  "stack": "vllm-0.19.0",
+  "measured_at": "2026-08-03T16:03:41",
+  "idle_w": 59.8,
+  "kv_cache_tokens": 47920,
+  "points": [
+    {
+      "concurrency": 1,
+      "thr_toks_s": 41.54465749799598,
+      "ttft_ms": 71.90709146379959,
+      "tpot_ms": 23.881288552736663,
+      "itl_p99_ms": 24.470816974062473,
+      "avg_w": 206.4464220183486
+    },
+    {
+      "concurrency": 2,
+      "thr_toks_s": 81.46505355471048,
+      "ttft_ms": 61.59238549298607,
+      "tpot_ms": 24.392267315895023,
+      "itl_p99_ms": 25.025015578139573,
+      "avg_w": 205.45616666666666
+    },
+    {
+      "concurrency": 4,
+      "thr_toks_s": 160.94188601455994,
+      "ttft_ms": 71.12207927275449,
+      "tpot_ms": 24.65766614922733,
+      "itl_p99_ms": 25.43942818650976,
+      "avg_w": 189.1561111111111
+    },
+    {
+      "concurrency": 8,
+      "thr_toks_s": 301.39549098891143,
+      "ttft_ms": 237.3894773700158,
+      "tpot_ms": 25.695937096800964,
+      "itl_p99_ms": 26.850248852279037,
+      "avg_w": 189.88432432432433
+    },
+    {
+      "concurrency": 16,
+      "thr_toks_s": 561.3135258916315,
+      "ttft_ms": 342.15705068345414,
+      "tpot_ms": 27.242908221737977,
+      "itl_p99_ms": 29.446907823439684,
+      "avg_w": 190.15425
+    },
+    {
+      "concurrency": 32,
+      "thr_toks_s": 1014.516520855818,
+      "ttft_ms": 542.5420200372173,
+      "tpot_ms": 29.46067358162134,
+      "itl_p99_ms": 47.24015170475468,
+      "avg_w": 192.38813953488372
+    },
+    {
+      "concurrency": 64,
+      "thr_toks_s": 1457.657909148701,
+      "ttft_ms": 1278.3553415465576,
+      "tpot_ms": 38.93671943886004,
+      "itl_p99_ms": 368.7011384963989,
+      "avg_w": 200.21563636363635
+    }
+  ],
+  "quality": {
+    "task": "gsm8k",
+    "shots": 5,
+    "n": 200,
+    "correct": 147,
+    "accuracy": 0.735,
+    "request_errors": 0,
+    "greedy": true
+  },
+  "oracle_path": "/home/swsok/LLMServingOptimizer/profiles/measured/A5000/meta-llama/Llama-3.1-8B-Instruct/tp1.yaml"
+}

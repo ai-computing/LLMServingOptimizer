@@ -1,0 +1,12 @@
+{
+  "llama8b-fp16": "skipped (already have a record)",
+  "llama8b-fp8": "ok (6.0 min) peak 1967 tok/s @c64, gsm8k 0.72, kv 95072",
+  "llama8b-int8": "ok (6.0 min) peak 2059 tok/s @c64, gsm8k 0.705, kv 95056",
+  "llama8b-int4": "ok (5.0 min) peak 2021 tok/s @c64, gsm8k 0.7, kv 120624",
+  "qwen14b-fp16-tp2": "ok (7.5 min) peak 1088 tok/s @c64, gsm8k 0.86, kv 70240",
+  "qwen14b-fp8-tp2": "ok (5.5 min) peak 1253 tok/s @c64, gsm8k 0.805, kv 138592",
+  "qwen14b-int8-tp2": "ok (5.5 min) peak 1305 tok/s @c64, gsm8k 0.85, kv 138352",
+  "qwen14b-int4-tp2": "ok (4.9 min) peak 1296 tok/s @c64, gsm8k 0.805, kv 171280",
+  "qwen14b-int8-tp1": "ok (7.1 min) peak 884 tok/s @c64, gsm8k 0.85, kv 23040",
+  "qwen14b-int4-tp1": "ok (5.5 min) peak 1100 tok/s @c64, gsm8k 0.795, kv 55872"
+}

@@ -1,0 +1,83 @@
+{
+  "label": "llama8b-int4",
+  "hw": "A5000",
+  "model": "hugging-quants/Meta-Llama-3.1-8B-Instruct-AWQ-INT4",
+  "tp": 1,
+  "gpus": "0",
+  "dtype": "auto",
+  "kv_cache_dtype": null,
+  "max_model_len": 4096,
+  "gpu_memory_utilization": 0.9,
+  "stack": "vllm-0.19.0",
+  "measured_at": "2026-08-03T16:21:39",
+  "idle_w": 73.5,
+  "kv_cache_tokens": 120624,
+  "points": [
+    {
+      "concurrency": 1,
+      "thr_toks_s": 113.9448682005403,
+      "ttft_ms": 67.97938299132511,
+      "tpot_ms": 8.542456390169521,
+      "itl_p99_ms": 8.808556178119034,
+      "avg_w": 178.86434782608697
+    },
+    {
+      "concurrency": 2,
+      "thr_toks_s": 220.42041111797477,
+      "ttft_ms": 44.04684675682802,
+      "tpot_ms": 8.93313200446987,
+      "itl_p99_ms": 9.25416782265529,
+      "avg_w": 178.90464285714285
+    },
+    {
+      "concurrency": 4,
+      "thr_toks_s": 425.12824764164856,
+      "ttft_ms": 39.92712510807905,
+      "tpot_ms": 9.285228978614231,
+      "itl_p99_ms": 9.5998304663226,
+      "avg_w": 158.38736842105263
+    },
+    {
+      "concurrency": 8,
+      "thr_toks_s": 714.0343279162861,
+      "ttft_ms": 216.80759614537237,
+      "tpot_ms": 10.390230469256137,
+      "itl_p99_ms": 11.103706818539647,
+      "avg_w": 160.2642857142857
+    },
+    {
+      "concurrency": 16,
+      "thr_toks_s": 1229.6872339398765,
+      "ttft_ms": 334.8801001047832,
+      "tpot_ms": 11.727360499393326,
+      "itl_p99_ms": 13.232701048254963,
+      "avg_w": 165.80434782608697
+    },
+    {
+      "concurrency": 32,
+      "thr_toks_s": 1720.0181779615452,
+      "ttft_ms": 444.3095714414085,
+      "tpot_ms": 16.871297315011876,
+      "itl_p99_ms": 40.185213398654014,
+      "avg_w": 178.89068965517242
+    },
+    {
+      "concurrency": 64,
+      "thr_toks_s": 2020.5238657361547,
+      "ttft_ms": 886.901016133379,
+      "tpot_ms": 28.2384229358464,
+      "itl_p99_ms": 76.01268683327363,
+      "avg_w": 193.89
+    }
+  ],
+  "quality": {
+    "task": "gsm8k",
+    "shots": 5,
+    "n": 200,
+    "correct": 140,
+    "accuracy": 0.7,
+    "request_errors": 0,
+    "greedy": true
+  },
+  "oracle_path": "/home/swsok/LLMServingOptimizer/profiles/measured/A5000/hugging-quants/Meta-Llama-3.1-8B-Instruct-AWQ-INT4/tp1.yaml"
+}

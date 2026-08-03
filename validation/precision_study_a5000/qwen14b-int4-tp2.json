@@ -1,0 +1,59 @@
+{
+  "label": "qwen14b-int4-tp2",
+  "hw": "A5000",
+  "model": "Qwen/Qwen2.5-14B-Instruct-AWQ",
+  "tp": 2,
+  "gpus": "0,1",
+  "dtype": "auto",
+  "kv_cache_dtype": null,
+  "max_model_len": 4096,
+  "gpu_memory_utilization": 0.9,
+  "stack": "vllm-0.19.0",
+  "measured_at": "2026-08-03T16:45:01",
+  "idle_w": 152.3,
+  "kv_cache_tokens": 171280,
+  "points": [
+    {
+      "concurrency": 1,
+      "thr_toks_s": 101.72794351960302,
+      "ttft_ms": 100.41170571639668,
+      "tpot_ms": 9.47359919944075,
+      "itl_p99_ms": 9.735967139713466,
+      "avg_w": 361.8037254901961
+    },
+    {
+      "concurrency": 4,
+      "thr_toks_s": 374.71850017240484,
+      "ttft_ms": 53.58578934101388,
+      "tpot_ms": 10.4965206495299,
+      "itl_p99_ms": 11.137326052412392,
+      "avg_w": 321.4295
+    },
+    {
+      "concurrency": 16,
+      "thr_toks_s": 887.5150242957642,
+      "ttft_ms": 761.5842360210081,
+      "tpot_ms": 15.08973722102739,
+      "itl_p99_ms": 16.454580281861098,
+      "avg_w": 354.87642857142856
+    },
+    {
+      "concurrency": 64,
+      "thr_toks_s": 1295.9582835973586,
+      "ttft_ms": 1979.4394320169886,
+      "tpot_ms": 41.718980988940416,
+      "itl_p99_ms": 706.3133864104748,
+      "avg_w": 398.23770491803276
+    }
+  ],
+  "quality": {
+    "task": "gsm8k",
+    "shots": 5,
+    "n": 200,
+    "correct": 161,
+    "accuracy": 0.805,
+    "request_errors": 0,
+    "greedy": true
+  },
+  "oracle_path": "/home/swsok/LLMServingOptimizer/profiles/measured/A5000/Qwen/Qwen2.5-14B-Instruct-AWQ/tp2.yaml"
+}

@@ -1,0 +1,59 @@
+{
+  "label": "qwen14b-int8-tp2",
+  "hw": "A5000",
+  "model": "RedHatAI/Qwen2.5-14B-Instruct-quantized.w8a8",
+  "tp": 2,
+  "gpus": "0,1",
+  "dtype": "auto",
+  "kv_cache_dtype": null,
+  "max_model_len": 4096,
+  "gpu_memory_utilization": 0.9,
+  "stack": "vllm-0.19.0",
+  "measured_at": "2026-08-03T16:40:09",
+  "idle_w": 152.0,
+  "kv_cache_tokens": 138352,
+  "points": [
+    {
+      "concurrency": 1,
+      "thr_toks_s": 62.75841392288549,
+      "ttft_ms": 89.60012074385304,
+      "tpot_ms": 15.643640189299216,
+      "itl_p99_ms": 15.908129825256765,
+      "avg_w": 397.64973333333336
+    },
+    {
+      "concurrency": 4,
+      "thr_toks_s": 236.7779802483536,
+      "ttft_ms": 62.69120631623082,
+      "tpot_ms": 16.693028243596427,
+      "itl_p99_ms": 17.263080903794616,
+      "avg_w": 358.2696296296296
+    },
+    {
+      "concurrency": 16,
+      "thr_toks_s": 689.9682248781381,
+      "ttft_ms": 561.7023648155737,
+      "tpot_ms": 21.03683234097701,
+      "itl_p99_ms": 21.37463137740269,
+      "avg_w": 369.7957575757576
+    },
+    {
+      "concurrency": 64,
+      "thr_toks_s": 1304.5610913480323,
+      "ttft_ms": 1648.9122826269522,
+      "tpot_ms": 42.6635678263326,
+      "itl_p99_ms": 574.9838031968102,
+      "avg_w": 399.39933333333335
+    }
+  ],
+  "quality": {
+    "task": "gsm8k",
+    "shots": 5,
+    "n": 200,
+    "correct": 170,
+    "accuracy": 0.85,
+    "request_errors": 0,
+    "greedy": true
+  },
+  "oracle_path": "/home/swsok/LLMServingOptimizer/profiles/measured/A5000/RedHatAI/Qwen2.5-14B-Instruct-quantized.w8a8/tp2.yaml"
+}

@@ -1,0 +1,83 @@
+{
+  "label": "llama8b-int8",
+  "hw": "A5000",
+  "model": "RedHatAI/Meta-Llama-3.1-8B-Instruct-quantized.w8a8",
+  "tp": 1,
+  "gpus": "0",
+  "dtype": "auto",
+  "kv_cache_dtype": null,
+  "max_model_len": 4096,
+  "gpu_memory_utilization": 0.9,
+  "stack": "vllm-0.19.0",
+  "measured_at": "2026-08-03T16:16:38",
+  "idle_w": 73.6,
+  "kv_cache_tokens": 95056,
+  "points": [
+    {
+      "concurrency": 1,
+      "thr_toks_s": 67.20939697351322,
+      "ttft_ms": 50.29867452685721,
+      "tpot_ms": 14.738391881110147,
+      "itl_p99_ms": 15.100916014052927,
+      "avg_w": 194.5154929577465
+    },
+    {
+      "concurrency": 2,
+      "thr_toks_s": 131.1590814201277,
+      "ttft_ms": 44.86239035031758,
+      "tpot_ms": 15.127746111087903,
+      "itl_p99_ms": 15.518551394343376,
+      "avg_w": 196.00073170731707
+    },
+    {
+      "concurrency": 4,
+      "thr_toks_s": 256.6237112587364,
+      "ttft_ms": 44.10948451550212,
+      "tpot_ms": 15.469543224282782,
+      "itl_p99_ms": 15.886603428516537,
+      "avg_w": 173.32807692307694
+    },
+    {
+      "concurrency": 8,
+      "thr_toks_s": 478.5941982178135,
+      "ttft_ms": 143.30443563085282,
+      "tpot_ms": 16.204341890646475,
+      "itl_p99_ms": 17.18288959003985,
+      "avg_w": 174.8625925925926
+    },
+    {
+      "concurrency": 16,
+      "thr_toks_s": 873.1415957511151,
+      "ttft_ms": 210.76621037354926,
+      "tpot_ms": 17.54119101313728,
+      "itl_p99_ms": 20.980440361890732,
+      "avg_w": 177.95206896551724
+    },
+    {
+      "concurrency": 32,
+      "thr_toks_s": 1471.909357341227,
+      "ttft_ms": 364.4460197247099,
+      "tpot_ms": 20.34070228593705,
+      "itl_p99_ms": 37.93206080794335,
+      "avg_w": 183.19875
+    },
+    {
+      "concurrency": 64,
+      "thr_toks_s": 2059.089862713434,
+      "ttft_ms": 619.3556375037588,
+      "tpot_ms": 28.6646849533224,
+      "itl_p99_ms": 67.5337153486906,
+      "avg_w": 194.30928571428572
+    }
+  ],
+  "quality": {
+    "task": "gsm8k",
+    "shots": 5,
+    "n": 200,
+    "correct": 141,
+    "accuracy": 0.705,
+    "request_errors": 0,
+    "greedy": true
+  },
+  "oracle_path": "/home/swsok/LLMServingOptimizer/profiles/measured/A5000/RedHatAI/Meta-Llama-3.1-8B-Instruct-quantized.w8a8/tp1.yaml"
+}
