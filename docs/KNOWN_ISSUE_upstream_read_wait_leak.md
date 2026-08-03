@@ -1,7 +1,13 @@
 # 알려진 문제: upstream 시뮬레이터의 `read_wait()` EOF 무한 루프 (메모리 폭주)
 
-날짜: 2026-07-31 · 영향: Stage-2 후보 평가 중 호스트 OOM 위험 · 상태: **우회 완료**(가드),
-근본 수정은 upstream 서브모듈 소관
+날짜: 2026-07-31 (수정 2026-08-03) · 영향: Stage-2 후보 평가 중 호스트 OOM 위험
+상태: **가드로 우회 + 근본 수정 적용**
+
+> **근본 수정 적용됨** — `backends/upstream` 서브모듈의 로컬 브랜치
+> `fix/read-wait-eof-guard` (커밋 `95d13be`, upstream `c84e58b` 위)에 아래
+> "근본 수정 방향"을 구현했습니다. 검증 결과는 이 문서 끝의 「수정 검증」 참고.
+> 부모 저장소의 서브모듈 포인터는 **의도적으로 올리지 않았습니다**(그 커밋이 아직
+> 원격에 없어 다른 체크아웃에서 깨짐). 공유하려면 포크에 push 후 포인터를 올리세요.
 
 ## 증상
 
@@ -93,9 +99,41 @@ cd backends/upstream
         return last
 ```
 
-핵심은 (a) EOF에서 예외/종료, (b) 전체 줄을 보관하지 않음. 우리 저장소에서는
-`backends/*` 수정 금지 규칙에 따라 손대지 않으며, upstream(casys-kaist)에 이슈/PR로
-올리는 것이 맞습니다.
+핵심은 (a) EOF에서 예외/종료, (b) 전체 줄을 보관하지 않음.
+
+`check_end()`는 다르게 다뤄야 합니다: 루프 조건이 `out[-2]`를 보기 때문에 **종료
+마커 뒤에 EOF를 한 번 읽는 것이 정상 종료 경로**입니다. 따라서 EOF에서 무조건
+예외를 던지면 정상 완주가 깨집니다 — 마커를 못 본 상태의 EOF에서만 예외를 던져야
+합니다.
+
+## 수정 검증 (2026-08-03)
+
+`backends/upstream` 브랜치 `fix/read-wait-eof-guard` (커밋 `95d13be`):
+`read_wait()`는 EOF에서 즉시 `RuntimeError`, `check_end()`는 마커 없는 EOF에서만
+예외, 양쪽 모두 마지막 8줄만 보관(`_TAIL_LINES`), 읽기 스트림의 `flush()` 제거.
+
+| 검증 | 결과 |
+|---|---|
+| 단위(가짜 프로세스 6종) | 정상 파싱(`out[-2]`)·EOF 즉시 예외(0.0000s)·1만 줄 입력에도 tail 8줄 유지·정상/에러 마커 종료·마커 없는 EOF 예외 모두 통과 |
+| 폭주 재현 설정 (70B tp4×2, 50요청) | 이전 79초에 17.4GB → **10분 동안 최대 78MB**, Python·astra-sim 모두 ~100% CPU(누수 없이 계산만 느림) |
+| 자식 강제 종료(`kill -9`) | 이전 무한 spin → **약 2초 만에 종료**, `RuntimeError: ASTRA-Sim closed its output stream before reporting 'Waiting' (exit code: -9)` |
+| 회귀 (8B tp1, 10요청) | exit 0, 요청별 CSV 정상 생성 — `check_end()` 정상 EOF 경로 유지 |
+
+플래너 관점에서는 이제 메모리 가드가 16GiB에서 죽이는 대신 시뮬이 스스로 **의미 있는
+메시지와 함께 non-zero 종료**하므로, `Infeasible` 사유에 원인이 그대로 실립니다.
+
+### 운영 주의
+
+`scripts/setup.sh`의 `git submodule update --init --recursive`는 부모가 기록한 SHA
+(`c84e58b`)로 **detach** 시키므로 이 수정이 워킹트리에서 사라집니다(브랜치 ref는 남으므로
+`git -C backends/upstream checkout fix/read-wait-eof-guard`로 복구). 영구 반영은
+포크 push + 포인터 갱신, 또는 upstream(casys-kaist)에 PR이 필요합니다.
+
+### 부수 발견 (수정과 무관, 기존 버그)
+
+`serving/__main__.py:503`의 `RATIO = FREQ // INTERVAL`은 `--log-interval > 1.0`이면
+0이 되어 리포트 단계에서 `ZeroDivisionError`가 납니다(예: `--log-interval 5.0`).
+플래너는 항상 1.0을 쓰므로 영향받지 않습니다.
 
 ## 함께 발견한 갭
 
