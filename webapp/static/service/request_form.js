@@ -10,6 +10,21 @@
     const hws = new Set();
     models.forEach(m => Object.keys(d.models[m]).forEach(h => hws.add(h)));
     $("rq-exclude").innerHTML = [...hws].map(h => `<option>${svc.esc(h)}</option>`).join("");
+
+    // precision is fixed by the checkpoint, so it is shown, not chosen: the
+    // per-model TP options and their fidelity source come along for the ride
+    const showPrecision = () => {
+      const m = $("rq-model").value;
+      const prec = (d.precision || {})[m];
+      const perHw = d.models[m] || {};
+      const tps = Object.entries(perHw)
+        .map(([hw, e]) => `${hw} TP ${e.tps.join("/")}`).join(", ");
+      $("rq-precision").innerHTML =
+        `<strong>${svc.esc(prec || "알 수 없음")}</strong>` +
+        (tps ? ` <span class="muted">— ${svc.esc(tps)}</span>` : "");
+    };
+    $("rq-model").addEventListener("change", showPrecision);
+    showPrecision();
   });
 
   function step(n, note) {
@@ -28,7 +43,7 @@
     if ($("rq-tpot").value) slo.tpot_ms = +$("rq-tpot").value;
     if ($("rq-itl").value) slo.itl_p99_ms = +$("rq-itl").value;
     const body = {
-      model: $("rq-model").value, fp: +$("rq-fp").value,
+      model: $("rq-model").value,
       tenant: $("rq-tenant").value || "default", slo,
       scale: { req_per_s: +$("rq-rate").value, preset: $("rq-preset").value,
                duration_s: +$("rq-dur").value },

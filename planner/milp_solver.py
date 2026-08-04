@@ -33,6 +33,7 @@ from .utils import (
     estimate_weight_bytes,
     get_logger,
     load_model_config,
+    model_precision,
 )
 
 log = get_logger("planner.milp")
@@ -99,8 +100,16 @@ def _memory_feasible(
 
 def _enumerate_templates(spec: PlannerSpec, inv: list[Device]) -> list[_Template]:
     cfg = load_model_config(spec.model.name)
-    weight_bytes = estimate_weight_bytes(cfg, spec.model.fp)
-    kv_per_tok = estimate_kv_bytes_per_token(cfg, spec.model.fp)
+    # Precision is a property of the checkpoint: int4 weights cannot be served
+    # as fp16, so a quantized config overrides spec.model.fp here (which stays
+    # the runtime dtype for the simulator CLI). Assuming fp16 for every
+    # checkpoint overstated 14B quantized weights by 2-4x and rejected tp1 on
+    # 24 GB cards that we had actually measured serving them.
+    prec = model_precision(cfg)
+    weight_bits = prec.weight_bits if prec.quant_method else spec.model.fp
+    kv_bits = prec.kv_bits if prec.quant_method else spec.model.fp
+    weight_bytes = estimate_weight_bytes(cfg, weight_bits)
+    kv_per_tok = estimate_kv_bytes_per_token(cfg, kv_bits)
 
     roles: list[str | None] = ["prefill", "decode"] if spec.search_space.pd_disaggregation else [None]
     hw_tp = spec.search_space.hw_tp_choices

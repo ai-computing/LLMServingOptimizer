@@ -172,6 +172,17 @@ def merge_model_catalog(per_source: dict[str, dict[str, dict[str, list[int]]]],
         for model, hw_srcs in by_tp.items()}
 
 
+def model_precision_label(model: str) -> Optional[str]:
+    """What precision this checkpoint is, for display. Precision is not a user
+    choice — it is baked into the checkpoint — so the UI shows it rather than
+    offering a dropdown. ``None`` when we have no config to read it from."""
+    from planner.utils import load_model_config, model_precision
+    try:
+        return model_precision(load_model_config(model)).label
+    except Exception:
+        return None
+
+
 def preferred_tp_options(catalog: dict, hardwares) -> tuple[dict[str, list[int]], list[str]]:
     """Per-hardware TP options from the highest-fidelity source that has any,
     plus the hardware with no profile/oracle at all for this model."""
@@ -464,7 +475,11 @@ def create_service_router(state: ServiceState) -> APIRouter:
                 per_source[source] = get_backend(source).list_hardware()
             except Exception:  # a backend that is not set up must not break the list
                 continue
-        return {"models": merge_model_catalog(per_source, cluster_hw)}
+        catalog = merge_model_catalog(per_source, cluster_hw)
+        # precision is a per-model property, not per-hardware: sibling map so
+        # the existing {model: {hw: ...}} shape stays untouched
+        return {"models": catalog,
+                "precision": {m: model_precision_label(m) for m in catalog}}
 
     @router.post("/serve-requests", response_model=JobStatusOut)
     def submit(req: ServeRequestIn):

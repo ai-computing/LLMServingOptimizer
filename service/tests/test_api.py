@@ -170,6 +170,11 @@ def test_models_endpoint_lists_catalog(svc):
     # A40 measured oracle (from M7) and/or legacy profiles must appear for 8B
     assert any(MODEL == name for name in models), models.keys()
     assert "A40" in models[MODEL]
+    # precision is reported per model (the UI shows it instead of a dropdown,
+    # since a checkpoint's precision cannot be chosen at request time)
+    prec = r.json()["precision"]
+    assert set(prec) == set(models)
+    assert prec[MODEL] == "fp16/bf16"
 
 
 def test_sse_events_stream_ends(svc):

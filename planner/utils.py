@@ -10,6 +10,7 @@ import json
 import logging
 import os
 import re
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional
 
@@ -22,6 +23,16 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 LEGACY_ROOT = REPO_ROOT / "backends" / "legacy"
 PERF_MODELS_DIR = LEGACY_ROOT / "llm_profile" / "perf_models"
 MODEL_CONFIG_DIR = LEGACY_ROOT / "model_config"
+#: where to look for a model's HF-style config, in order. The legacy tree stays
+#: first so its curated configs keep winning; ours carries the checkpoints the
+#: submodules do not ship (the quantized ones we profile — the same files
+#: setup.sh links into the upstream submodule), and the upstream tree is the
+#: last resort for models only it knows.
+MODEL_CONFIG_DIRS = (
+    MODEL_CONFIG_DIR,
+    REPO_ROOT / "configs" / "upstream_model",
+    REPO_ROOT / "backends" / "upstream" / "configs" / "model",
+)
 
 _TP_RE = re.compile(r"^tp(\d+)$")
 
@@ -130,14 +141,79 @@ def scan_profile_catalog(
 # Model size / memory estimation (linear proxy for Stage-1 feasibility)
 # ---------------------------------------------------------------------------
 def load_model_config(model_name: str) -> dict:
-    """Load ``model_config/<model_name>.json`` (HuggingFace-style fields)."""
-    path = MODEL_CONFIG_DIR / f"{model_name}.json"
-    if not path.is_file():
-        raise FileNotFoundError(
-            f"Model config not found: {path} (model_name='{model_name}')"
-        )
-    with open(path, "r", encoding="utf-8") as f:
-        return json.load(f)
+    """Load ``<root>/<model_name>.json`` (HuggingFace-style fields) from the
+    first root in :data:`MODEL_CONFIG_DIRS` that has it."""
+    tried = []
+    for root in MODEL_CONFIG_DIRS:
+        path = root / f"{model_name}.json"
+        tried.append(path)
+        if path.is_file():
+            with open(path, "r", encoding="utf-8") as f:
+                return json.load(f)
+    raise FileNotFoundError(
+        f"Model config not found for model_name='{model_name}'. Looked in: "
+        + ", ".join(str(p) for p in tried)
+        + ". Stage the checkpoint's config.json under configs/upstream_model/"
+        "<org>/<name>.json (see docs/UPSTREAM_QUANTIZED_PROFILING.md)."
+    )
+
+
+#: HF ``torch_dtype`` -> bits per element
+_DTYPE_BITS = {"float32": 32, "float": 32, "float16": 16, "half": 16,
+               "bfloat16": 16, "float8_e4m3fn": 8, "int8": 8}
+
+
+@dataclass(frozen=True)
+class Precision:
+    """What a checkpoint's own config says about its numeric precision."""
+    label: str                    # human-readable, for the UI
+    weight_bits: int              # bits per weight element
+    kv_bits: int                  # bits per KV-cache element
+    quant_method: Optional[str]   # awq | gptq | compressed-tensors | None
+
+
+def model_precision(cfg: dict) -> Precision:
+    """Derive precision from an HF config's ``quantization_config``.
+
+    Precision is a property of the checkpoint, not a user choice: it decides
+    weight bytes (Stage-1 memory feasibility) and it is what the model list
+    shows. Weight-only and W8A8 schemes leave the KV cache at the model's
+    ``torch_dtype`` — only an explicit ``kv_cache_scheme`` shrinks it.
+    """
+    dtype_bits = _DTYPE_BITS.get(str(cfg.get("torch_dtype", "bfloat16")), 16)
+    q = cfg.get("quantization_config") or {}
+    method = q.get("quant_method")
+    kv_bits = dtype_bits
+    kv_scheme = q.get("kv_cache_scheme") or {}
+    if isinstance(kv_scheme, dict) and kv_scheme.get("num_bits"):
+        kv_bits = int(kv_scheme["num_bits"])
+
+    if not method:
+        return Precision(label=_float_label(dtype_bits), weight_bits=dtype_bits,
+                         kv_bits=kv_bits, quant_method=None)
+
+    if method in ("awq", "gptq"):
+        bits = int(q.get("bits", 4))
+        group = q.get("group_size")
+        label = f"int{bits} ({method.upper()}"
+        label += f", group {group})" if group else ")"
+        return Precision(label=label, weight_bits=bits, kv_bits=kv_bits,
+                         quant_method=method)
+
+    # compressed-tensors: bits + numeric type live in the per-group scheme
+    group0 = (q.get("config_groups") or {}).get("group_0") or {}
+    weights = group0.get("weights") or {}
+    bits = int(weights.get("num_bits", 8))
+    kind = "fp" if weights.get("type") == "float" else "int"
+    acts = group0.get("input_activations") or {}
+    suffix = (f"W{bits}A{acts['num_bits']}" if acts.get("num_bits")
+              else "weight-only")
+    return Precision(label=f"{kind}{bits} ({suffix})", weight_bits=bits,
+                     kv_bits=kv_bits, quant_method=method)
+
+
+def _float_label(bits: int) -> str:
+    return {32: "fp32", 16: "fp16/bf16", 8: "fp8"}.get(bits, f"{bits}-bit")
 
 
 def estimate_weight_bytes(cfg: dict, fp_bits: int) -> float:

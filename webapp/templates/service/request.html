@@ -6,8 +6,9 @@
     <h3>요구사항</h3>
     <form id="rq-form">
       <p><label>모델<br><select id="rq-model" required style="width:100%"></select></label></p>
-      <p><label>정밀도
-        <select id="rq-fp"><option value="16">fp16/bf16</option></select></label></p>
+      <p>정밀도 <span id="rq-precision" class="muted">모델 선택 시 표시</span>
+        <br><small class="muted">체크포인트에 고정된 값입니다 — 다른 정밀도는
+        해당 체크포인트를 모델 목록에서 고르십시오.</small></p>
       <fieldset><legend>SLO (미입력 = 제약 없음)</legend>
         <p><label>TTFT ≤ (ms) <input id="rq-ttft" type="number" min="1" placeholder="예: 2000"></label></p>
         <p><label>TPOT ≤ (ms) <input id="rq-tpot" type="number" min="1" placeholder="예: 100"></label></p>
