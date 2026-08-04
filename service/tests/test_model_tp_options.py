@@ -12,6 +12,7 @@ import pytest
 
 from service.api.routes import (
     _drop_hardware,
+    merge_model_catalog,
     model_tp_catalog,
     preferred_tp_options,
     proxy_toks_per_unit,
@@ -48,6 +49,35 @@ def test_hardware_without_any_profile_is_reported_unsupported():
     assert hw_tps == {"A40": [1, 4, 8]} and unsupported == ["A5000"]
     # never invent TPs for hardware that cannot run the model
     assert "A5000" not in hw_tps
+
+
+def test_model_list_unions_tps_across_rungs_with_provenance():
+    """A short oracle must not hide the simulator's higher TP degrees: the
+    quantized checkpoints have measured oracles only at tp1/tp2 (we own 2 cards)
+    while their upstream profiles reach tp4/tp8, and the model list has to show
+    all four with the rung each one comes from.
+    """
+    fp8 = "RedHatAI/Meta-Llama-3.1-8B-Instruct-FP8"
+    out = merge_model_catalog(
+        {"measured": {"A5000": {fp8: [1, 2]}},
+         "upstream": {"A5000": {fp8: [1, 2, 4, 8]},
+                      "A100": {fp8: [1, 2]}}},        # not in the cluster
+        {"A5000"})
+    assert list(out) == [fp8]
+    entry = out[fp8]["A5000"]
+    assert entry["tps"] == [1, 2, 4, 8]
+    assert entry["sources"] == {"1": "measured", "2": "measured",
+                                "4": "upstream", "8": "upstream"}
+    assert entry["source"] == "measured"      # best rung present
+    assert "A100" not in out[fp8]             # hardware outside the cluster
+
+
+def test_model_list_source_is_the_single_rung_when_one_covers_everything():
+    out = merge_model_catalog({"measured": {}, "upstream": {M8: {}},
+                               "legacy": {"RNGD": {M8: [1, 2]}}}, {"RNGD"})
+    assert out[M8]["RNGD"] == {"tps": [1, 2],
+                               "sources": {"1": "legacy", "2": "legacy"},
+                               "source": "legacy"}
 
 
 def test_drop_hardware_prunes_devices_and_empty_nodes():

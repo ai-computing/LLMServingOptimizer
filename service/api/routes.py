@@ -140,6 +140,38 @@ def model_tp_catalog(model: str) -> dict[str, dict[str, list[int]]]:
     return out
 
 
+def merge_model_catalog(per_source: dict[str, dict[str, dict[str, list[int]]]],
+                        cluster_hw) -> dict[str, dict[str, dict]]:
+    """{model: {hw: {"tps": [...], "sources": {"<tp>": rung}, "source": rung}}}.
+
+    ``per_source`` is {rung: {hw: {model: [tp, ...]}}} as returned by each
+    backend's ``list_hardware()``; hardware outside ``cluster_hw`` is dropped.
+
+    A rung must not mask TP degrees it lacks: measured oracles stop at the GPUs
+    we physically own (tp<=2 on A5000) while the simulator profiles reach
+    tp4/tp8. Union the degrees and attribute each one to the highest rung that
+    has it, so every serviceable (model, hw, tp) is listed with its real
+    provenance instead of disappearing behind a shorter oracle. ``source`` stays
+    the best rung present, which is the whole list when one rung covers it.
+    """
+    by_tp: dict[str, dict[str, dict[int, str]]] = {}
+    for source in _SOURCE_ORDER:          # first rung wins per (model, hw, tp)
+        for hw, models in (per_source.get(source) or {}).items():
+            if hw not in cluster_hw:
+                continue
+            for model, tps in models.items():
+                slot = by_tp.setdefault(model, {}).setdefault(hw, {})
+                for tp in tps:
+                    slot.setdefault(tp, source)
+    return {
+        model: {hw: {"tps": sorted(srcs),
+                     "sources": {str(tp): srcs[tp] for tp in sorted(srcs)},
+                     "source": next(s for s in _SOURCE_ORDER
+                                    if s in set(srcs.values()))}
+                for hw, srcs in hw_srcs.items()}
+        for model, hw_srcs in by_tp.items()}
+
+
 def preferred_tp_options(catalog: dict, hardwares) -> tuple[dict[str, list[int]], list[str]]:
     """Per-hardware TP options from the highest-fidelity source that has any,
     plus the hardware with no profile/oracle at all for this model."""
@@ -418,27 +450,21 @@ def create_service_router(state: ServiceState) -> APIRouter:
 
     @router.get("/models")
     def get_models():
-        """Serviceable models per hardware present in the registry, with the TP
-        options and source planning would actually use (measured oracle >
-        upstream profile > legacy profile — the fidelity ladder)."""
+        """Serviceable models per hardware present in the registry, with every
+        evaluable TP degree and the rung of the fidelity ladder (measured oracle
+        > upstream profile > legacy profile) that supplies each one."""
         from sim_backends import get_backend
         # hardware present in the cluster (via the v2 graph: works for both
         # v1-promoted and native v2 registries)
         cluster_hw = {d.hw for n in state.topology_graph().registry.nodes
                       for d in n.devices}
-        catalog: dict[str, dict] = {}
-        for source in _SOURCE_ORDER:      # first source wins per (model, hw)
+        per_source = {}
+        for source in _SOURCE_ORDER:
             try:
-                per_hw = get_backend(source).list_hardware()
-            except Exception:
+                per_source[source] = get_backend(source).list_hardware()
+            except Exception:  # a backend that is not set up must not break the list
                 continue
-            for hw, models in per_hw.items():
-                if hw not in cluster_hw:
-                    continue
-                for model, tps in models.items():
-                    catalog.setdefault(model, {}).setdefault(
-                        hw, {"tps": sorted(tps), "source": source})
-        return {"models": catalog}
+        return {"models": merge_model_catalog(per_source, cluster_hw)}
 
     @router.post("/serve-requests", response_model=JobStatusOut)
     def submit(req: ServeRequestIn):
