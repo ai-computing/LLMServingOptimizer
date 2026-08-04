@@ -172,6 +172,26 @@ def merge_model_catalog(per_source: dict[str, dict[str, dict[str, list[int]]]],
         for model, hw_srcs in by_tp.items()}
 
 
+def measured_capacity(model: str, hw_tps: dict[str, list[int]]
+                      ) -> Optional[dict[str, dict[int, float]]]:
+    """Peak measured generation rate per (hardware, tp) for Stage-1's demand
+    constraint, or None when nothing is measured.
+
+    Stage-1's analytical proxy derives token rate from parameter count alone, so
+    it gives quantization no credit and assumes TP scales linearly. On this
+    cluster that combination declared a 14B AWQ request unachievable at a demand
+    the oracles show one card serving. Where a capacity curve exists, filter with
+    it instead."""
+    from sim_backends.measured.backend import oracle_peak_toks_s
+    out: dict[str, dict[int, float]] = {}
+    for hw, tps in hw_tps.items():
+        for tp in tps:
+            peak = oracle_peak_toks_s(hw, model, tp)
+            if peak:
+                out.setdefault(hw, {})[tp] = peak
+    return out or None
+
+
 def model_precision_label(model: str) -> Optional[str]:
     """What precision this checkpoint is, for display. Precision is not a user
     choice — it is baked into the checkpoint — so the UI shows it rather than
@@ -327,8 +347,14 @@ def _default_planner(req: ServeRequestIn, topology: dict, snapshot_ver: int,
                                "suggestions": ["drop force_backend",
                                                "profile the model for this backend"]}}
 
-    # 4) build the power-min spec and run the two-stage planner
-    demand: dict = {"toks_per_s": synth.demand_toks_per_s}
+    # 4) build the power-min spec and run the two-stage planner.
+    # Stage-1's ceiling is a *generation* rate: _PROXY_TOKS_PER_UNIT is
+    # calibrated as "an 8B model's tokens/s" and the measured oracles record
+    # vLLM's output_throughput. Feeding it sum(in+out) compared a total-token
+    # demand against an output-token ceiling and roughly doubled the demand at
+    # the chat preset's 1:1 mix (991 vs 496 toks/s) -- enough to call a
+    # configuration we had measured serving "달성 불가".
+    demand: dict = {"toks_per_s": synth.output_toks_per_s}
     scale = proxy_toks_per_unit(req.model)
     if scale is not None:
         demand["proxy_toks_per_unit"] = scale
@@ -351,7 +377,8 @@ def _default_planner(req: ServeRequestIn, topology: dict, snapshot_ver: int,
         # tp1 oracle)
         "search_space": {"tp_choices": sorted({tp for tps in hw_tps.values()
                                                for tp in tps}),
-                         "hw_tp_choices": hw_tps},
+                         "hw_tp_choices": hw_tps,
+                         "hw_tp_capacity": measured_capacity(req.model, hw_tps)},
         "solver": {"top_k": 4, "time_limit_sec": 30, "pareto_epsilon_steps": 3},
         "backend": decision.backend,
     })

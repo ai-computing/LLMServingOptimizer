@@ -64,6 +64,26 @@ def load_oracle(hw: str, model: str, tp: int, root: Optional[Path] = None):
     raise ValueError(f"unknown oracle kind '{kind}' in {path}")
 
 
+def oracle_peak_toks_s(hw: str, model: str, tp: int,
+                       root: Optional[Path] = None) -> Optional[float]:
+    """Peak measured generation rate (output toks/s) for one instance, or None
+    when there is no capacity-curve oracle for (hw, model, tp).
+
+    Stage-1's analytical proxy scales token rate by parameter count alone: it is
+    blind to quantization (int4 weights move a quarter of the bytes) and to the
+    sublinear payoff of TP on PCIe (measured: 14B AWQ 1100 toks/s at tp1 vs 1296
+    at tp2, not 2200). Where we have measured the curve, that is the better
+    number to filter with."""
+    try:
+        oracle = load_oracle(hw, model, tp, root)
+    except Exception:
+        return None
+    points = getattr(oracle, "points", None)
+    if not points:
+        return None
+    return max(p.thr_toks_s for p in points)
+
+
 def cluster_model_from_config(config: dict, root: Optional[Path] = None) -> ClusterModel:
     instances: list[InstanceCfg] = []
     hosts: list[HostCfg] = []

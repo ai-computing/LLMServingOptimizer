@@ -158,6 +158,12 @@ class SearchSpace(BaseModel):
     # service exclude (hw, tp) combos its evaluation backend cannot evaluate
     # (e.g. no measured oracle for A40 tp2).
     hw_tp_choices: Optional[dict[str, list[int]]] = None
+    # optional measured capacity per (hardware, tp), in output toks/s for ONE
+    # instance: {hardware: {tp: toks_per_s}}. When given it replaces the
+    # analytical rel_throughput*tp proxy for that combo, which is blind to
+    # quantization and to TP's sublinear payoff on PCIe. Same units as
+    # requirements.demand.toks_per_s (a generation rate).
+    hw_tp_capacity: Optional[dict[str, dict[int, float]]] = None
     pp_choices: list[int] = Field(default_factory=lambda: [1])  # PP not a config knob
     xpyd_prefill_range: list[int] = Field(default_factory=lambda: [1, 1])
     xpyd_decode_range: list[int] = Field(default_factory=lambda: [1, 1])
@@ -171,6 +177,13 @@ class SearchSpace(BaseModel):
             for hw, tps in self.hw_tp_choices.items():
                 if not tps or any(t < 1 for t in tps):
                     raise ValueError(f"hw_tp_choices[{hw!r}] must be non-empty, all >= 1")
+        if self.hw_tp_capacity is not None:
+            for hw, per_tp in self.hw_tp_capacity.items():
+                for tp, cap in per_tp.items():
+                    if tp < 1 or cap <= 0:
+                        raise ValueError(
+                            f"hw_tp_capacity[{hw!r}][{tp}]={cap} must have tp >= 1 "
+                            "and a positive toks/s")
         if self.pp_choices != [1]:
             # PP is not exposed as a cluster_config knob (npu_group <= npu_num only).
             raise ValueError(

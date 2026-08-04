@@ -273,7 +273,7 @@ def test_reconcile_keeps_midflight_containers(env):
     assert store.get(dep.id).state == S.HEALTH_CHECK
 
 
-def test_measured_config_carries_host_base_power(tmp_path):
+def test_measured_config_carries_host_base_power(tmp_path, monkeypatch):
     """Stage-2 (measured) must integrate host base power per active node, so
     the host-consolidation cost Stage-1 minimizes is visible in the final
     judgment. Simulator backends' config schema stays untouched."""
@@ -305,9 +305,11 @@ def test_measured_config_carries_host_base_power(tmp_path):
     assert [n["host_base_w"] for n in cfg["nodes"]] == [250, 200]
     assert [n["id"] for n in cfg["nodes"]] == ["n0", "n1"]
 
-    # the measured backend turns those into HostCfg entries (500 W of hosts)
-    import os
-    os.environ.setdefault("LLMSS_MEASURED_ORACLES", str(tmp_path / "none"))
+    # the measured backend turns those into HostCfg entries (500 W of hosts).
+    # monkeypatch, not os.environ: setting it directly leaked an empty oracle
+    # root into every later test in the session and silently skipped the ones
+    # that need real oracles.
+    monkeypatch.setenv("LLMSS_MEASURED_ORACLES", str(tmp_path / "none"))
     try:
         model = cluster_model_from_config(cfg)
     except FileNotFoundError:

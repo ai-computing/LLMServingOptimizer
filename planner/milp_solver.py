@@ -113,6 +113,8 @@ def _enumerate_templates(spec: PlannerSpec, inv: list[Device]) -> list[_Template
 
     roles: list[str | None] = ["prefill", "decode"] if spec.search_space.pd_disaggregation else [None]
     hw_tp = spec.search_space.hw_tp_choices
+    capacity = spec.search_space.hw_tp_capacity or {}
+    unit = _proxy_unit(spec)
     templates: list[_Template] = []
     for dev in inv:
         for tp in spec.search_space.tp_choices:
@@ -130,11 +132,32 @@ def _enumerate_templates(spec: PlannerSpec, inv: list[Device]) -> list[_Template
                         tp=tp,
                         role=role,
                         mem_gb=dev.mem_gb,
-                        rel_throughput=_HW_REL_THROUGHPUT.get(dev.hardware, 1.0),
+                        rel_throughput=_rel_throughput(dev.hardware, tp, capacity, unit),
                         power_w=device_active_w(dev.hardware)[0],
                     )
                 )
     return templates
+
+
+def _proxy_unit(spec: PlannerSpec) -> float:
+    """toks/s that 1.0 unitless proxy throughput stands for."""
+    d = spec.requirements.demand
+    return (d.proxy_toks_per_unit if d and d.proxy_toks_per_unit
+            else _PROXY_TOKS_PER_UNIT)
+
+
+def _rel_throughput(hardware: str, tp: int, capacity: dict, unit: float) -> float:
+    """Unitless per-instance throughput used by every downstream expression as
+    ``rel_throughput * tp``.
+
+    A measured capacity for (hardware, tp) is divided out by ``unit * tp`` so
+    that the product reproduces the measured toks/s exactly, leaving the rest of
+    the model untouched. Without one, fall back to the per-hardware constant.
+    """
+    measured = (capacity.get(hardware) or {}).get(tp)
+    if measured and unit > 0 and tp > 0:
+        return measured / (unit * tp)
+    return _HW_REL_THROUGHPUT.get(hardware, 1.0)
 
 
 def _add_flow_constraints(model, n, templates, graph, inv) -> bool:
@@ -375,9 +398,7 @@ def _diagnose_infeasible(spec, templates, inv, graph,
                          demand_units: float) -> InfeasibleReport:
     """Identify which constraint family blocks the power-min model (§6:
     infeasible is a first-class result)."""
-    unit = (spec.requirements.demand.proxy_toks_per_unit
-            if spec.requirements.demand and spec.requirements.demand.proxy_toks_per_unit
-            else _PROXY_TOKS_PER_UNIT)
+    unit = _proxy_unit(spec)
     if not templates:
         return InfeasibleReport(
             bottleneck="memory",
