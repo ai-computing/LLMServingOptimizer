@@ -337,7 +337,27 @@ def build(recs: dict) -> str:
     L += ["", "## 4. 품질 (GSM8K)", ""]
     L += table_quality(recs)
     L += ["", "## 5. 분석", ""] + analysis(recs) + ["",
-          "## 6. 한계", "",
+          "## 6. 서비스 카탈로그 반영", "",
+          "여기서 측정한 설정들은 실측 오라클(`profiles/measured/A5000/`)로 저장되어 "
+          "Serving Service의 모델 목록에 정밀도별 항목으로 올라갑니다 — 정밀도는 별도 "
+          "차원이 아니라 **체크포인트 ID 자체**로 구분됩니다"
+          "(`RedHatAI/...-FP8`, `hugging-quants/...-AWQ-INT4`, `...quantized.w8a8`).",
+          "",
+          "실측 오라클은 우리가 보유한 2장까지만 커버하므로 TP1/TP2에서 멈춥니다. "
+          "그보다 넓은 TP는 업스트림 시뮬레이터 프로파일이 채웁니다 — 양자화 "
+          "체크포인트를 프로파일링하는 방법은 "
+          "`docs/UPSTREAM_QUANTIZED_PROFILING.md`에 있습니다(프로파일러가 광고하는 "
+          "`--dtype fp8`은 현재 vLLM에서 동작하지 않습니다).",
+          "",
+          "`GET /api/models`는 두 출처의 TP를 합집합으로 주고 각 TP가 어느 단계에서 "
+          "왔는지 함께 보고합니다:",
+          "",
+          "```",
+          "A5000  RedHatAI/Meta-Llama-3.1-8B-Instruct-FP8  tps=[1,2,4,8]",
+          "       sources={1: measured, 2: measured, 4: upstream, 8: upstream}",
+          "```",
+          "",
+          "## 7. 한계", "",
           "- GSM8K 200문제·5-shot 단일 프롬프트이므로 절대 점수는 공개 리더보드와 "
           "다릅니다. 정밀도 간 **상대 비교**로만 해석하십시오(±3pp 내 차이는 표본 "
           "오차와 구분되지 않습니다).",

@@ -1,6 +1,6 @@
 # A5000 x2 정밀도 실험: fp16 / fp8 / int8 / int4
 
-날짜: 2026-08-03 · 하드웨어: NVIDIA RTX A5000 24GB x2 (Ampere SM 8.6, NVLink 없음 — 호스트 브리지 PCIe) · 스택: vllm-0.19.0
+날짜: 2026-08-04 · 하드웨어: NVIDIA RTX A5000 24GB x2 (Ampere SM 8.6, NVLink 없음 — 호스트 브리지 PCIe) · 스택: vllm-0.19.0
 
 ## 요약
 
@@ -148,7 +148,20 @@ GSM8K 200문제에서 비율의 표준오차는 약 3pp, **두 설정 차이의 
 확정적 품질 결론이 필요하면 문제 수를 1,000개 이상으로 올리고 (설정당 약 10분 추가) MMLU 등 다른 과제를 병행해야 합니다.
 
 
-## 6. 한계
+## 6. 서비스 카탈로그 반영
+
+여기서 측정한 설정들은 실측 오라클(`profiles/measured/A5000/`)로 저장되어 Serving Service의 모델 목록에 정밀도별 항목으로 올라갑니다 — 정밀도는 별도 차원이 아니라 **체크포인트 ID 자체**로 구분됩니다(`RedHatAI/...-FP8`, `hugging-quants/...-AWQ-INT4`, `...quantized.w8a8`).
+
+실측 오라클은 우리가 보유한 2장까지만 커버하므로 TP1/TP2에서 멈춥니다. 그보다 넓은 TP는 업스트림 시뮬레이터 프로파일이 채웁니다 — 양자화 체크포인트를 프로파일링하는 방법은 `docs/UPSTREAM_QUANTIZED_PROFILING.md`에 있습니다(프로파일러가 광고하는 `--dtype fp8`은 현재 vLLM에서 동작하지 않습니다).
+
+`GET /api/models`는 두 출처의 TP를 합집합으로 주고 각 TP가 어느 단계에서 왔는지 함께 보고합니다:
+
+```
+A5000  RedHatAI/Meta-Llama-3.1-8B-Instruct-FP8  tps=[1,2,4,8]
+       sources={1: measured, 2: measured, 4: upstream, 8: upstream}
+```
+
+## 7. 한계
 
 - GSM8K 200문제·5-shot 단일 프롬프트이므로 절대 점수는 공개 리더보드와 다릅니다. 정밀도 간 **상대 비교**로만 해석하십시오(±3pp 내 차이는 표본 오차와 구분되지 않습니다).
 - 입력/출력 길이를 256/256으로 고정했습니다. 긴 컨텍스트에서는 KV 용량 차이가 더 크게 작용합니다.

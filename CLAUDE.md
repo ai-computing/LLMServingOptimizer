@@ -102,6 +102,13 @@ simulator outputs (CSV + stdout).
 - Our upstream-format profiles live in `profiles/upstream/<HW>/` and get
   symlinked into `backends/upstream/profiler/perf/` by `scripts/setup.sh`
   (the submodule stays clean).
+- Precision is carried by the **checkpoint ID**, not a separate dimension
+  (`RedHatAI/...-FP8`, `hugging-quants/...-AWQ-INT4`) — the adapter's
+  `list_hardware()` merges variant folders, so a variant cannot express it.
+  To profile a quantized checkpoint, put its `config.json` under
+  `configs/upstream_model/<org>/<name>.json` and pass
+  `--model-config-root`; `--dtype fp8` is broken against the installed vLLM
+  (see `docs/UPSTREAM_QUANTIZED_PROFILING.md`).
 - Cluster configs: `cluster_config/` holds legacy-format JSONs;
   `cluster_config/upstream/` holds the new format.
 
