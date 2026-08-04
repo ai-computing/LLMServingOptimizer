@@ -62,6 +62,19 @@ for f in cluster_config/upstream/*.json; do
     [[ -f "$f" ]] || continue
     ln -sf "../../../../$f" "backends/upstream/configs/cluster/$(basename "$f")"
 done
+# model configs for checkpoints the submodule does not ship (the quantized ones
+# we profile). The simulator's get_config() only looks under the submodule's own
+# configs/model/ — unlike the profiler there is no --model-config-root at
+# simulation time — so a profile without this link lists in the catalog but
+# fails to evaluate. Linked per file so vendors the submodule already has
+# (meta-llama, Qwen) keep their real directory.
+for cfg in configs/upstream_model/*/*.json; do
+    [[ -f "$cfg" ]] || continue
+    vendor="$(basename "$(dirname "$cfg")")"
+    mkdir -p "backends/upstream/configs/model/$vendor"
+    ln -sf "../../../../../$cfg" \
+        "backends/upstream/configs/model/$vendor/$(basename "$cfg")"
+done
 
 echo "==> [6/6] smoke check"
 python3 - <<'EOF'

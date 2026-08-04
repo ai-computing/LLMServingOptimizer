@@ -7,7 +7,7 @@ profiled_at: '2026-08-04T06:04:44+00:00'
 architecture: llama
 architecture_sha256: 19d708000ec8a89edf1ca12dd388235b2cfe59007aaec6ea48702fb856ff2cfb
 model: RedHatAI/Meta-Llama-3.1-8B-Instruct-FP8
-variant: fp8
+variant: bf16
 tp_degrees: [1, 2, 4, 8]
 engine_effective:
   load_format: dummy

@@ -42,12 +42,31 @@ cd backends/upstream
 CUDA_VISIBLE_DEVICES=0 .venv-vllm/bin/python -m profiler profile \
   RedHatAI/Meta-Llama-3.1-8B-Instruct-FP8 \
   --model-config-root /path/to/LLMServingOptimizer/configs/upstream_model \
-  --hardware A5000 --tp 1,2,4,8 --variant fp8 --skip-skew \
+  --hardware A5000 --tp 1,2,4,8 --skip-skew \
   --out-root /path/to/LLMServingOptimizer/profiles/upstream
 ```
 
 산출물은
-`profiles/upstream/A5000/RedHatAI/Meta-Llama-3.1-8B-Instruct-FP8/fp8/tp<N>/`.
+`profiles/upstream/A5000/RedHatAI/Meta-Llama-3.1-8B-Instruct-FP8/bf16/tp<N>/`.
+
+### `--variant`를 주지 말 것
+
+variant 폴더 이름은 **양자화 스킴이 아니라 config의 `torch_dtype`(+ KV dtype)**
+을 따른다. compressed-tensors FP8 체크포인트의 `torch_dtype`은 `bfloat16`이므로
+variant는 `bf16`이 되는 게 정상이다.
+
+시뮬레이터가 런타임에 같은 계산으로 폴더를 찾기 때문에
+(`serving/core/trace_generator.py::resolve_variant` =
+`_short_dtype(dtype or torch_dtype)`) 여기서 `--variant fp8` 같은 이름을 주면
+프로파일은 만들어지지만 **시뮬레이션이 폴더를 못 찾는다**:
+
+```
+FileNotFoundError: Profile variant folder not found:
+  ../profiler/perf/A5000/RedHatAI/Meta-Llama-3.1-8B-Instruct-FP8/bf16
+```
+
+정밀도는 이미 모델 ID가 표현하므로 variant에 중복으로 넣을 이유도 없다.
+`--variant`는 같은 체크포인트를 서로 다른 KV dtype으로 여러 벌 뽑을 때만 쓴다.
 
 ### 모델 ID = 정밀도
 
@@ -101,7 +120,66 @@ bf16 tp1과 fp8 tp1의 `dense.csv`를 비교하면 fp8 경로가 실제로 동�
 정확도는 실측 캠페인(`scripts/run_capacity_campaign.py --quality-samples`,
 GSM8K)에서만 나온다.
 
-## 5. 카탈로그 노출
+### 엔드투엔드: 시뮬이 실제로 도는지
+
+커널 CSV가 그럴듯한 것과 시뮬이 도는 것은 별개다. 합성 워크로드
+(chat, 2 req/s, 10요청)로 네 조합을 돌린 결과:
+
+| 구성 | 평균 지연 | 판정 |
+|---|---|---|
+| bf16 tp1 | 4,416 ms | 기준 |
+| fp8 tp1 | 2,677 ms | **1.65× 빠름** |
+| bf16 tp8 | 811 ms | ok |
+| fp8 tp4 | 904 ms | ok |
+
+저동시성에서 fp8이 1.65배 빠른 것은 커널 측정의 0.50~0.55× GEMM 시간과
+같은 방향이고, 실측 서빙 실험의 저동시성 우세와도 일치한다. 프로파일을 추가한
+뒤에는 **반드시 이런 스모크 시뮬까지 돌려볼 것** — 카탈로그에 뜨는 것만으로는
+평가 가능함이 보장되지 않는다(§5, §6에서 실제로 두 번 막혔다).
+
+## 5. 프로파일만으로는 부족하다 — 시뮬 시점 config도 필요
+
+프로파일을 다 뽑아도 **시뮬레이션은 별도로 실패한다**. 서빙 쪽
+`serving/core/utils.py::get_config()`는 서브모듈 안의 두 경로만 찾고,
+프로파일러의 `--model-config-root` 같은 우회로가 없다:
+
+```
+FileNotFoundError: Config file for model
+  'RedHatAI/Meta-Llama-3.1-8B-Instruct-FP8' not found. Checked:
+  backends/upstream/configs/model/RedHatAI/...json,
+  backends/upstream/serving/configs/model/RedHatAI/...json
+```
+
+이 상태면 카탈로그에는 뜨는데 평가는 실패하는 **깨진 추천 경로**가 된다.
+`scripts/setup.sh`가 프로파일을 심링크하는 것과 같은 방식으로 model config도
+심링크한다(파일 단위로 걸어서 서브모듈이 이미 가진 vendor 디렉터리는
+건드리지 않는다):
+
+```
+backends/upstream/configs/model/<org>/<name>.json
+  -> ../../../../../configs/upstream_model/<org>/<name>.json
+```
+
+새 양자화 체크포인트를 추가할 때는 **프로파일 + 이 심링크 두 개가 세트**다.
+`./scripts/setup.sh`를 다시 돌리면 자동으로 걸린다.
+
+## 6. 알려진 격차: fp8 프로파일에는 skew 보정이 없다
+
+fp8은 `--skip-skew`로 뽑았다(skew 스윕은 TP당 몇 시간이 더 걸린다). 반면
+bf16 tp1/2/4에는 fitted skew가 있다. 시뮬레이터는 `meta.yaml::skew_fit.per_tp`
+가 없는 TP에 대해 pooled 상수 alpha로 되돌아가므로, **bf16과 fp8을
+시뮬레이션으로 비교할 때 attention skew 모델의 충실도가 다르다**. 이질적인
+kv 길이가 섞인 decode 배치에서 fp8 쪽 오차가 더 클 수 있다.
+
+또한 bf16 변종의 tp8도 같은 이유로 skew fit이 없다(tp1/2/4만 있음).
+
+> 주의: `--skip-skew`로 기존 변종을 다시 프로파일하면 그 변종의 `meta.yaml`이
+> **그 세션 기준으로 덮어써진다** — 이전 TP들의 `skew_fit` 항목이 사라져
+> (CSV는 남아도) 보정이 조용히 꺼진다. tp8을 추가할 때 실제로 겪었고
+> 되돌렸다. 기존 변종에 TP를 추가한 뒤에는 `meta.yaml`의 `tp_degrees`와
+> `skew_fit.per_tp`를 반드시 확인할 것.
+
+## 7. 카탈로그 노출
 
 `/api/models`는 (model, hw)의 TP를 fidelity ladder의 모든 단계에서 **합집합**
 으로 모으고 각 TP가 어느 단계에서 왔는지 함께 준다:
