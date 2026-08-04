@@ -73,8 +73,24 @@ class Metrics:
     tpot_ms: float
     itl_p99_ms: float
     throughput_toks_s: float
+    #: Highest generation rate the run actually demonstrated, over a sliding
+    #: window (toks/s). ``throughput_toks_s`` cannot answer "did it keep up?":
+    #: the trace fixes how many tokens exist, so tokens/span reports the ARRIVAL
+    #: rate however fast the server is. The trace is synthesized AT the demanded
+    #: rate, so a candidate that never reached that rate in any window did not
+    #: sustain the demand.
+    peak_gen_toks_s: Optional[float] = None
+    # queue wait = arrival to admission. A direct backlog signal, but it only
+    # bites once the admission cap binds (the measured backend caps at the
+    # oracle's max profiled concurrency, so a short evaluation trace never
+    # queues at all) -- hence peak_gen_toks_s above is the primary test.
+    queue_p95_ms: Optional[float] = None
+    queue_max_ms: Optional[float] = None
     energy_j: Optional[float] = None
     toks_per_wh: Optional[float] = None
+    #: generated tokens per joule == tokens/s per watt (same number, both are
+    #: "token bandwidth per unit power"); toks_per_wh / 3600
+    toks_per_j: Optional[float] = None
     # average cluster power (W): sim energy/wall-clock when the backend reports
     # energy, else a power-profile estimate (raw["power_source"] says which)
     power_w: Optional[float] = None
@@ -96,10 +112,11 @@ class Infeasible:
 
 @dataclass
 class InfeasibleReport:
-    """First-class Stage-1 infeasibility diagnosis (design doc §6).
+    """First-class infeasibility diagnosis (design doc §6).
 
     ``bottleneck`` names the constraint family whose relaxation makes the model
-    SAT: memory | demand | availability | links | structure.
+    SAT: memory | demand | availability | links | structure for Stage-1, plus
+    slo | evaluation when Stage-2 rejected every candidate.
     """
 
     bottleneck: str

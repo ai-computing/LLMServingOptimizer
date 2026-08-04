@@ -92,11 +92,52 @@
     return `<div>${label}: <strong class="${cls}">${svc.fmtMs(val)}</strong>${margin}</div>`;
   }
 
+  /* token bandwidth per unit power. toks/J and toks/s-per-W are the same
+     number (tok/s ÷ W = tok/J); toks/Wh is the same figure at a human scale,
+     so show both rather than making the reader convert. */
+  function tokPerJ(m) {
+    if (m.toks_per_j != null) return m.toks_per_j;
+    if (m.toks_per_wh != null) return m.toks_per_wh / 3600;
+    if (m.throughput_toks_s != null && m.power_w) return m.throughput_toks_s / m.power_w;
+    return null;
+  }
+
+  function fmtEff(m) {
+    const j = tokPerJ(m);
+    return j == null ? "—" : `${j.toFixed(2)} tok/J`;
+  }
+
+  function effLine(m) {
+    const j = tokPerJ(m);
+    if (j == null) return '<div class="muted">전력 효율: 측정 없음</div>';
+    const wh = m.toks_per_wh != null ? m.toks_per_wh : j * 3600;
+    return `전력 효율: <strong>${j.toFixed(2)} tok/J</strong>` +
+           ` <span class="muted">(= ${j.toFixed(2)} tok/s per W · ` +
+           `${Math.round(wh).toLocaleString()} tok/Wh)</span>`;
+  }
+
+  /* Stage-2 demand attainment. Queue wait, not throughput: the trace fixes the
+     token count, so tokens/span reports the arrival rate however fast the
+     server is. A backlog is what says capacity fell short. */
+  function demandLine(m, res) {
+    const q = m.queue_p95_ms, peak = m.peak_gen_toks_s;
+    const bits = [];
+    if (peak != null) bits.push(`실증 생성 ${Math.round(peak)} tok/s`);
+    if (q != null) bits.push(`큐 대기 p95 ${svc.fmtMs(q)}`);
+    if (!bits.length) return '<div class="muted">수요 충족: 지표 미보고</div>';
+    const behind = q != null && q > 1000;
+    const cls = behind ? "slo-violated" : "slo-ok";
+    const verdict = behind ? "미달 (요청 적체)" : "충족";
+    return `수요 충족: <strong class="${cls}">${verdict}</strong>` +
+           ` <span class="muted">— ${bits.join(" · ")}</span>`;
+  }
+
   function candRow(c, res) {
     const m = c.metrics || {};
     return `<tr data-run="${svc.esc(c.run_id)}">
       <td>${svc.esc(c.hw_summary)}</td>
       <td class="svc-num">${svc.fmtW(c.power_w)}</td>
+      <td class="svc-num">${fmtEff(m)}</td>
       <td class="svc-num">${svc.fmtMs(m.ttft_ms)}</td>
       <td class="svc-num">${svc.fmtMs(m.tpot_ms)}</td>
       <td>${c.passed ? '<span class="slo-ok">통과</span>'
@@ -110,10 +151,17 @@
     $("rq-progress-card").style.display = "none";
     if (!res.best) {
       const inf = res.infeasible || {};
+      const tried = res.alternatives || [];
       el.innerHTML = `<div class="infeasible-card">
         <h3>달성 불가 — ${svc.esc(inf.bottleneck || "unknown")}</h3>
         <p>${svc.esc(inf.detail || job.error || "")}</p>
-        <ul>${(inf.suggestions || []).map(s => `<li>${svc.esc(s)}</li>`).join("")}</ul></div>`;
+        <ul>${(inf.suggestions || []).map(s => `<li>${svc.esc(s)}</li>`).join("")}</ul></div>
+        ${tried.length ? `<h4>평가한 구성 (${tried.length})</h4>
+        <table class="svc-table"><tr><th>구성</th><th>전력</th><th>전력 효율</th><th>TTFT</th><th>TPOT</th><th>SLO</th></tr>
+        ${tried.map(c => candRow(c, res)).join("")}</table>
+        <ul class="muted" style="font-size:.85em">${tried.flatMap(c =>
+          c.violations.map(v => `<li>${svc.esc(c.hw_summary)}: ${svc.esc(v)}</li>`)
+        ).join("")}</ul>` : ""}`;
       return;
     }
     const b = res.best, m = b.metrics || {};
@@ -129,6 +177,8 @@
         <div>
           <h3 style="margin:0 0 8px">${svc.esc(b.hw_summary)}</h3>
           ${gauge("TTFT", m.ttft_ms, null)} ${gauge("TPOT", m.tpot_ms, null)}
+          <div>${effLine(m)}</div>
+          <div>${demandLine(m, res)}</div>
           <div class="muted">devices: ${res.device_ids.map(svc.esc).join(", ")}</div>
         </div>
         <div style="text-align:center">
@@ -136,8 +186,10 @@
         </div>
       </div>
       ${res.alternatives.length ? `<h4>대안 (${res.alternatives.length})</h4>
-      <table class="svc-table"><tr><th>구성</th><th>전력</th><th>TTFT</th><th>TPOT</th><th>SLO</th></tr>
+      <table class="svc-table"><tr><th>구성</th><th>전력</th><th>전력 효율</th><th>TTFT</th><th>TPOT</th><th>SLO</th></tr>
       ${res.alternatives.map(c => candRow(c, res)).join("")}</table>` : ""}
+      ${res.demand_note ? `<p class="slo-violated" style="font-size:.85em">
+        주의: ${svc.esc(res.demand_note)}</p>` : ""}
       <p class="muted" style="font-size:.85em">이유: ${svc.esc(res.reason)}</p>`;
     $("rq-confirm").addEventListener("click", confirmFlow);
   }

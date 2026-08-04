@@ -253,6 +253,7 @@ def eval_jobs(model: str, default: int = 4) -> int:
 
 def _default_planner(req: ServeRequestIn, topology: dict, snapshot_ver: int,
                      job: Job) -> dict:
+    from planner.objective import demand_shortfall
     from planner.search_orchestrator import run_spec
     from planner.spec_schema import PlannerSpec
     from service.workload_synth import ScaleSpec, synthesize
@@ -415,6 +416,14 @@ def _default_planner(req: ServeRequestIn, topology: dict, snapshot_ver: int,
                           * (inst.npu_num // inst.tp))
         out["_need"] = {f"{k[0]}|{k[1]}": v for k, v in need.items()}
         out["_groups"] = groups
+        note = demand_shortfall(result.best.metrics, spec.requirements)
+        if note:
+            out["demand_note"] = note
+    elif result.candidates:
+        # nothing passed: show what was tried and what each broke, otherwise the
+        # screen is a bare "달성 불가" with no way to act on it
+        out["alternatives"] = [_candidate_out(c) for c in result.candidates
+                               if c.metrics is not None]
     return out
 
 

@@ -184,6 +184,23 @@ def run_spec(
     result.pareto = objective.pareto_front(pf_input, spec.requirements) if pf_input else []
     if passing:
         result.best = max(passing, key=lambda c: c.score)
+    else:
+        # Stage-2 rejected everything. Without a report the caller can only say
+        # "달성 불가 — unknown"; name the constraint each candidate broke.
+        evaluated = [c for c in candidates if c.metrics is not None]
+        reasons = sorted({v.split(":")[0].split("=")[0].strip()
+                          for c in evaluated for v in c.violations})
+        detail = (f"all {len(candidates)} candidate(s) failed Stage-2"
+                  + (f" on: {', '.join(reasons)}" if reasons else
+                     " (no candidate produced metrics)"))
+        result.infeasible_report = InfeasibleReport(
+            bottleneck="slo" if reasons else "evaluation",
+            detail=detail,
+            suggestions=(["relax the SLO constraints",
+                          "lower the request rate",
+                          "add device capacity"] if reasons else
+                         ["check the Stage-2 simulation logs under sim_out/"]),
+        )
     log.info(
         "Stage-2 done: %d candidates, %d passed SLO, %d on Pareto front",
         len(candidates), len(passing), len(result.pareto),

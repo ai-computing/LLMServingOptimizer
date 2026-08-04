@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import ast
 import json
+import math
 import subprocess
 import sys
 from pathlib import Path
@@ -49,6 +50,50 @@ def _p99(series: pd.Series) -> float:
     return float(series.quantile(0.99)) if len(series) else float("nan")
 
 
+#: sliding window for the demonstrated generation rate. One request's decode
+#: span is seconds at typical TPOT, so a few seconds smooths per-request
+#: boundaries without averaging the busy stretch away.
+_GEN_WINDOW_S = 5.0
+
+
+def _peak_generation_rate(df, window_s: float = _GEN_WINDOW_S) -> Optional[float]:
+    """Highest sustained generation rate in the run (toks/s).
+
+    Each request generates its ``output`` tokens over the decode span implied by
+    its TPOT and ending at ``end_time``; spreading tokens over that span and
+    sliding a window over the timeline recovers what the cluster was really
+    producing per second. See ``Metrics.peak_gen_toks_s`` for why this and not
+    ``throughput_toks_s`` answers "did it keep up with the demand?".
+    """
+    needed = {"output", "end_time", "TPOT"}
+    if not needed.issubset(df.columns) or df.empty or window_s <= 0:
+        return None
+    buckets: dict[int, float] = {}
+    for out_toks, end_ns, tpot_ns in zip(df["output"], df["end_time"], df["TPOT"]):
+        try:
+            out_toks, end_ns, tpot_ns = float(out_toks), float(end_ns), float(tpot_ns)
+        except (TypeError, ValueError):
+            continue
+        if out_toks <= 0 or not math.isfinite(end_ns):
+            continue
+        span_ns = max(out_toks * max(tpot_ns, 0.0), float(NS_PER_S) / 1000.0)
+        rate = out_toks / (span_ns / NS_PER_S)          # tokens per second
+        start_s, end_s = (end_ns - span_ns) / NS_PER_S, end_ns / NS_PER_S
+        for sec in range(int(start_s // 1), int(end_s // 1) + 1):
+            overlap = min(end_s, sec + 1) - max(start_s, sec)
+            if overlap > 0:
+                buckets[sec] = buckets.get(sec, 0.0) + rate * overlap
+    if not buckets:
+        return None
+    lo, hi = min(buckets), max(buckets)
+    width = max(1, int(window_s))
+    best = 0.0
+    for start in range(lo, hi + 1):
+        tokens = sum(buckets.get(s, 0.0) for s in range(start, start + width))
+        best = max(best, tokens / width)
+    return best
+
+
 def parse_metrics_csv(csv_path: str | Path) -> Metrics:
     """Aggregate a per-request output CSV into SLO metrics.
 
@@ -81,13 +126,25 @@ def parse_metrics_csv(csv_path: str | Path) -> Metrics:
     span_ns = float(df["end_time"].max() - df["arrival"].min())
     throughput = (total_out / (span_ns / NS_PER_S)) if span_ns > 0 else 0.0
 
+    # backlog: how long requests waited for a slot (see Metrics.queue_p95_ms)
+    queue_p95 = queue_max = None
+    if "queuing_delay" in df.columns:
+        q = pd.to_numeric(df["queuing_delay"], errors="coerce").dropna()
+        if not q.empty:
+            queue_p95 = float(q.quantile(0.95)) / NS_PER_MS
+            queue_max = float(q.max()) / NS_PER_MS
+
     return Metrics(
         ttft_ms=ttft_ms,
         tpot_ms=tpot_ms,
         itl_p99_ms=itl_p99_ms,
         throughput_toks_s=throughput,
+        peak_gen_toks_s=_peak_generation_rate(df),
+        queue_p95_ms=queue_p95,
+        queue_max_ms=queue_max,
         num_requests=len(df),
-        raw={"total_output_tokens": total_out, "span_ns": span_ns},
+        raw={"total_output_tokens": total_out, "span_ns": span_ns,
+             "arrival_span_ns": float(df["arrival"].max() - df["arrival"].min())},
     )
 
 
@@ -322,6 +379,7 @@ def evaluate(
         metrics.energy_j = energy
         total_out = metrics.raw.get("total_output_tokens", 0.0)
         metrics.toks_per_wh = total_out / (energy / J_PER_WH) if energy else None
+        metrics.toks_per_j = total_out / energy
         span_ns = metrics.raw.get("span_ns", 0.0)
         if span_ns > 0:
             metrics.power_w = energy / (span_ns / NS_PER_S)

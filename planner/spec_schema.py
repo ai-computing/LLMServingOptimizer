@@ -98,6 +98,13 @@ class DemandSpec(BaseModel):
     # calibration: tokens/s produced by 1.0 unit of the Stage-1 throughput proxy
     # (A6000 tp1 == 1.0 unit). None -> milp_solver._PROXY_TOKS_PER_UNIT.
     proxy_toks_per_unit: Optional[float] = Field(default=None, gt=0)
+    # Stage-2 demand attainment (see objective.check_demand_attainment).
+    # How far the demonstrated peak generation rate may fall below toks_per_s
+    # before the candidate is failed; >= 1.0 disables that test.
+    attainment_tolerance: float = Field(default=0.10, ge=0)
+    # Queue-wait p95 (ms) above which requests are judged to be backing up.
+    # 0 disables that test.
+    max_queue_ms: float = Field(default=1000.0, ge=0)
 
     @model_validator(mode="after")
     def _check(self):

@@ -51,6 +51,9 @@ class RecommendationOut(BaseModel):
     snapshot_ver: int
     device_ids: list[str] = Field(default_factory=list)
     demand_toks_per_s: Optional[float] = None
+    # advisory: the run never generated at the demanded rate, but nothing backed
+    # up either (objective.demand_shortfall) — not a rejection
+    demand_note: Optional[str] = None
     infeasible: Optional[dict] = None               # InfeasibleReport.as_dict()
 
 
