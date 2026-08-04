@@ -1,0 +1,34 @@
+kind: capacity_curve
+hw: A5000
+model: RedHatAI/Qwen2.5-14B-Instruct-FP8-dynamic
+tp: 1
+idle_w: 70.3
+meta:
+  source: measured
+  stack: vllm-0.19.0
+  measured_at: '2026-08-03'
+points:
+- concurrency: 1
+  thr_toks_s: 40.22447394612524
+  ttft_ms: 121.45337264519185
+  tpot_ms: 24.48005790059802
+  itl_p99_ms: 24.838597835041583
+  avg_w: 209.12774774774775
+- concurrency: 4
+  thr_toks_s: 155.89415034794038
+  ttft_ms: 66.50432739115786
+  tpot_ms: 25.48974436740893
+  itl_p99_ms: 25.844021725934
+  avg_w: 192.24722222222223
+- concurrency: 16
+  thr_toks_s: 503.5866818629127
+  ttft_ms: 920.2935413268278
+  tpot_ms: 28.245332442362695
+  itl_p99_ms: 28.942217086441815
+  avg_w: 195.06285714285715
+- concurrency: 64
+  thr_toks_s: 773.2064817866576
+  ttft_ms: 3759.550332445542
+  tpot_ms: 63.07560303884398
+  itl_p99_ms: 823.9906187378801
+  avg_w: 214.5141052631579

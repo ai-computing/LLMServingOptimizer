@@ -1,0 +1,52 @@
+kind: capacity_curve
+hw: A5000
+model: RedHatAI/Meta-Llama-3.1-8B-Instruct-quantized.w8a8
+tp: 2
+idle_w: 150.3
+meta:
+  source: measured
+  stack: vllm-0.19.0
+  measured_at: '2026-08-03'
+points:
+- concurrency: 1
+  thr_toks_s: 110.84488767937131
+  ttft_ms: 55.426965933293104
+  tpot_ms: 8.838301449648888
+  itl_p99_ms: 9.125646452885121
+  avg_w: 361.1171739130435
+- concurrency: 2
+  thr_toks_s: 214.53617784829498
+  ttft_ms: 31.815411392017268
+  tpot_ms: 9.228784010480798
+  itl_p99_ms: 9.497281452640891
+  avg_w: 365.13107142857143
+- concurrency: 4
+  thr_toks_s: 413.4501258381387
+  ttft_ms: 42.042774191941135
+  tpot_ms: 9.532988460348717
+  itl_p99_ms: 10.105182516854256
+  avg_w: 324.6252631578947
+- concurrency: 8
+  thr_toks_s: 705.53708865943
+  ttft_ms: 167.7453480224358
+  tpot_ms: 10.707603266500348
+  itl_p99_ms: 11.497741609346122
+  avg_w: 332.5757142857143
+- concurrency: 16
+  thr_toks_s: 1201.2222995315306
+  ttft_ms: 257.7539648045786
+  tpot_ms: 12.339190557495206
+  itl_p99_ms: 13.173887834418565
+  avg_w: 335.3725
+- concurrency: 32
+  thr_toks_s: 1800.6767129325592
+  ttft_ms: 456.7143287640647
+  tpot_ms: 16.002815800425644
+  itl_p99_ms: 21.28150965552777
+  avg_w: 350.8167857142857
+- concurrency: 64
+  thr_toks_s: 2358.3478449584663
+  ttft_ms: 636.6583850222014
+  tpot_ms: 24.667885492143633
+  itl_p99_ms: 98.78585640806705
+  avg_w: 375.6665789473684

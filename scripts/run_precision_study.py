@@ -41,9 +41,12 @@ SWEEP_14B = "1,4,16,64"
 CONFIGS: dict[str, tuple[str, int, str, str]] = {}
 for prec, mid in LLAMA.items():                       # 8B: everything fits tp1
     CONFIGS[f"llama8b-{prec}"] = (mid, 1, "0", SWEEP_8B)
+    CONFIGS[f"llama8b-{prec}-tp2"] = (mid, 2, "0,1", SWEEP_8B)
 for prec, mid in QWEN.items():                        # 14B: fp16 needs tp2
     CONFIGS[f"qwen14b-{prec}-tp2"] = (mid, 2, "0,1", SWEEP_14B)
-for prec in ("int8", "int4"):                         # quantization removes TP
+# 14B at tp1: fp16 does not fit on one 24 GB card (27.5 GiB of weights), the
+# quantized variants do
+for prec in ("fp8", "int8", "int4"):
     CONFIGS[f"qwen14b-{prec}-tp1"] = (QWEN[prec], 1, "0", SWEEP_14B)
 
 QUALITY_SAMPLES = 200
